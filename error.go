@@ -14,6 +14,12 @@ var ErrNotPointerToStruct = errors.New("provided data is not a pointer to struct
 // but does not implement even the most simple interface, Commander.
 var ErrNotCommander = errors.New("provided data does not implement Commander")
 
+// Internal errors.
+var (
+	errStringer    = errors.New("type assertion to `fmt.Stringer` failed")
+	errUnmarshaler = errors.New("type assertion to `flags.Unmarshaler` failed")
+)
+
 // ParserError represents the type of error.
 type ParserError uint
 
@@ -133,12 +139,3 @@ func wrapError(err error) *Error {
 
 	return newError(ErrUnknown, err.Error())
 }
-
-//
-// Internal errors -------------------------------------------------------- //
-//
-
-var (
-	errStringer    = errors.New("type assertion to `fmt.Stringer` failed")
-	errUnmarshaler = errors.New("type assertion to `flags.Unmarshaler` failed")
-)
