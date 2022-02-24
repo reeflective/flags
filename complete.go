@@ -62,6 +62,8 @@ func (c *completion) Execute(args []string) (err error) {
 	// The last argument, which is not completely typed by the user,
 	// should not be part of the list of arguments. It can be either ""
 	// or an incomplete word. Populate the parser with those trimmed args.
+	// c.toComplete = args[len(args)-1]
+	// c.args = args[:len(args)-1]
 	c.toComplete = c.Args.List[len(c.Args.List)-1]
 	c.args = c.Args.List[:len(c.Args.List)-1]
 

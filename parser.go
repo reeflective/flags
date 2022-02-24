@@ -214,6 +214,14 @@ func (p *Client) parse(args []string) ([]string, error) {
 // parseCommandWords works recursively on each argument of the provided command-line.
 func (p *Client) parseCommandWords(s *parseState) {
 	for !s.eof() {
+		// If the last word (invoked command) is the completion one,
+		// just populate its arguments with the list and return.
+		if p.isCompleting(s) {
+			s.addArgs(s.args...)
+
+			return
+		}
+
 		arg := s.pop()
 
 		// When PassDoubleDash is set and we encounter a --, then
@@ -724,6 +732,13 @@ func (p *Client) checkErrors(s *parseState) (retargs []string, err error) {
 		err = s.estimateCommand()
 	}
 
+	// A special case is when the completion command is called,
+	// where all command-line option words will trigger ErrUnknownFlag.
+	// if p.isCompleting(s) {
+	//         fmt.Println("completing")
+	//         return retargs, nil
+	// }
+
 	// Check the previous steps (including the above check
 	// for required options) have not thrown an error.
 	if s.err != nil {
@@ -738,6 +753,16 @@ func (p *Client) checkErrors(s *parseState) (retargs []string, err error) {
 	}
 
 	return
+}
+
+func (p *Client) isCompleting(s *parseState) bool {
+	// Just return if we are not
+	if s.command.Name == "__complete-flags" {
+		return true
+	}
+
+	// Else directly populate the command
+	return false
 }
 
 // printError will either print the error to Stdout if the parser
