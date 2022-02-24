@@ -115,16 +115,16 @@ type Command struct {
 //
 // Execution Strategies & Implementation Priority:
 // --------
-// - If `T` only implements Commander, the command can only be client
+// - If `data` only implements `Commander`, the command can only be client
 //   and local, and will only be executed when the application is such one.
-// - If `T` implements CommanderClient for remote execution, the command
+// - If `data` implements `CommanderClient` for remote execution, the command
 //   will always trigger the server's peer execution, followed by the Response()
 //   method of CommanderClient being executed.
-// - If `T` also implements CommanderServer, the command will be executed
+// - If `data` also implements `CommanderServer`, the command will be executed
 //   according to the type of application/parser to which it's bound: if
 //   the application is tied to a remote server, the command will act as
-//   a CommanderClient, while if the app is a server, the command will act
-//   as a CommanderServer.
+//   a `CommanderClient`, while if the app is a server, the command will act
+//   as a `CommanderServer`.
 //
 // Thus, you can use the same function for every code base and regardless of
 // the type of application that will use your commands. In order to use such
@@ -141,9 +141,8 @@ type Command struct {
 //
 // @cmd - The command created by the parser when binding your type, allows you to further
 //         customize your command, bind handlers, set completions, usage, helps, etc.
-
+//
 func (c *Command) AddCommand(name, short, long, group string, data Commander) *Command {
-	// Build the base command, on which we will work
 	cmd := newCommand(name, short, long, data)
 	cmd.parent = c
 
@@ -171,6 +170,9 @@ func (c *Command) AddCommand(name, short, long, group string, data Commander) *C
 	// (which means instantiating a new one here, to ensure its blank)
 	// and hash the string.
 	// Keep the string hash in the command.hash field
+
+	// If the parent command is a remote, and that our own is not,
+	// panic: remotes can only have parent locals, not the inverse.
 
 	// Scan command contents (subcommands, arguments, options)
 	if err := cmd.scan(); err != nil {
@@ -472,7 +474,7 @@ func (c *Command) scanSubcommand(mtag multiTag, realval reflect.Value) (bool, er
 // 2) Command-line parsing (for completions/pre-exec) ----------------------- //
 //
 
-func (c *Command) fillParseState(s *parseState) {
+func (c *Command) fillParser(s *parseState) {
 	s.positional = make([]*Arg, len(c.args))
 	copy(s.positional, c.args)
 
