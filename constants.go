@@ -7,4 +7,8 @@ const (
 	defaultTerminalColumns  = 80
 	minWrapLength           = 10
 	minCommandsListHelp     = 3
+	minDistanceClosest      = 0.5
+
+	bashCompLogFilePerm = 0o644
+	argumentWordReq     = "argument"
 )
