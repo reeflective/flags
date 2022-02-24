@@ -345,7 +345,7 @@ func (c *Command) scanSubcommandHandler(parentg *Group) scanHandler {
 
 // scanPositional finds a struct tagged as containing positional arguments and scans them.
 func (c *Command) scanPositional(mtag multiTag, realval reflect.Value) (bool, error) {
-	if len(mtag.Get("args")) == 0 {
+	if len(mtag.Get("positional-args")) == 0 {
 		return false, nil
 	}
 
@@ -542,14 +542,9 @@ func (c *Command) fillLookup(ret *lookup, onlyOptions bool) {
 		// persistent groups, or required options in groups.
 		if (onlyOptions && group.Persistent) || (!onlyOptions) {
 
-			// First add the group to the ordered list,
-			// for correct order completion lists used later.
-			var longName string
-			if group.Namespace != "" {
-				longName = group.Namespace + group.NamespaceDelimiter + group.ShortDescription
-			}
-			ret.groupList = append(ret.groupList, longName)
-			ret.groups[longName] = group
+			// If the group is the one embedded in the command,
+			// this will NOT add the group to our lookup list
+			c.filterUselessGroup(ret, group)
 
 			// Add all options
 			for _, option := range group.options {
@@ -575,6 +570,25 @@ func (c *Command) fillLookup(ret *lookup, onlyOptions bool) {
 			ret.commands[a] = subcommand
 		}
 	}
+}
+
+func (c *Command) filterUselessGroup(ret *lookup, group *Group) {
+	// If the group is only the one embedded in a command,
+	// (contains the struct data), we don't consider it a group,
+	// so we exclude it from our list of groups
+	if _, isCmd := group.data.(Commander); isCmd {
+		return
+	}
+
+	// First add the group to the ordered list,
+	// for correct order completion lists used later.
+	var longName string
+	if group.Namespace != "" {
+		longName = group.Namespace + group.NamespaceDelimiter + group.ShortDescription
+	}
+
+	ret.groupList = append(ret.groupList, longName)
+	ret.groups[longName] = group
 }
 
 // Commands.

@@ -80,6 +80,27 @@ type Client struct {
 	mutex *sync.RWMutex
 }
 
+// NewClient - Creates a new reflag command Client.
+func NewClient(name string, opts Options) *Client {
+	client := &Client{
+		// Local
+		Command:               newCommand(name, "", "", nil),
+		EnvNamespaceDelimiter: "_",
+		Options:               opts,
+
+		// Remote
+		pendingReqs: map[string]Request{},
+		// pendingCmds: map[string]Command{},
+
+		// Others
+		mutex: &sync.RWMutex{},
+	}
+
+	client.Command.parent = client
+
+	return client
+}
+
 // SetID - Overrride the automatically generated ID for this client.
 // This is useful when your client application already makes use of one.
 func (c *Client) SetID(id string) {

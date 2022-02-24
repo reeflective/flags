@@ -117,8 +117,9 @@ func (g *Group) FindOptionByShortName(shortName rune) *Option {
 
 func newGroup(shortDescription string, longDescription string, data interface{}) *Group {
 	return &Group{
-		ShortDescription: shortDescription,
-		LongDescription:  longDescription,
+		ShortDescription:   shortDescription,
+		LongDescription:    longDescription,
+		NamespaceDelimiter: ".", // Applies to commands and options
 
 		data: data,
 	}

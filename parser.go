@@ -172,7 +172,7 @@ func (p *Client) parse(args []string) ([]string, error) {
 	// Immediately return if any error is caught at this point.
 	p.parseCommandWords(state)
 
-	// Clear all values and verify all required fields are set.
+	// Clear all default values if we are not in an error state.
 	p.clearTypes(state)
 
 	// Check for any errors stored in the parser, and return
@@ -224,7 +224,8 @@ func (p *Client) parseCommandWords(s *parseState) {
 			break
 		}
 
-		// If the argument is anything except a -o/--option word
+		// If the argument is anything except a -o/--option word,
+		// therefore either a command name or a command/option argument.
 		if !argumentIsOption(arg) {
 			if done := p.parseArgumentWord(s, arg); done {
 				break
@@ -244,7 +245,7 @@ func (p *Client) parseCommandWords(s *parseState) {
 		// based on the error and state, if we have to break abruptly or not.
 		// The function also takes care of populating/updating its various
 		// lists of arguments appropriately.
-		if done := p.checkParseError(s, err, arg, optname, *argument); done {
+		if done := p.checkParseError(s, err, arg, optname, argument); done {
 			break
 		}
 	}
@@ -274,6 +275,30 @@ func (p *Client) parseArgumentWord(s *parseState, arg string) bool {
 	return false
 }
 
+func (p *Client) parseNonOption(s *parseState) error {
+	if len(s.positional) > 0 {
+		return s.addArgs(s.arg)
+	}
+
+	if len(s.command.commands) > 0 && len(s.retargs) == 0 {
+		if cmd := s.lookup.commands[s.arg]; cmd != nil {
+			// Exception is made if the completion command is called
+			s.command.Active = cmd
+			cmd.fillParser(s)
+
+			return nil
+		}
+
+		if !s.command.SubcommandsOptional {
+			s.addArgs(s.arg)
+
+			return newErrorf(ErrUnknownCommand, "Unknown command `%s'", s.arg)
+		}
+	}
+
+	return s.addArgs(s.arg)
+}
+
 func (p *Client) parseOptionWord(s *parseState, arg string) (optname string, argument *string, err error) {
 	prefix, optname, islong := stripOptionPrefix(arg)
 	optname, _, argument = splitOption(prefix, optname, islong)
@@ -287,7 +312,7 @@ func (p *Client) parseOptionWord(s *parseState, arg string) (optname string, arg
 	return
 }
 
-func (p *Client) checkParseError(s *parseState, err error, arg, optname, argument string) (done bool) {
+func (p *Client) checkParseError(s *parseState, err error, arg, optname string, argument *string) (done bool) {
 	// This is redundant with the one just
 	// before we are called, but just in case...
 	if err == nil {
@@ -313,7 +338,7 @@ func (p *Client) checkParseError(s *parseState, err error, arg, optname, argumen
 		return false
 	}
 
-	modifiedArgs, err := p.UnknownOptionHandler(optname, strArgument{&argument}, s.args)
+	modifiedArgs, err := p.UnknownOptionHandler(optname, strArgument{argument}, s.args)
 	if err != nil {
 		s.err = err
 
@@ -383,27 +408,6 @@ func (p *parseState) addArgs(args ...string) error {
 	p.retargs = append(p.retargs, args...)
 
 	return nil
-}
-
-func (p *Client) parseNonOption(s *parseState) error {
-	if len(s.positional) > 0 {
-		return s.addArgs(s.arg)
-	}
-
-	if len(s.command.commands) > 0 && len(s.retargs) == 0 {
-		if cmd := s.lookup.commands[s.arg]; cmd != nil {
-			s.command.Active = cmd
-			cmd.fillParser(s)
-
-			return nil
-		} else if !s.command.SubcommandsOptional {
-			s.addArgs(s.arg)
-
-			return newErrorf(ErrUnknownCommand, "Unknown command `%s'", s.arg)
-		}
-	}
-
-	return s.addArgs(s.arg)
 }
 
 func (p *Client) parseShort(s *parseState, optname string, argument *string) error {
@@ -715,6 +719,11 @@ func (p *Client) checkErrors(s *parseState) (retargs []string, err error) {
 		s.err = s.checkRequired(p.Command)
 	}
 
+	// Notify if no command has been found in the command-line string
+	if len(s.command.commands) != 0 && !s.command.SubcommandsOptional {
+		err = s.estimateCommand()
+	}
+
 	// Check the previous steps (including the above check
 	// for required options) have not thrown an error.
 	if s.err != nil {
@@ -726,11 +735,6 @@ func (p *Client) checkErrors(s *parseState) (retargs []string, err error) {
 		}
 
 		return retargs, s.err
-	}
-
-	// Notify if no command has been found in the command-line string
-	if len(s.command.commands) != 0 && !s.command.SubcommandsOptional {
-		s.err = s.estimateCommand()
 	}
 
 	return

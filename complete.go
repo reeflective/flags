@@ -22,13 +22,14 @@ func (p *Client) initCompletionCmd() {
 		parseState: &parseState{},
 	}
 
-	p.AddCommand(shellCompRequestCmd,
+	complete := p.AddCommand(shellCompRequestCmd,
 		"Request completions for the given shell",
 		fmt.Sprintf("%[2]s is a special command that is used by the shell completion logic\n%[1]s",
 			"to request completion choices for the specified command-line.", shellCompRequestCmd),
 		"", // No group needed for this command
 		completer,
 	)
+	complete.Hidden = true
 }
 
 // completion is both a command and a manager for console completion.
