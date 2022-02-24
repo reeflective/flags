@@ -1,6 +1,6 @@
 package main
 
-import "github.com/maxlandon/reflags"
+import "github.com/reeflective/flags"
 
 // CompletedArguments is a simple example on how to declare one or more command arguments.
 // Please refer to github.com/jessevdk/go-flags documentation
@@ -16,7 +16,7 @@ type CompletedArguments struct {
 type Target string
 
 // Complete implements the simplest completer interface for an argument/option.
-func (t *Target) Complete() (comps reflags.Completions) {
+func (t *Target) Complete() (comps flags.Completions) {
 	return
 }
 
@@ -28,6 +28,6 @@ type IP string
 // can return more than one group of completions to be proposed when this
 // argument is needed/invoked on the command line.
 // @err is equivalent to a reflags.CompError directive, if not nil.
-func (i *IP) Complete() (comps reflags.Completions) {
+func (i *IP) Complete() (comps flags.Completions) {
 	return
 }

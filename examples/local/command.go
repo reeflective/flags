@@ -37,7 +37,6 @@ type Command struct {
 // `Commander`. This makes it a valid command, for which any reflags client (CLI or
 // closed-app) will provide default use, help, usage and completion functionality.
 func (c *Command) Execute(args []string) (err error) {
-
 	// Remove this line, and add your command implementation.
 	err = errors.New("ListContent client command not implemented")
 
