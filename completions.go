@@ -233,9 +233,9 @@ func (c *Completions) output() {
 	// Prepare the first line, containing
 	// summary information for all completions
 	// Success/Err CompDirective NumGroups
-	success := 1
+	success := 0
 	if c.err != nil {
-		success = 0
+		success = 1
 	}
 
 	summary := fmt.Sprintf("%d-%d \n",
@@ -259,7 +259,8 @@ func (c *Completions) output() {
 // printGroup formats a complete block of completions and prints it to stdout.
 func (c *Completions) printGroup(buf io.Writer, group *CompletionGroup) {
 	// Print the header line
-	header := fmt.Sprintf("%s \"%s\" \"%s\" %d %d %t %d",
+	// header := fmt.Sprintf("%s \"%s\" \"%s\" %d %d %t %d",
+	header := fmt.Sprintf("%s\t%s\t%s\t%d\t%d\t%t\t%d",
 		group.argType,
 		group.Name, // Should escape quotes
 		group.Name, // Should escape quotes

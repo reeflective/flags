@@ -22,6 +22,7 @@ type Group struct {
 	isRemote           bool        // If the group has a remote declaration (similar to command implementation)
 	options            []*Option   // All the options in the group: only for OPTIONS => commands are in groups
 	groups             []*Group    // All the subgroups, which are either subcommands or nested options
+	compGroupName      string      // The name of the group as used by the completions for commands structure
 	parent             interface{} // The parent of the group (a parent command/option) or nil if it has no parent
 	data               interface{} // data is the actual options data
 }

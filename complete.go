@@ -185,9 +185,9 @@ func (c *completion) completeCommands(match string) {
 		}
 
 		// Or add to completions
-		grp := c.getGroup(cmd.Group.ShortDescription)
+		grp := c.getGroup(cmd.Group.compGroupName)
 		if grp == nil {
-			grp = c.comps.NewGroup(cmd.Group.ShortDescription)
+			grp = c.comps.NewGroup(cmd.Group.compGroupName)
 			grp.argType = compCommand
 		}
 

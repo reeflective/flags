@@ -145,6 +145,7 @@ type Command struct {
 func (c *Command) AddCommand(name, short, long, group string, data Commander) *Command {
 	cmd := newCommand(name, short, long, data)
 	cmd.parent = c
+	cmd.compGroupName = group
 
 	// Command type paths, stored for mapping with client/server peer -----------------
 	// s.mutex.RLock()
