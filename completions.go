@@ -181,29 +181,40 @@ func (c *Completions) Errorln(msg string) {
 	c.Error(fmt.Sprintf("%s\n", msg))
 }
 
-// CompleterType identifies one of reflags' builtin completer functions.
-type CompleterType int
+// CompDirective identifies one of reflags' builtin completer functions.
+type CompDirective int
 
 const (
 	// Public directives =========================================================.
 
-	// CompFiles completes all files found in the current filesystem context.
-	CompFiles CompleterType = 1 << iota
-	// CompDirs completes all directories in the current filesystem context.
-	CompDirs
-	// CompFilterExt only complete files that are part of the given extensions.
-	CompFilterExt
-	// CompFilterDirs only complete files within a given set of directories.
-	CompFilterDirs
+	// CompError indicates an error occurred and completions should handled accordingly.
+	CompError CompDirective = 1 << iota
+
+	// CompNoSpace indicates that the shell should not add a space after
+	// the completion even if there is a single completion provided.
+	CompNoSpace
+
 	// CompNoFiles forbids file completion when no other comps are available.
 	CompNoFiles
+
+	// CompFilterExt only complete files that are part of the given extensions.
+	CompFilterExt
+
+	// CompFilterDirs only complete files within a given set of directories.
+	CompFilterDirs
+
+	// CompFiles completes all files found in the current filesystem context.
+	CompFiles
+
+	// CompDirs completes all directories in the current filesystem context.
+	CompDirs
 
 	// Internal directives (must be below) =======================================.
 
 	// ShellCompDirectiveDefault indicates to let the shell perform its default
 	// behavior after completions have been provided.
 	// This one must be last to avoid messing up the iota count.
-	ShellCompDirectiveDefault CompleterType = 0
+	ShellCompDirectiveDefault CompDirective = 0
 )
 
 // --------------------------------------------------------------------------------------------------- //

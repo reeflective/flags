@@ -139,14 +139,18 @@ func (p *Client) parse(args []string) ([]string, error) {
 		option.updateDefaultLiteral()
 	})
 
-	// Add built-in help group to all commands if necessary
-	if (p.Options & HelpFlag) != None {
-		p.addHelpGroups(p.showBuiltinHelp)
-	}
+	// Initialize the completion script generation command
+	// at the last moment, to allow for user overriding.
+	p.initDefaultCompletionCmd()
 
 	// Simply bind a command that will handle the completions.
 	// This command is then used the same way as any other.
 	p.initCompletionCmd()
+
+	// Add built-in help group to all commands if necessary
+	if (p.Options & HelpFlag) != None {
+		p.addHelpGroups(p.showBuiltinHelp)
+	}
 
 	//
 	// 2 - Command-line parsing --------------------------------------
@@ -732,13 +736,6 @@ func (p *Client) checkErrors(s *parseState) (retargs []string, err error) {
 		err = s.estimateCommand()
 	}
 
-	// A special case is when the completion command is called,
-	// where all command-line option words will trigger ErrUnknownFlag.
-	// if p.isCompleting(s) {
-	//         fmt.Println("completing")
-	//         return retargs, nil
-	// }
-
 	// Check the previous steps (including the above check
 	// for required options) have not thrown an error.
 	if s.err != nil {
@@ -757,7 +754,7 @@ func (p *Client) checkErrors(s *parseState) (retargs []string, err error) {
 
 func (p *Client) isCompleting(s *parseState) bool {
 	// Just return if we are not
-	if s.command.Name == "__complete-flags" {
+	if s.command.Name == ShellCompRequestCmd {
 		return true
 	}
 

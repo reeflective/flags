@@ -28,7 +28,7 @@ type CompletionGroup struct {
 	NoSpace           bool          // Do not add a space when inserting/exiting the completion  // DROP
 	FilterExtension   bool          // Use the suggestions as file extension filters for file comp. // DROP
 	FilterDirectories bool          // Use suggestions as directories in which to complete. // DROP
-	CompDirective     CompleterType //
+	CompDirective     CompDirective //
 
 	// Internal
 	required  bool

@@ -7,11 +7,19 @@ import (
 	"unicode/utf8"
 )
 
+const (
+	// ShellCompRequestCmd is the name of the hidden command that is used to request
+	// completion results from the program.  It is used by the shell completion scripts.
+	ShellCompRequestCmd = "__complete"
+	// ShellCompNoDescRequestCmd is the name of the hidden command that is used to request
+	// completion results without their description.  It is used by the shell completion scripts.
+	ShellCompNoDescRequestCmd = "__completeNoDesc"
+)
+
 // initCompletionCmd binds a special command that is called by the shell
 // to get some completions. This command is bound at the very last minute,
 // so that it's almost perfectly transparent to your application.
 func (p *Client) initCompletionCmd() {
-	shellCompRequestCmd := "__complete-flags"
 	// First, check that the completion command was actually called,
 	// otherwise don't bind the command, so as to avoid any collisions.
 
@@ -22,10 +30,10 @@ func (p *Client) initCompletionCmd() {
 		parseState: &parseState{},
 	}
 
-	complete := p.AddCommand(shellCompRequestCmd,
+	complete := p.AddCommand(ShellCompRequestCmd,
 		"Request completions for the given shell",
 		fmt.Sprintf("%[2]s is a special command that is used by the shell completion logic\n%[1]s",
-			"to request completion choices for the specified command-line.", shellCompRequestCmd),
+			"to request completion choices for the specified command-line.", ShellCompRequestCmd),
 		"", // No group needed for this command
 		completer,
 	)
@@ -39,7 +47,6 @@ func (p *Client) initCompletionCmd() {
 type completion struct {
 	// Command line arguments
 	Args struct {
-		// Shell string   `description:"The name of the shell requesting completions" required:"yes"`
 		List []string `description:"The command-line words to parse for completion"`
 	} `positional-args:"yes" required:"yes"`
 
@@ -195,6 +202,13 @@ func (c *completion) completeCommands(match string) {
 
 		grp.suggestions = append(grp.suggestions, cmd.Name)
 		grp.descriptions[cmd.Name] = cmd.ShortDescription
+	}
+
+	// Check all groups have a name other than.
+	for _, group := range c.comps.groups {
+		if group.argType == compCommand && group.Name == "" {
+			group.Name = "commands"
+		}
 	}
 }
 
