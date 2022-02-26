@@ -287,7 +287,7 @@ _%[1]s()
                 __add_group_comps $compType $gdirective $tag $desc $required $comps
         fi
 
-    done < <(printf "%s\n\n-- End Completion Output --" "${completions[@]}")
+    done < <(printf "%%s\n\n-- End Completion Output --" "${completions[@]}")
 
     
     #
@@ -298,7 +298,7 @@ _%[1]s()
     # other completion, and all other directives are irrelevant now.
     if [ "$numGroups" -gt 0 ] && [ "$numComps" -gt 0 ]; then
         __%[1]s_debug "Returning some completions to Z-Shell"
-        return
+        return 0
     fi
 
     # If we are here, we didn't add any completions at all, and
@@ -323,7 +323,7 @@ _%[1]s()
     #     __%[1]s_debug "Activating nospace."
     #     noSpace="-S ''"
     # fi
-    return
+    return 0
 }
 
 # __add_comp takes an entire completion line thrown
@@ -346,7 +346,7 @@ __add_group_comps() {
         # If the group is about file completions,
         # handle them in a special function.
         if [ "$compType" = "file" ]; then
-                __add_file_comp $gdirective $spec comps 
+                __add_file_comp $gdirective $spec $comps 
                 return
         fi
 
@@ -362,7 +362,7 @@ __add_file_comp() {
         # Parameters
         local directive=$1  # The type of file completion
         local spec=$2       # The preforged tag:desc for the group
-        local comps=$3      # The values to use in completion
+        # local comps=$3      # The values to use in completion
 
         # Constants
         local shellCompDirectiveFilterFileExt=8
@@ -373,34 +373,40 @@ __add_file_comp() {
             local filteringCmd
             filteringCmd='_files'
             for filter in ${comps[@]}; do
+                # Sanitize surrounding quotes
+                temp="${filter%%\"}"
+                temp="${temp#\"}"
+
                 if [ ${filter[1]} != '*' ]; then
                     # zsh requires a glob pattern to do file filtering
-                    filter="\*.$filter"
+                    filter="\*.$temp"
                 fi
                 filteringCmd+=" -g $filter"
             done
             filteringCmd+=" ${flagPrefix}"
             __%[1]s_debug "File filtering command: $filteringCmd"
             _alternative "$spec$filteringCmd"
-            # _arguments '*:filename:'"$filteringCmd"
 
         # File completion for directories only
         elif [ $((directive & shellCompDirectiveFilterDirs)) -ne 0 ]; then
-            local subdir
-            subdir="${comps[1]}"
-            if [ -n "$subdir" ]; then
-                __%[1]s_debug "Listing directories in $subdir"
-                pushd "${subdir}" >/dev/null 2>&1
-            else
-                __%[1]s_debug "Listing directories in ."
-            fi
-            local result
-            _alternative "${spec}_files -/ ${flagPrefix}"
-            # _arguments '*:dirname:_files -/'" ${flagPrefix}"
-            result=$?
-            if [ -n "$subdir" ]; then
-                popd >/dev/null 2>&1
-            fi
+            for dir in ${comps[@]}; do
+                subdir="${dir%%\"}"
+                subdir="${subdir#\"}"
+                if [ -n "$subdir" ]; then
+                    __%[1]s_debug "Listing directories in $subdir"
+                    pushd "${subdir}" >/dev/null 2>&1
+                else
+                    __%[1]s_debug "Listing directories in ."
+                fi
+                # Add the given subdir path as a prefix to compute candidates.
+                # This, between others, ensures that paths are correctly slash-formatted,
+                # that they get automatically inserted when unique, etc...
+                _alternative "${spec}_files -/ -W $subdir ${flagPrefix}"
+                result=$?
+                if [ -n "$subdir" ]; then
+                    popd >/dev/null 2>&1
+                fi
+            done
             return $result
         fi
 }

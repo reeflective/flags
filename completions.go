@@ -237,6 +237,7 @@ const (
 	compCommand  compType = "command"
 	compArgument compType = "argument"
 	compOption   compType = "option"
+	compFile     compType = "file"
 )
 
 // output builds the complete list of completions
@@ -295,14 +296,21 @@ func (c *Completions) printGroup(buf io.Writer, group *CompletionGroup) {
 	// For each completion, print its corresponding line
 	if len(group.suggestions) > 0 {
 		for _, comp := range group.suggestions {
-			// Main candidate
+			var compLine string
+
 			desc := group.descriptions[comp]
-			compLine := fmt.Sprintf("%s\t%s \n", comp, desc)
+
+			if desc != "" {
+				compLine = fmt.Sprintf("%s\t%s\n", comp, desc)
+			} else {
+				compLine = fmt.Sprintf("%s\n", comp)
+			}
+
 			fmt.Fprint(buf, compLine)
 
 			// And alias if any, with same description
-			if alias, ok := group.aliases[comp]; ok {
-				aliasLine := fmt.Sprintf("%s\t%s \n", alias, desc)
+			if alias, ok := group.aliases[comp]; ok && alias != "" {
+				aliasLine := fmt.Sprintf("%s\t%s\n", alias, desc)
 				fmt.Fprint(buf, aliasLine)
 			}
 		}

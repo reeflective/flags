@@ -221,12 +221,15 @@ func (c *completion) completeOption(linePrefix, match string) {
 	prefix, optname, islong := stripOptionPrefix(c.toComplete)
 	optname, split, argument := splitOption(prefix, optname, islong)
 
+	c.comps.Debugln("Optname: "+optname, false)
+	c.comps.Debugln(fmt.Sprintf("Long: %t", islong), false)
 	// We might be dealing with combined short options
 	// (even namespaced ones), so check that and get them all.
 	// multi, all, last := getAllOptions(optname)
 
 	// If we don't have a parsed (opt=arg) argument yet
 	if argument == nil && !islong {
+		c.comps.Debugln("Looking up short options", false)
 		rname, length := utf8.DecodeRuneInString(optname)
 		sname := string(rname)
 
@@ -234,12 +237,15 @@ func (c *completion) completeOption(linePrefix, match string) {
 		// Or, the current option is a group namespace (eg. "P" in -Pn)
 		// Or we need short options (and long aliases)
 		if opt := c.lookup.shortNames[sname]; opt != nil && opt.canArgument() {
+			c.comps.Debugln("Found short option", false)
 			// c.completeValue(opt.value, prefix+sname, optname[n:])
 			c.completeValue(opt.value, "", prefix+optname[length:])
 		} else if yes, group := c.optIsGroupNamespace(sname); yes {
+			c.comps.Debugln("Found option namespace prefix", false)
 			c.completeNestedGroup(group, true, false)
 		} else {
-			c.completeAllOptions(prefix, match, false)
+			c.comps.Debugln("Completing all options", false)
+			c.completeAllOptions(prefix, optname, true)
 		}
 
 		return
@@ -262,7 +268,7 @@ func (c *completion) completeOption(linePrefix, match string) {
 
 	// Else if the current word is simply a long option request
 	if islong {
-		c.completeAllOptions(prefix, optname, true)
+		c.completeAllOptions(prefix, optname, false)
 
 		return
 	}
@@ -276,6 +282,7 @@ func (c *completion) completeAllOptions(prefix, match string, short bool) {
 	// Return if we don't actually have a short option
 	// despite what's claimed by the caller.
 	if short && len(match) != 0 {
+		c.comps.Debugln("Always finding an empty option", false)
 		group := c.comps.NewGroup("")
 		group.argType = compArgument
 		group.suggestions = append(group.suggestions, prefix+match)
@@ -288,6 +295,7 @@ func (c *completion) completeAllOptions(prefix, match string, short bool) {
 	// groups are below immediate command options.
 	for i := (len(c.lookup.groupList) - 1); i > 0; i-- {
 		group := c.lookup.groups[c.lookup.groupList[i]]
+		c.comps.Debugln("Group name: "+group.ShortDescription, false)
 
 		// Compare the group against the current match,
 		// and skip if incompatible.
@@ -426,6 +434,16 @@ func (c *completion) completeValue(value reflect.Value, prefix, match string) {
 		if completer, ok = value.Addr().Interface().(Completer); ok {
 			c.comps = completer.Complete(match)
 		}
+	}
+
+	// Always modify the type of completions we annonce
+	// to the shell script, depending on the shell completion
+	for _, group := range c.comps.groups {
+		if (group.CompDirective == CompNoFiles) || (group.CompDirective == CompNoSpace) {
+			continue
+		}
+
+		group.argType = compFile
 	}
 }
 
