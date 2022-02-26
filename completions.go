@@ -148,7 +148,10 @@ func (c *Completions) Debug(msg string, printToStdErr bool) {
 			os.O_APPEND|os.O_CREATE|os.O_WRONLY, bashCompLogFilePerm)
 		if err == nil {
 			defer f.Close()
-			// WriteStringAndCheck(f, msg)
+
+			if _, err = f.WriteString(msg); err != nil {
+				fmt.Fprintln(os.Stderr, "Error: ", msg)
+			}
 		}
 	}
 
@@ -230,6 +233,11 @@ const (
 // for consumption by completion scripts.
 // Note that this is only used for bash/zsh/fish.
 func (c *Completions) output() {
+	// If there is no comps and no default group
+	if c.defaultGroup == nil {
+		c.newDefaultGroup()
+	}
+
 	// Prepare the first line, containing
 	// summary information for all completions
 	// Success/Err CompDirective NumGroups
@@ -238,9 +246,10 @@ func (c *Completions) output() {
 		success = 1
 	}
 
-	summary := fmt.Sprintf("%d-%d \n",
+	summary := fmt.Sprintf("%d-%d-%d \n",
 		success,
 		len(c.groups),
+		c.defaultGroup.CompDirective,
 	)
 
 	fmt.Fprint(os.Stdout, summary)

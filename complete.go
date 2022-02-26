@@ -95,8 +95,10 @@ func (c *completion) Execute(args []string) (err error) {
 // populateInternal is used to detect which types (command/option/arg/some)
 // are currently concerned with completions, and stores it internally.
 func (c *completion) populateInternal() {
+	// c.comps.Debugln(fmt.Sprintf("ARGUMENTS: %v", c.args), false)
+
 	// For each argument in the list, in their order of appearance
-	for len(c.args) > 1 {
+	for len(c.args) > 0 {
 		arg := c.pop()
 
 		// As soon as the -- is found and PassDoubleDash is on, break.
@@ -166,7 +168,7 @@ func (c *completion) getCompletions() {
 
 	// If we are still here, we must add completions
 	// for all (if any) subcommands of the current cmd.
-	if len(c.command.commands) > 0 {
+	if (c.command != nil) && len(c.command.commands) > 0 {
 		c.completeCommands(c.toComplete)
 	}
 }
