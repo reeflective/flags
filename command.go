@@ -541,29 +541,30 @@ func (c *Command) fillLookup(ret *lookup, onlyOptions bool) {
 		// If we are only asked for options, it means that
 		// we are parsing a parent command, so we only add
 		// persistent groups, or required options in groups.
-		if (onlyOptions && group.Persistent) || (!onlyOptions) {
+		// if (onlyOptions && group.Persistent) || (!onlyOptions) {
 
-			// If the group is the one embedded in the command,
-			// this will NOT add the group to our lookup list
-			c.filterUselessGroup(ret, group)
+		// If the group is the one embedded in the command,
+		// this will NOT add the group to our lookup list
+		c.filterUselessGroup(ret, group)
 
-			// Add all options
-			for _, option := range group.options {
-				if option.ShortName != 0 {
-					ret.shortNames[string(option.ShortName)] = option
-				}
+		// Add all options
+		for _, option := range group.options {
+			if option.ShortName != 0 {
+				ret.shortNames[string(option.ShortName)] = option
+			}
 
-				if len(option.LongName) > 0 {
-					ret.longNames[option.LongNameWithNamespace()] = option
-				}
+			if len(option.LongName) > 0 {
+				ret.longNames[option.LongNameWithNamespace()] = option
 			}
 		}
+		// }
 	})
 
 	if onlyOptions {
 		return
 	}
 
+	// Add all subcommands
 	for _, subcommand := range c.commands {
 		ret.commands[subcommand.Name] = subcommand
 
@@ -583,7 +584,7 @@ func (c *Command) filterUselessGroup(ret *lookup, group *Group) {
 
 	// First add the group to the ordered list,
 	// for correct order completion lists used later.
-	var longName string
+	longName := group.ShortDescription
 	if group.Namespace != "" {
 		longName = group.Namespace + group.NamespaceDelimiter + group.ShortDescription
 	}

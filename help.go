@@ -221,7 +221,8 @@ func (p *Client) writeCurrentOptions(buf io.Writer, cmd, root *Command, align al
 		first := true
 
 		// Skip built-in help group for all commands except the top-level parser
-		if grp.Hidden || (grp.isBuiltinHelp && root != p.Command) {
+		if grp.Hidden || (grp.isBuiltinHelp) {
+			// if grp.Hidden || (grp.isBuiltinHelp && root != p.Command) {
 			return
 		}
 

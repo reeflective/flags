@@ -121,6 +121,7 @@ func newGroup(shortDescription string, longDescription string, data interface{})
 		ShortDescription:   shortDescription,
 		LongDescription:    longDescription,
 		NamespaceDelimiter: ".", // Applies to commands and options
+		compGroupName:      shortDescription,
 
 		data: data,
 	}

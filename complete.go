@@ -230,6 +230,7 @@ func (c *completion) completeOption(linePrefix, match string) {
 	// If we don't have a parsed (opt=arg) argument yet
 	if argument == nil && !islong {
 		c.comps.Debugln("Looking up short options", false)
+
 		rname, length := utf8.DecodeRuneInString(optname)
 		sname := string(rname)
 
@@ -293,9 +294,13 @@ func (c *completion) completeAllOptions(prefix, match string, short bool) {
 	// For each available option group, process
 	// in reverse order so that persistent/parent
 	// groups are below immediate command options.
-	for i := (len(c.lookup.groupList) - 1); i > 0; i-- {
+	for i := 0; i < (len(c.lookup.groupList)); i++ {
 		group := c.lookup.groups[c.lookup.groupList[i]]
-		c.comps.Debugln("Group name: "+group.ShortDescription, false)
+
+		// Filter groups we don't want in anycase, such as help.
+		if c.mustSkipGroup(group) {
+			continue
+		}
 
 		// Compare the group against the current match,
 		// and skip if incompatible.
@@ -329,12 +334,19 @@ func (c *completion) completeGroupOptions(g *Group, match string, short bool) {
 		}
 
 		var optname string
-		if short {
+
+		switch {
+		case short:
 			optname = prefix + string(opt.ShortName)
-			alias := prefix + opt.LongName
-			comps.aliases[optname] = alias
-		} else {
+
+			if opt.LongName != "" {
+				alias := defaultLongOptDelimiter + opt.LongName
+				comps.aliases[optname] = alias
+			}
+		case opt.LongName != "":
 			optname = prefix + opt.LongName
+		default:
+			continue
 		}
 
 		comps.suggestions = append(comps.suggestions, optname)
@@ -542,4 +554,22 @@ func (c *completion) skipPositional(n int) {
 	} else {
 		c.positional = c.positional[n:]
 	}
+}
+
+func (c *completion) mustSkipGroup(group *Group) bool {
+	if group.Hidden {
+		return true
+	}
+
+	if group.isBuiltinHelp {
+		return true
+	}
+
+	// This group is the root parser parent: it must be empty
+	// although the parser's group itself might not.
+	if group.data == nil {
+		return true
+	}
+
+	return false
 }
