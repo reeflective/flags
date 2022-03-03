@@ -349,3 +349,14 @@ func (c *Completions) newDefaultGroup() {
 func (c *Completions) addGroup(g *CompletionGroup) {
 	c.groups = append(c.groups, g)
 }
+
+func (c *Completions) getLastGroup() *CompletionGroup {
+	if c.defaultGroup == nil {
+		c.newDefaultGroup()
+	}
+	if len(c.groups) == 0 {
+		return c.defaultGroup
+	}
+
+	return c.groups[len(c.groups)-1]
+}

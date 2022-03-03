@@ -37,6 +37,28 @@ func (g *Group) AddGroup(short, long string, data interface{}) (*Group, error) {
 	group := newGroup(short, long, data)
 
 	group.parent = g
+	group.NamespaceDelimiter = g.NamespaceDelimiter
+
+	if g.isRemote {
+		group.isRemote = true
+	}
+
+	if err := group.scan(); err != nil {
+		return nil, err
+	}
+
+	g.groups = append(g.groups, group)
+
+	return group, nil
+}
+
+func (g *Group) addGroup(short, long, namespace, delim string, data interface{}) (*Group, error) {
+	group := newGroup(short, long, data)
+
+	group.parent = g
+	group.NamespaceDelimiter = delim
+	group.Namespace = namespace
+
 	if g.isRemote {
 		group.isRemote = true
 	}
@@ -190,13 +212,22 @@ func (g *Group) scanSubGroupHandler(realval reflect.Value, sfield *reflect.Struc
 
 	description := mtag.Get("description")
 
+	// New change, in order to easily propagate parent namespaces
+	// in heavily/specially nested option groups at bind time.
+	namespace := mtag.Get("namespace")
+	delim := mtag.Get("namespace-delimiter")
+
 	// Recursively add the new, embedded group
-	group, err := g.AddGroup(subgroup, description, ptrval.Interface())
+	group, err := g.addGroup(subgroup, description, namespace, delim, ptrval.Interface())
+	// group, err := g.AddGroup(subgroup, description, ptrval.Interface())
 	if err != nil {
 		return true, err
 	}
 
-	group.Namespace = mtag.Get("namespace")
+	// The namespace is immediately compounded to its parent's one
+	group.Namespace = g.Namespace + group.Namespace
+
+	// Traditionally the two namespace/delim vars were here as well.
 	group.EnvNamespace = mtag.Get("env-namespace")
 	group.Hidden = mtag.Get("hidden") != ""
 
@@ -357,15 +388,41 @@ func (g *Group) scanOption(mtag multiTag, field reflect.StructField, val reflect
 }
 
 func (g *Group) checkForDuplicateFlags() *Error {
-	shortNames := make(map[rune]*Option)
+	shortNames := make(map[string]*Option)
+	// shortNames := make(map[rune]*Option)
 	longNames := make(map[string]*Option)
 
 	var duplicateError *Error
 
 	g.eachGroup(func(g *Group) {
 		for _, option := range g.options {
+			namespace := option.getFullNamespace()
+			// name, short := option.getNamespaceName()
+			// fmt.Println("Option: " + name)
+			// if !short {
+			//         if otherOption, ok := longNames[name]; ok {
+			//                 duplicateError = isDuplicate(option, otherOption, true)
+			//
+			//                 return
+			//         }
+			//         longNames[name] = option
+			//         if option.ShortName == 0 {
+			//                 continue
+			//         }
+			// }
+			// // delim := option.getNamespaceDelimiter(false)
+			// name = option.getFullNamespace() + string(option.ShortName)
+			// // namespaceName, _ := option.getNamespaceName()
+			// if otherOption, ok := shortNames[name]; ok {
+			//         // if otherOption, ok := shortNames[option.ShortName]; ok {
+			//         duplicateError = isDuplicate(option, otherOption, false)
+			//
+			//         return
+			// }
+			// shortNames[name] = option
 			if option.LongName != "" {
-				longName := option.LongNameWithNamespace()
+				longName := namespace + option.LongName
+				// longName := option.LongNameWithNamespace()
 
 				if otherOption, ok := longNames[longName]; ok {
 					duplicateError = isDuplicate(option, otherOption, true)
@@ -375,12 +432,15 @@ func (g *Group) checkForDuplicateFlags() *Error {
 				longNames[longName] = option
 			}
 			if option.ShortName != 0 {
-				if otherOption, ok := shortNames[option.ShortName]; ok {
+				shortName := namespace + string(option.ShortName)
+				if otherOption, ok := shortNames[shortName]; ok {
+					// if otherOption, ok := shortNames[option.ShortName]; ok {
 					duplicateError = isDuplicate(option, otherOption, false)
 
 					return
 				}
-				shortNames[option.ShortName] = option
+				shortNames[shortName] = option
+				// shortNames[option.ShortName] = option
 			}
 		}
 	})

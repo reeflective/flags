@@ -208,7 +208,9 @@ func (c *Command) Find(name string) *Command {
 func (c *Command) AddGroup(short, long string, data interface{}) (*Group, error) {
 	// Build the group
 	group := newGroup(short, long, data)
+
 	group.parent = c
+	group.NamespaceDelimiter = c.NamespaceDelimiter
 
 	// Scan contents (including subgroups)
 	if err := group.scanType(c.scanSubcommandHandler(group)); err != nil {

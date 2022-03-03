@@ -84,17 +84,19 @@ func getAllOptions(option string) (multi bool, all []string, last string) {
 
 // optIsGroupNamespace verifies that a short-letter option is either that
 // (an option), or the one-letter namespace of an option group (eg. `P` in `-Pn`).
-func (c *completion) optIsGroupNamespace(opt string) (yes bool, g *Group) {
+func (c *completion) optIsGroupNamespace(opt string) (yes bool, grps []*Group) {
 	if len(opt) > 1 {
 		return false, nil
 	}
 
 	// Check against all available option groups
-	for _, group := range c.lookup.groups {
+	for _, name := range c.lookup.groupList {
+		group := c.lookup.groups[name]
 		if groupIsNestedOption(group) && group.Namespace == opt {
-			return true, group
+			grps = append(grps, group)
+			yes = true
 		}
 	}
 
-	return false, nil
+	return
 }
