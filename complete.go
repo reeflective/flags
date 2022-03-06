@@ -5,6 +5,8 @@ import (
 	"reflect"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/muesli/termenv"
 )
 
 const (
@@ -189,27 +191,37 @@ func (c *completion) getCompletions() {
 func (c *completion) completeCommands(match string) {
 	for _, cmd := range c.command.commands {
 		// Filter out unwanted commands
-		if cmd.data == c || cmd.Hidden || !strings.HasPrefix(cmd.Name, match) {
+		if cmd.data == c || cmd.Hidden {
 			continue
+		}
+		// if cmd.data == c || cmd.Hidden || !strings.HasPrefix(cmd.Name, match) {
+		//         continue
+		// }
+
+		// Or get the good completion group
+		var group *CompletionGroup
+
+		if cmd.Group.compGroupName == "" {
+			group = c.comps.defaultGroup()
+			group.argType = compCommand
+		} else {
+			grp := c.getGroup(cmd.Group.compGroupName)
+
+			if grp == nil {
+				grp = c.comps.NewGroup(cmd.Group.compGroupName)
+				grp.argType = compCommand
+			}
+
+			group = grp
 		}
 
 		// Or add to completions
-		grp := c.getGroup(cmd.Group.compGroupName)
-		if grp == nil {
-			grp = c.comps.NewGroup(cmd.Group.compGroupName)
-			grp.argType = compCommand
-		}
-
-		grp.suggestions = append(grp.suggestions, cmd.Name)
-		grp.descriptions[cmd.Name] = cmd.ShortDescription
+		group.suggestions = append(group.suggestions, cmd.Name)
+		group.descriptions[cmd.Name] = cmd.ShortDescription
 	}
 
-	// Check all groups have a name other than.
-	for _, group := range c.comps.groups {
-		if group.argType == compCommand && group.Name == "" {
-			group.Name = "commands"
-		}
-	}
+	c.comps.FormatType(nil, termenv.ANSI256Color(128))
+	c.getGroup("scan command").FormatType(nil, termenv.ANSI256Color(132))
 }
 
 // completeOption gives all completions for a currently typed -o/--opt option word.

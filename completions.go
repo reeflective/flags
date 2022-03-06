@@ -62,45 +62,31 @@ type CompletionFunc func(prefix string) Completions
 // Completions.Error(err)), no completions will be offered to the parent
 // shell, and the error will be notified instead, or workflow will continue.
 type Completions struct {
-	defaultGroup *CompletionGroup
-	groups       []*CompletionGroup
-	prefix       string
-	dynamic      bool
-	last         string
-	err          error
-	// colors
+	defGroup *CompletionGroup
+	groups   []*CompletionGroup
+	prefix   string
+	dynamic  bool
+	last     string
+	err      error
 }
 
 // Add adds a completion candidate (with description, alias and color) directly
 // to the default list of completions (eg. all of these will appear under a single
 // group heading in the shell caller completion output). Equivalent of group.Add().
-func (c *Completions) Add(comp, desc, alias string, color termenv.Color) {
-	if c.defaultGroup == nil {
-		c.newDefaultGroup()
-	}
-	// Add the completion
-	c.defaultGroup.Add(comp, desc, alias, color)
+func (c *Completions) Add(completion, description, alias string, color termenv.Color) {
+	c.defaultGroup().Add(completion, description, alias, color)
 }
 
 // FormatMatch adds a mapping between a string pattern (can be either a regexp, or anything),
 // and a color, so that this formatting is applied when completions are used by the shell.
 func (c *Completions) FormatMatch(pattern string, color termenv.Color) {
-	if c.defaultGroup == nil {
-		c.newDefaultGroup()
-	}
-	// Add the style
-	c.defaultGroup.styles[pattern] = color.Sequence(false)
+	c.defaultGroup().FormatMatch(pattern, color)
 }
 
 // FormatType is used to apply color formatting to either/both of ALL completion
 // candidates (eg. all candidates in red) or descriptions (eg. all descs in grey).
-func (c *Completions) FormatType(compColor, descColor termenv.Color) {
-	if c.defaultGroup == nil {
-		c.newDefaultGroup()
-	}
-
-	c.defaultGroup.compStyle = compColor.Sequence(false)
-	c.defaultGroup.descStyle = descColor.Sequence(false)
+func (c *Completions) FormatType(completions, descriptions termenv.Color) {
+	c.defaultGroup().FormatType(completions, descriptions)
 }
 
 // NewGroup creates a new group of completions, which you can populate as
@@ -108,23 +94,16 @@ func (c *Completions) FormatType(compColor, descColor termenv.Color) {
 func (c *Completions) NewGroup(name string) *CompletionGroup {
 	group := &CompletionGroup{
 		Name:          name,
+		CompDirective: ShellCompDirectiveDefault,
 		aliases:       map[string]string{},
 		descriptions:  map[string]string{},
-		CompDirective: ShellCompDirectiveDefault,
-		argType:       compArgument,
 		styles:        map[string]string{},
+		argType:       compArgument,
+		tag:           name,
 	}
 	c.groups = append(c.groups, group)
 
 	return group
-}
-
-// PrefixDynamic returns the last word of the current command-line,
-// which can be used if you are writing dynamic completions yourself.
-// Note that you normally DON'T need this, as prefixes are automatically
-// managed when the completions are finally displayed.
-func (c *Completions) PrefixDynamic() string {
-	return c.prefix
 }
 
 // SetDynamic is used to signal the completer that we want to replace the
@@ -209,6 +188,10 @@ const (
 	// CompDirs completes all directories in the current filesystem context.
 	CompDirs
 
+	// TODO: Add Multiple Completion directives:
+	// CompMultiPart allows to combine two lists of completions (like user@host, or URL ones, etc)
+	// CompMultiPart.
+
 	// Internal directives (must be below) =======================================.
 
 	// ShellCompDirectiveDefault indicates to let the shell perform its default
@@ -245,10 +228,11 @@ const (
 // for consumption by completion scripts.
 // Note that this is only used for bash/zsh/fish.
 func (c *Completions) output() {
-	// If there is no comps and no default group
-	if c.defaultGroup == nil {
-		c.newDefaultGroup()
-	}
+	c.setupDefaultComps()
+
+	// Add the default group to the list
+	// of groups to be completed.
+	c.groups = append(c.groups, c.defaultGroup())
 
 	// Prepare the first line, containing
 	// summary information for all completions
@@ -261,81 +245,144 @@ func (c *Completions) output() {
 	summary := fmt.Sprintf("%d-%d-%d \n",
 		success,
 		len(c.groups),
-		c.defaultGroup.CompDirective,
+		c.defaultGroup().CompDirective,
 	)
 
 	fmt.Fprint(os.Stdout, summary)
 	fmt.Fprint(os.Stdout, "\n")
 
-	// If needed, add the default formats
-	// (comp/desc) to the list of styles.
-
 	// For each group, build & print it
 	// Add a newline to mark end of group
 	for _, group := range c.groups {
-		c.printGroup(os.Stdout, group)
+		c.setupDefaultStyles(group)
+
+		// fmt.Fprintln(os.Stdout, "-----BEGIN GROUP-----")
+
+		// Print the group's header
+		c.printHeader(os.Stdout, group)
+
+		// Then the completions
+		c.printCompletions(os.Stdout, group)
+
+		// And the styles if any.
+		c.printStyles(os.Stdout, group)
+
+		// fmt.Fprintln(os.Stdout, "-----END GROUP-----")
 	}
 }
 
-// printGroup formats a complete block of completions and prints it to stdout.
-func (c *Completions) printGroup(buf io.Writer, group *CompletionGroup) {
-	// Print the header line
-	// header := fmt.Sprintf("%s \"%s\" \"%s\" %d %d %t %d",
+func (c *Completions) setupDefaultComps() {
+	// If we are completing commands, we must name
+	// the default group according to some things.
+	if c.defaultGroup().argType == compCommand {
+		if len(c.groups) == 0 {
+			c.defaultGroup().Name = "commands"
+			c.defaultGroup().tag = "flags-commands"
+		} else {
+			c.defaultGroup().Name = "other commands"
+			c.defaultGroup().tag = "other commands"
+		}
+	}
+}
+
+func (c *Completions) setupDefaultStyles(group *CompletionGroup) {
+	// If there are no group comp/desc specifications,
+	if group.compStyle == "" && group.descStyle == "" {
+		return
+	}
+
+	// If there are default colors for completions
+	// and descriptions, use them only if the group
+	// has not specified them for its own
+	if _, found := group.styles["=^(-- *)"]; found {
+		// if _, found := group.styles["=(#b)*(-- *)"]; found {
+		return
+	}
+
+	// The base string for formatting comps/descs.
+	var compStyles string
+
+	// Default completion color
+	if group.compStyle != "" {
+		compStyles = fmt.Sprintf("=%s", group.compStyle)
+	}
+
+	// And/or descriptions color
+	if group.descStyle != "" {
+		compStyles += fmt.Sprintf("=%s", group.descStyle)
+	}
+
+	// Map the pattern "comp -- desc" to its full style
+	group.styles["=^(-- *)"] = compStyles
+	// group.styles["=(#b)*(-- *)"] = compStyles
+}
+
+// Print the header line for a group.
+func (c *Completions) printHeader(buf io.Writer, group *CompletionGroup) {
 	header := fmt.Sprintf("%s\t%s\t%s\t%d\t%d\t%t\t%d",
 		group.argType,
-		group.Name, // Should escape quotes
-		group.Name, // Should escape quotes
-		len(group.suggestions),
+		group.tag,              // Should escape quotes
+		group.Name,             // Should escape quotes
+		len(group.suggestions), // BUG: Should be computed with aliases because of how we pass it ZSH
 		group.CompDirective,
 		group.required,
 		len(group.styles),
 	)
+
 	fmt.Fprint(buf, header)
 	fmt.Fprint(buf, "\n")
+}
+
+// printCompletions formats a complete block of completions and prints it to stdout.
+func (c *Completions) printCompletions(buf io.Writer, group *CompletionGroup) {
+	if len(group.suggestions) == 0 {
+		return
+	}
 
 	// For each completion, print its corresponding line
-	if len(group.suggestions) > 0 {
-		for _, comp := range group.suggestions {
-			var compLine string
+	for _, comp := range group.suggestions {
+		var compLine string
 
-			desc := group.descriptions[comp]
+		desc := group.descriptions[comp]
 
-			if desc != "" {
-				compLine = fmt.Sprintf("%s\t%s\n", comp, desc)
-			} else {
-				compLine = fmt.Sprintf("%s\n", comp)
-			}
-
-			fmt.Fprint(buf, compLine)
-
-			// And alias if any, with same description
-			if alias, ok := group.aliases[comp]; ok && alias != "" {
-				aliasLine := fmt.Sprintf("%s\t%s\n", alias, desc)
-				fmt.Fprint(buf, aliasLine)
-			}
+		if desc != "" {
+			compLine = fmt.Sprintf("%s\t%s\n", comp, desc)
+		} else {
+			compLine = fmt.Sprintf("%s\n", comp)
 		}
 
-		fmt.Fprint(buf, "\n") // Mark end of completions
-	}
+		fmt.Fprint(buf, compLine)
 
-	// Print styles if any
-	if len(group.styles) > 0 {
-		for regex, format := range group.styles {
-			styleLine := fmt.Sprintf("%s=%s \n", regex, format)
-			fmt.Fprint(buf, styleLine)
+		// And alias if any, with same description
+		if alias, ok := group.aliases[comp]; ok && alias != "" {
+			aliasLine := fmt.Sprintf("%s\t%s\n", alias, desc)
+			fmt.Fprint(buf, aliasLine)
 		}
 	}
+}
 
-	// Always add an empty line, marking the end of the group
-	fmt.Fprint(buf, "\n")
+// print all the styles/format strings to the shell.
+func (c *Completions) printStyles(buf io.Writer, group *CompletionGroup) {
+	if len(group.styles) == 0 {
+		return
+	}
+
+	for regex, format := range group.styles {
+		styleLine := fmt.Sprintf("'%s%s'\n", regex, format)
+		fmt.Fprint(buf, styleLine)
+	}
 }
 
 //
 // 4 - Other completions helpers ---------------------------------------------- //
 //
 
-func (c *Completions) newDefaultGroup() {
-	c.defaultGroup = &CompletionGroup{
+func (c *Completions) defaultGroup() *CompletionGroup {
+	if c.defGroup != nil {
+		return c.defGroup
+	}
+
+	c.defGroup = &CompletionGroup{
 		Name:          "",
 		aliases:       map[string]string{},
 		descriptions:  map[string]string{},
@@ -343,19 +390,13 @@ func (c *Completions) newDefaultGroup() {
 		argType:       compArgument,
 		styles:        map[string]string{},
 	}
-}
 
-// addGroup adds an entire group of completions at once.
-func (c *Completions) addGroup(g *CompletionGroup) {
-	c.groups = append(c.groups, g)
+	return c.defGroup
 }
 
 func (c *Completions) getLastGroup() *CompletionGroup {
-	if c.defaultGroup == nil {
-		c.newDefaultGroup()
-	}
 	if len(c.groups) == 0 {
-		return c.defaultGroup
+		return c.defaultGroup()
 	}
 
 	return c.groups[len(c.groups)-1]

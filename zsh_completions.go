@@ -88,9 +88,16 @@ _%[1]s()
     # Setup & Request ------------------------------------------------------------ #
     #
      
+    # Main shell directives (overall/per group)
+    local shellCompDirectiveError=1
+    local shellCompDirectiveNoSpace=2
+    local shellCompDirectiveNoFileComp=4
+    local shellCompDirectiveFilterFileExt=8
+    local shellCompDirectiveFilterDirs=16
+
     # Main request/output/prefixes variables
     local lastParam lastChar flagPrefix requestComp out directive noSpace
-    local completions # The raw string containing all groups of completions
+    local output # Raw, (but partially trimmed) completions output 
     
     __%[1]s_debug "\n========= starting completion logic =========="
     __%[1]s_debug "CURRENT: ${CURRENT}, words[*]: ${words[*]}"
@@ -131,127 +138,77 @@ _%[1]s()
     # Parsing -------------------------------------------------------------------- #
     #
     
-    # Main shell directives (overall/per group)
-    local shellCompDirectiveError=%[3]d
-    local shellCompDirectiveNoSpace=%[4]d
-    local shellCompDirectiveNoFileComp=%[5]d
-    local shellCompDirectiveFilterFileExt=%[6]d
-    local shellCompDirectiveFilterDirs=%[7]d
-
     # Read the first line for summary information and 
     # return immediately if the summary gave an error.
     # TODO: Add directive variable for last return condition below
     echo $out | read -r header
     while IFS=- read success numGroups directive <<< $header
-    # while IFS=- read success numGroups <<< $header
         if [ $((directive & shellCompDirectiveError)) -ne 0 ]; then
-    # if [ "${success}" = "0" ]; then
         __%[1]s_debug "Completion header notified an error. Ignoring completions."
         return
     fi
     # Otherwise trim this first line from the comps.
-    completions=$(echo $out | sed '1,2d') 
+    output=$(echo $out | sed '1,2d') 
     
-    # Group parsing state
-    local newGroup=true  # Are we processing a new group ?
-    local groupComps=0   # The number of candidates for the group
-    local inComps=false  # Are we currently processing completions ?
-    local groupStyles=0  # The number of lines containing style strings
-    local inStyle=false  # Are we currently processing line styles ?
-    local numComps=0     # The total number of completions we added 
-
     # Completion group information
-    local compType tag desc required gdirective
-    local comps=()       # Completion candidates
-    local styles=()      # Style format strings
+    # Each group adds to each of the following arrays:
+    local tags=()           # The name of the group (its tag)
+    local -A types          # The type of completion for each group
+    local -A descriptions   # Adds the group's description (might be different from tag)
+    local -A completions    # Adds a single string containing its quoted completions
+    local -A styles         # Adds a single string containing all its formats strings
+    local -A directives     # Adds its directive (file/nospace, etc)
+    
+    # Buffer variables & State management
+    local tag               # The current group tag
+    local newGroup=true     # True if we are waiting for a group header 
+    local numComps=0        # The total number of completions we added 
+    local inComps=false     # Are we currently processing completions ?
+    local numStyles=0       # The number of lines containing style strings
+    local inStyle=false     # Are we currently processing line styles ?
+    local comps=()          # Completion candidates for the current group
+    local gstyles=()        # Completion candidates for the current group
 
-    # Parse structured completions
+    # Read the completions output, one line at a time.
+    #
+    # For each line, there are only three different cases:
+    # - A group header (with all info for itself)
+    # - A group completion candidate
+    # - A group format string
+    #
     while IFS='\n' read -r line; do
 
-        # If we have an empty line, there are several cases
-        if [ -z "$line" ]; then
-                # If we are still waiter for a group header...
-                if [ "$newGroup" = true ]; then
-                        continue
-                fi
-                # If we are done with completions, but with styles to read
-                if [ "$inComps" = true ] && [ $groupStyles -gt 0 ]; then
-                        __%[1]s_debug "Done with comps, with styles"
-                        inStyle=true
-                        continue
-                fi
-                # If we are done with completions, and no styles to read
-                # add completions only, reset values and go to next group
-                if [ "$inComps" = true ] && [ $groupStyles -eq 0 ]; then
-                        __%[1]s_debug "Done with comps, no styles"
-                        # Completions
-                        __add_group_comps $compType $gdirective $tag $desc $required $comps
-
-                        # Reset
-                        comps=()
-                        inComps=false
-                        newGroup=true
-                        continue
-                fi
-                # Or if are done with styles, therefore with the group,
-                # add the completions, reset values and go to the next.
-                if [ "$inStyle" = true ]; then
-                        # Add completions and styles
-                        __add_group_comps compType tag desc required comps
-                        __add_styles tag styles
-
-                        # Reset
-                        comps=()
-                        inStyle=false
-                        styles=()
-                        newGroup=true
-                        continue
-                fi
-                # Else, by default, we consider to be still
-                # in the same "setup", eg. we are still parsing
-                # completions, or still parsing styles, etc...
-        fi
-
-        # If we are in a new group, we
-        # are reading the header line
+        # If we are in a new group, we are reading the header line
         if [ "$newGroup" = true ]; then
-                newGroup=false  # by default...
-                
-                # Parse the header line for information
-                # Escape : signs  and quotes in the description,
+                newGroup=false  
+                # Adjust the header for easier parsing
                 line=${line//:/\\:} # comma :
                 line=${line//\"/\\\"} # quotes "
                 local tab=$(printf '\t')
                 line=${line//$tab/:}
         
-                # Line ready to be splitted, then split
-                # and store all header info.
-                __%[1]s_debug "Line: $line"
-                IFS=$':' read -rA summary <<< "$line"
-                compType="${summary[1]}"
-                tag=${summary[2]}
-                desc=${summary[3]}
-                groupComps="${summary[4]}"
-                gdirective=${summary[5]}
-                required=${summary[6]}
-                groupStyles=${summary[7]}
-                
-                # Add requirements info to description
-                if [ "$required" = true ]; then
-                        desc="${desc} (required)"
-                fi
-               
+                __%[1]s_debug " --- Group header: $line"
+
+                # Split and store all header info.
+                IFS=$':' read compType tag desc numComps directive req numStyles <<< "$line"
+
+                # Header infos needed for AFTER parsing
+                tags+="$tag" 
+                types["$tag"]="$compType"
+                descriptions["$tag"]="$desc"
+                directives["$tag"]=$directive
+
                 # If we don't have any completions or styles,
                 # directly continue to the next (new) group
-                if [ $groupComps -eq 0 ] && [ $groupStyles -eq 0 ]; then
-                        newGroup=true
+                if [ $numComps -eq 0 ] ; then
+                        if [ $numStyles -eq 0 ]; then
+                                newGroup=true
+                        elif [ $numStyles -gt 0 ]; then
+                                inStyle=true
+                        fi
                         continue
                 fi
-                # If we don't have completions, but styles
-                if [ $groupComps -eq 0 ] && [ $groupStyles -gt 0 ]; then
-                        inStyle=true
-                        continue
-                fi
+
                 # Else, we have completions to process
                 inComps=true
                 continue
@@ -266,30 +223,66 @@ _%[1]s()
                 local tab=$(printf '\t')
                 line=${line//$tab/:}
                 
+                # Add the completion to the buffer
                 __%[1]s_debug "Adding completion: ${line}"
                 comps+=\"${line}\"
-                ((numComps++))
-                continue
+                 
+                # If this was the last completion line for the group
+                if [ ${#comps[@]} -eq $numComps ]; then
+                        completions["$tag"]="${comps[@]}"
+                        comps=()
+                        inComps=false
+
+                        # We might have styles lines to read, or not
+                        if [ $numStyles -gt 0 ]; then
+                                inStyle=true
+                        else
+                                newGroup=true
+                        fi
+                        continue
+                fi
         fi
 
-        # Or if we are parsing a style line,
-        # add it to the list, and add them all
-        # at once when we are done reading them.
+        # Or if we are parsing a style (format) line
         if [ "$inStyle" = true ]; then
-        __%[1]s_debug "in style"
-                styles+=${line}
+                gstyles+="${line}" # We add the raw style line to the styles
+
+                # If this was the last style, we are done with the group.
+                if [ ${#gstyles[@]} -eq $numStyles ]; then
+                        __%[1]s_debug "Formats: ${gstyles[@]}"
+
+                        styles["$tag"]="${gstyles[@]}"
+                        gstyles=()
+                        inStyle=false
+                        newGroup=true
+                fi
                 continue
         fi
 
-        # Or if we caught the explicit end of the completions output.
-        if [ "$line" = "-- End Completion Output --" ]; then
-                __%[1]s_debug "Found End completion"
-                __add_group_comps $compType $gdirective $tag $desc $required $comps
-        fi
+    done < <(printf "%%s\n" "${output[@]}")
 
-    done < <(printf "%%s\n\n-- End Completion Output --" "${completions[@]}")
-
+    #
+    # Yielding Completions to ZSH ------------------------------------------------ #
+    #
     
+    # For each available group of completions
+    for tag in "${tags[@]}"
+    do
+        # Retrieve each of group's components
+        local compType="${types["$tag"]}"
+        local description=${descriptions["$tag"]}
+        local candidates="${completions["$tag"]}"
+        local formats="${styles["$tag"]}"
+        local directive="${directives["$tag"]}"
+
+        # First add the styles, which must be available
+        # to completions as soon as they are added.
+        __add_styles $tag $formats
+
+        # Then add the completions, which can further call filename completion.
+        __add_group_comps $compType $directive $tag $description $candidates
+    done
+
     #
     # Final Adjustements & Return ------------------------------------------------ #
     #
@@ -331,28 +324,27 @@ _%[1]s()
 # adds its to ZSH completions.
 __add_group_comps() {
 
+        # Debugging will summarize the whole group
         __%[1]s_debug "Comp type:      $compType"
-        __%[1]s_debug "directive:      $gdirective"
+        __%[1]s_debug "directive:      $directive"
         __%[1]s_debug "tag:            $tag"
-        __%[1]s_debug "description:    $desc"
-        __%[1]s_debug "required:       $required"
-        __%[1]s_debug "comps:        ${comps[@]}"
+        __%[1]s_debug "description:    $description"
+        __%[1]s_debug "required:       $req"
+        __%[1]s_debug "comps:        ${candidates[@]}"
 
         # Build the base specification string
-        local spec="$tag:$desc:"
-
-        __%[1]s_debug "Spec: $spec"
+        local spec="$tag:$description:"
 
         # If the group is about file completions,
         # handle them in a special function.
         if [ "$compType" = "file" ]; then
-                __add_file_comp $gdirective $spec $comps 
+                __add_file_comp $directive $spec $candidates
                 return
         fi
 
         # Else, the completions are already formatted
         # in an array, and we add them with the spec.
-        _alternative "$spec(($comps))"
+        _alternative "$spec(($candidates))"
 }
 
 # __add_file_comp is used when we want to perform some file
@@ -413,16 +405,13 @@ __add_file_comp() {
 
 # __add_style adds a style format to a completion group
 __add_styles() {
-        local tag=$1        # The preforged tag:desc for the group
-        local styles=$2     # The strings to use as styles
-
         # Don't do anything if no styles
-        if [ ${#array[@]} -eq 0 ]; then
+        if [ ${#styles[@]} -eq 0 ]; then
                 return
         fi
-
         # Or add them all at once
-        zstyle ":completion:*:*:*:*:$tag" list-colors $styles[@]
+        zstyle ":completion:*:*:%[1]s:*:$tag" list-colors (($formats))
+        __%[1]s_debug "Added styles: (($formats))"
 }
 
 # don't run the completion function when being source-ed or eval-ed
