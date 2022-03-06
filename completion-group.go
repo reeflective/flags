@@ -31,6 +31,7 @@ type CompletionGroup struct {
 	tag          string            // A tag used by ZSH completion system.
 	compStyle    string            // A format style for ALL completion candidates
 	descStyle    string            // A format style for ALL descriptions
+	nameStyle    string            // The color of the group's description
 }
 
 // Add adds a completion candidate, along with optional description, alias and
@@ -60,6 +61,18 @@ func (g *CompletionGroup) Add(completion, description, alias string, color terme
 	} else {
 		g.styles[completion] = termColor
 	}
+}
+
+// FormatName allows to set the color of group's description,
+// which appears above the group in some shell systems.
+func (g *CompletionGroup) FormatName(color termenv.Color, background bool) {
+	if color == nil {
+		return
+	}
+
+	profile := termenv.ANSI256
+	compColor := profile.Convert(color).Sequence(background)
+	g.nameStyle = compColor
 }
 
 // FormatMatch adds a mapping between a string pattern (can be either a regexp, or anything),

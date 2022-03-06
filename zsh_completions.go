@@ -161,8 +161,9 @@ _%[1]s()
     
     # Buffer variables & State management
     local tag               # The current group tag
+    local fmt=false         # If the group has a description format string
     local newGroup=true     # True if we are waiting for a group header 
-    local numComps=0        # The total number of completions we added 
+    local numComps=0        # Number of completion lines declared
     local inComps=false     # Are we currently processing completions ?
     local numStyles=0       # The number of lines containing style strings
     local inStyle=false     # Are we currently processing line styles ?
@@ -190,13 +191,38 @@ _%[1]s()
                 __%[1]s_debug " --- Group header: $line"
 
                 # Split and store all header info.
-                IFS=$':' read compType tag desc numComps directive req numStyles <<< "$line"
+                IFS=$':' read compType tag desc numComps directive req numStyles fmt <<< "$line"
 
                 # Header infos needed for AFTER parsing
                 tags+="$tag" 
                 types["$tag"]="$compType"
                 descriptions["$tag"]="$desc"
                 directives["$tag"]=$directive
+
+                # If we have a format string to parse, 
+                # we directly continue to it, otherwise...
+                if [ "$fmt" = true ]; then
+                        continue
+                # ... or we don't have any completions or styles,
+                # directly continue to the next (new) group
+                elif [ $numComps -eq 0 ] ; then
+                        if [ $numStyles -eq 0 ]; then
+                                newGroup=true
+                        elif [ $numStyles -gt 0 ]; then
+                                inStyle=true
+                        fi
+                        continue
+                else
+                        inComps=true
+                        continue
+                fi
+        fi
+
+        # If we have a format string for the group description, push
+        # it now to ZSH style, so we don't have to check who's got it.
+        if [ "$fmt" = true ]; then
+                fmt=false
+                zstyle ":completion:*:*:%[1]s:*:$tag" format "$line"  
 
                 # If we don't have any completions or styles,
                 # directly continue to the next (new) group
@@ -207,13 +233,11 @@ _%[1]s()
                                 inStyle=true
                         fi
                         continue
+                else
+                        inComps=true
+                        continue
                 fi
-
-                # Else, we have completions to process
-                inComps=true
-                continue
         fi
-
 
         # If we are parsing a completion line
         if [ "$inComps" = true ]; then
@@ -277,10 +301,75 @@ _%[1]s()
 
         # First add the styles, which must be available
         # to completions as soon as they are added.
-        __add_styles $tag $formats
+        if [ ${#formats[@]} -gt 0 ]; then
+            zstyle ":completion:*:*:%[1]s:*:$tag" list-colors "${formats[@]}" 
+            __%[1]s_debug "Added formats: ${formats[@]}"
+        fi
 
-        # Then add the completions, which can further call filename completion.
-        __add_group_comps $compType $directive $tag $description $candidates
+        # Then add the completions, which might further call 
+        # filename completion for this specific group.
+        # Debugging summary:
+        __%[1]s_debug "Comp type:      $compType"
+        __%[1]s_debug "directive:      $directive"
+        __%[1]s_debug "tag:            $tag"
+        __%[1]s_debug "description:    $description"
+        __%[1]s_debug "required:       $req"
+        __%[1]s_debug "comps:        ${candidates[@]}"
+
+        # Build the base specification string
+        local spec="$tag:$description:"
+
+        # If the group is about file completions,
+        # handle them in a special function.
+        if [ "$compType" = "file" ]; then
+                # File extension filtering
+                if [ $((directive & shellCompDirectiveFilterFileExt)) -ne 0 ]; then
+                    local filteringCmd
+                    filteringCmd='_files'
+                    for filter in ${comps[@]}; do
+                        # Sanitize surrounding quotes
+                        temp="${filter%%\"}"
+                        temp="${temp#\"}"
+
+                        if [ ${filter[1]} != '*' ]; then
+                            # zsh requires a glob pattern to do file filtering
+                            filter="\*.$temp"
+                        fi
+                        filteringCmd+=" -g $filter"
+                    done
+                    filteringCmd+=" ${flagPrefix}"
+                    __%[1]s_debug "File filtering command: $filteringCmd"
+                    _alternative "$spec$filteringCmd"
+
+                # File completion for directories only
+                elif [ $((directive & shellCompDirectiveFilterDirs)) -ne 0 ]; then
+                    for dir in ${comps[@]}; do
+                        subdir="${dir%%\"}"
+                        subdir="${subdir#\"}"
+                        if [ -n "$subdir" ]; then
+                            __%[1]s_debug "Listing directories in $subdir"
+                            pushd "${subdir}" >/dev/null 2>&1
+                        else
+                            __%[1]s_debug "Listing directories in ."
+                        fi
+                        # Add the given subdir path as a prefix to compute candidates.
+                        # This, between others, ensures that paths are correctly slash-formatted,
+                        # that they get automatically inserted when unique, etc...
+                        _alternative "${spec}_files -/ -W $subdir ${flagPrefix}"
+                        result=$?
+                        if [ -n "$subdir" ]; then
+                            popd >/dev/null 2>&1
+                        fi
+                    done
+                    # TODO: Maybe we should check result for each group and handle.
+                    # return $result
+                fi
+        fi
+
+        # Else, the completions are already formatted
+        # in an array, and we add them with the spec.
+        _alternative "$spec(($candidates))"
+
     done
 
     #
@@ -289,7 +378,8 @@ _%[1]s()
 
     # If we have at least one completion, we don't have to add any
     # other completion, and all other directives are irrelevant now.
-    if [ "$numGroups" -gt 0 ] && [ "$numComps" -gt 0 ]; then
+    if [ ${#completions[@]} -gt 0 ]; then
+    # if [ $numGroups -gt 0 ] && [ ${#completions[@]} -gt 0 ]; then
         __%[1]s_debug "Returning some completions to Z-Shell"
         return 0
     fi
@@ -317,101 +407,6 @@ _%[1]s()
     #     noSpace="-S ''"
     # fi
     return 0
-}
-
-# __add_comp takes an entire completion line thrown
-# by the command's group completion function, and
-# adds its to ZSH completions.
-__add_group_comps() {
-
-        # Debugging will summarize the whole group
-        __%[1]s_debug "Comp type:      $compType"
-        __%[1]s_debug "directive:      $directive"
-        __%[1]s_debug "tag:            $tag"
-        __%[1]s_debug "description:    $description"
-        __%[1]s_debug "required:       $req"
-        __%[1]s_debug "comps:        ${candidates[@]}"
-
-        # Build the base specification string
-        local spec="$tag:$description:"
-
-        # If the group is about file completions,
-        # handle them in a special function.
-        if [ "$compType" = "file" ]; then
-                __add_file_comp $directive $spec $candidates
-                return
-        fi
-
-        # Else, the completions are already formatted
-        # in an array, and we add them with the spec.
-        _alternative "$spec(($candidates))"
-}
-
-# __add_file_comp is used when we want to perform some file
-# completion for a group. Takes care of all related variants.
-__add_file_comp() {
-
-        # Parameters
-        local directive=$1  # The type of file completion
-        local spec=$2       # The preforged tag:desc for the group
-        # local comps=$3      # The values to use in completion
-
-        # Constants
-        local shellCompDirectiveFilterFileExt=8
-        local shellCompDirectiveFilterDirs=16
-
-        # File extension filtering
-        if [ $((directive & shellCompDirectiveFilterFileExt)) -ne 0 ]; then
-            local filteringCmd
-            filteringCmd='_files'
-            for filter in ${comps[@]}; do
-                # Sanitize surrounding quotes
-                temp="${filter%%\"}"
-                temp="${temp#\"}"
-
-                if [ ${filter[1]} != '*' ]; then
-                    # zsh requires a glob pattern to do file filtering
-                    filter="\*.$temp"
-                fi
-                filteringCmd+=" -g $filter"
-            done
-            filteringCmd+=" ${flagPrefix}"
-            __%[1]s_debug "File filtering command: $filteringCmd"
-            _alternative "$spec$filteringCmd"
-
-        # File completion for directories only
-        elif [ $((directive & shellCompDirectiveFilterDirs)) -ne 0 ]; then
-            for dir in ${comps[@]}; do
-                subdir="${dir%%\"}"
-                subdir="${subdir#\"}"
-                if [ -n "$subdir" ]; then
-                    __%[1]s_debug "Listing directories in $subdir"
-                    pushd "${subdir}" >/dev/null 2>&1
-                else
-                    __%[1]s_debug "Listing directories in ."
-                fi
-                # Add the given subdir path as a prefix to compute candidates.
-                # This, between others, ensures that paths are correctly slash-formatted,
-                # that they get automatically inserted when unique, etc...
-                _alternative "${spec}_files -/ -W $subdir ${flagPrefix}"
-                result=$?
-                if [ -n "$subdir" ]; then
-                    popd >/dev/null 2>&1
-                fi
-            done
-            return $result
-        fi
-}
-
-# __add_style adds a style format to a completion group
-__add_styles() {
-        # Don't do anything if no styles
-        if [ ${#styles[@]} -eq 0 ]; then
-                return
-        fi
-        # Or add them all at once
-        zstyle ":completion:*:*:%[1]s:*:$tag" list-colors (($formats))
-        __%[1]s_debug "Added styles: (($formats))"
 }
 
 # don't run the completion function when being source-ed or eval-ed

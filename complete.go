@@ -5,8 +5,6 @@ import (
 	"reflect"
 	"strings"
 	"unicode/utf8"
-
-	"github.com/muesli/termenv"
 )
 
 const (
@@ -190,13 +188,13 @@ func (c *completion) getCompletions() {
 // strutured in different groups.
 func (c *completion) completeCommands(match string) {
 	for _, cmd := range c.command.commands {
-		// Filter out unwanted commands
-		if cmd.data == c || cmd.Hidden {
+		// Filter out unwanted commands,
+		// but do not filter based on the prefix:
+		// the shell calling for completion will
+		// handle it on its own.
+		if cmd.data == c || cmd.Hidden { // or !strings.HasPrefix()
 			continue
 		}
-		// if cmd.data == c || cmd.Hidden || !strings.HasPrefix(cmd.Name, match) {
-		//         continue
-		// }
 
 		// Or get the good completion group
 		var group *CompletionGroup
@@ -219,9 +217,6 @@ func (c *completion) completeCommands(match string) {
 		group.suggestions = append(group.suggestions, cmd.Name)
 		group.descriptions[cmd.Name] = cmd.ShortDescription
 	}
-
-	c.comps.FormatType(nil, termenv.ANSI256Color(128))
-	c.getGroup("scan command").FormatType(nil, termenv.ANSI256Color(132))
 }
 
 // completeOption gives all completions for a currently typed -o/--opt option word.

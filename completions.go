@@ -228,11 +228,10 @@ const (
 // for consumption by completion scripts.
 // Note that this is only used for bash/zsh/fish.
 func (c *Completions) output() {
+	// This takes care of all default format
+	// strings, places default groups in the
+	// lists, etc...
 	c.setupDefaultComps()
-
-	// Add the default group to the list
-	// of groups to be completed.
-	c.groups = append(c.groups, c.defaultGroup())
 
 	// Prepare the first line, containing
 	// summary information for all completions
@@ -254,20 +253,11 @@ func (c *Completions) output() {
 	// For each group, build & print it
 	// Add a newline to mark end of group
 	for _, group := range c.groups {
-		c.setupDefaultStyles(group)
-
-		// fmt.Fprintln(os.Stdout, "-----BEGIN GROUP-----")
-
-		// Print the group's header
-		c.printHeader(os.Stdout, group)
-
-		// Then the completions
-		c.printCompletions(os.Stdout, group)
-
-		// And the styles if any.
-		c.printStyles(os.Stdout, group)
-
-		// fmt.Fprintln(os.Stdout, "-----END GROUP-----")
+		c.setupDefaultStyles(group)          // Styles applying to all comps/descs
+		c.printHeader(os.Stdout, group)      // Print the group's header
+		c.printGroupStyle(os.Stdout, group)  // Print any group description format
+		c.printCompletions(os.Stdout, group) // Then the completions
+		c.printStyles(os.Stdout, group)      // And the styles if any.
 	}
 }
 
@@ -283,6 +273,10 @@ func (c *Completions) setupDefaultComps() {
 			c.defaultGroup().tag = "other commands"
 		}
 	}
+
+	// Finally, add the default group to the list
+	// of groups to be completed.
+	c.groups = append(c.groups, c.defaultGroup())
 }
 
 func (c *Completions) setupDefaultStyles(group *CompletionGroup) {
@@ -294,8 +288,7 @@ func (c *Completions) setupDefaultStyles(group *CompletionGroup) {
 	// If there are default colors for completions
 	// and descriptions, use them only if the group
 	// has not specified them for its own
-	if _, found := group.styles["=^(-- *)"]; found {
-		// if _, found := group.styles["=(#b)*(-- *)"]; found {
+	if _, found := group.styles["=(#b)*(-- *)"]; found {
 		return
 	}
 
@@ -305,32 +298,52 @@ func (c *Completions) setupDefaultStyles(group *CompletionGroup) {
 	// Default completion color
 	if group.compStyle != "" {
 		compStyles = fmt.Sprintf("=%s", group.compStyle)
+	} else {
+		p := termenv.ColorProfile()
+		color := termenv.ForegroundColor()
+		termColor := p.Convert(color).Sequence(false)
+		compStyles = fmt.Sprintf("=%s", termColor)
 	}
 
 	// And/or descriptions color
 	if group.descStyle != "" {
 		compStyles += fmt.Sprintf("=%s", group.descStyle)
+	} else {
+		p := termenv.ColorProfile()
+		color := termenv.ForegroundColor()
+		termColor := p.Convert(color).Sequence(false)
+		compStyles = fmt.Sprintf("=%s", termColor)
 	}
 
 	// Map the pattern "comp -- desc" to its full style
-	group.styles["=^(-- *)"] = compStyles
-	// group.styles["=(#b)*(-- *)"] = compStyles
+	group.styles["=(#b)*(-- *)"] = compStyles
 }
 
 // Print the header line for a group.
 func (c *Completions) printHeader(buf io.Writer, group *CompletionGroup) {
-	header := fmt.Sprintf("%s\t%s\t%s\t%d\t%d\t%t\t%d",
+	header := fmt.Sprintf("%s\t%s\t%s\t%d\t%d\t%t\t%d\t%t",
 		group.argType,
-		group.tag,              // Should escape quotes
-		group.Name,             // Should escape quotes
-		len(group.suggestions), // BUG: Should be computed with aliases because of how we pass it ZSH
+		group.tag,
+		group.Name,
+		c.getNumCompLines(group),
 		group.CompDirective,
 		group.required,
 		len(group.styles),
+		group.nameStyle != "",
 	)
 
 	fmt.Fprint(buf, header)
 	fmt.Fprint(buf, "\n")
+}
+
+func (c *Completions) printGroupStyle(buf io.Writer, group *CompletionGroup) {
+	if group.nameStyle == "" {
+		return
+	}
+
+	nameStyle := fmt.Sprintf("\\e[%sm%%d\\e[0m", group.nameStyle)
+
+	fmt.Fprintln(buf, nameStyle)
 }
 
 // printCompletions formats a complete block of completions and prints it to stdout.
@@ -368,7 +381,7 @@ func (c *Completions) printStyles(buf io.Writer, group *CompletionGroup) {
 	}
 
 	for regex, format := range group.styles {
-		styleLine := fmt.Sprintf("'%s%s'\n", regex, format)
+		styleLine := fmt.Sprintf("%s%s\n", regex, format)
 		fmt.Fprint(buf, styleLine)
 	}
 }
@@ -400,4 +413,15 @@ func (c *Completions) getLastGroup() *CompletionGroup {
 	}
 
 	return c.groups[len(c.groups)-1]
+}
+
+func (c *Completions) getNumCompLines(group *CompletionGroup) (lines int) {
+	for _, comp := range group.suggestions {
+		lines++
+		if _, found := group.aliases[comp]; found {
+			lines++
+		}
+	}
+
+	return
 }
