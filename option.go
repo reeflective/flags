@@ -68,6 +68,10 @@ type Option struct {
 	// If true, the option is not displayed in the help or man page
 	Hidden bool
 
+	// If true, the command completion will propose argument completions
+	// without any space separating them from the option name itself.
+	NoSpace bool
+
 	// Determines if the option will be always quoted in the INI output
 	iniQuote bool
 

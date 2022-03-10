@@ -66,35 +66,43 @@ func splitOption(prefix string, option string, islong bool) (string, string, *st
 
 // getAllOptions verifies that the given option string contains (or doesn't)
 // multiple short options (combined).
-func getAllOptions(option string) (multi bool, all []string, last string) {
+func (c *completion) getAllOptions(option string) (last *Option, idx int, multi, nested bool) {
 	for _, opt := range option {
 		sname := string(opt)
 
-		// Overwrite last
-		all = append(all, sname)
-		last = sname
+		// If the option string is a group namespace
+		for _, group := range c.lookup.groups {
+			if groupIsNestedOption(group) && group.Namespace == option {
+				nested = true
+
+				return
+			}
+		}
+
+		// If the option is not a valid one, return
+		last = c.lookup.shortNames[sname]
+		if last == nil {
+			break
+		}
+
+		// Else increment our position in the option string stack
+		idx++
 	}
 
-	if len(all) > 1 {
+	if idx > 1 {
 		multi = true
 	}
 
 	return
 }
 
-// optIsGroupNamespace verifies that a short-letter option is either that
+// getSubGroups verifies that a short-letter option is either that
 // (an option), or the one-letter namespace of an option group (eg. `P` in `-Pn`).
-func (c *completion) optIsGroupNamespace(opt string) (yes bool, grps []*Group) {
-	if len(opt) > 1 {
-		return false, nil
-	}
-
-	// Check against all available option groups
+func (c *completion) getSubGroups(optname string) (grps []*Group) {
 	for _, name := range c.lookup.groupList {
 		group := c.lookup.groups[name]
-		if groupIsNestedOption(group) && group.Namespace == opt {
+		if groupIsNestedOption(group) && group.Namespace == optname {
 			grps = append(grps, group)
-			yes = true
 		}
 	}
 
