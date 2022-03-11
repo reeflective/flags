@@ -89,15 +89,14 @@ _%[1]s()
     #
      
     # Main shell directives (overall/per group)
-    local shellCompDirectiveError=1
-    local shellCompDirectiveNoSpace=2
-    local shellCompDirectiveNoFileComp=4
-    local shellCompDirectiveFilterFileExt=8
-    local shellCompDirectiveFilterDirs=16
+    local shellCompDirectiveError=%[3]d
+    local shellCompDirectiveNoSpace=%[4]d
+    local shellCompDirectiveNoFileComp=%[5]d
+    local shellCompDirectiveFilterFileExt=%[6]d
+    local shellCompDirectiveFilterDirs=%[7]d
 
     # Main request/output/prefixes variables
-    local lastParam lastChar flagPrefix requestComp out directive noSpace
-    local output # Raw, (but partially trimmed) completions output 
+    local lastParam lastChar flagPrefix requestComp out directive noSpace 
     
     __%[1]s_debug "\n========= starting completion logic =========="
     __%[1]s_debug "CURRENT: ${CURRENT}, words[*]: ${words[*]}"
@@ -137,19 +136,36 @@ _%[1]s()
     #
     # Parsing -------------------------------------------------------------------- #
     #
+
+    local output            # The raw completions output, but with headers trimmed 
+    local numGroups         # The number of completion groups
+    local compPrefix        # The prefix returned by the Go program.
+    local prefixDirective   # What to do of the prefix given by command ?
     
     # Read the first line for summary information and 
     # return immediately if the summary gave an error.
     # TODO: Add directive variable for last return condition below
-    echo $out | read -r header
-    while IFS=- read success numGroups directive <<< $header
-        if [ $((directive & shellCompDirectiveError)) -ne 0 ]; then
-        __%[1]s_debug "Completion header notified an error. Ignoring completions."
-        return
-    fi
-    # Otherwise trim this first line from the comps.
-    output=$(echo $out | sed '1,2d') 
-    
+    local headers=2 parsed=0
+    while IFS='\n' read -r line; do
+        # The first line is the header
+        if [ "$parsed" -eq 0 ]; then
+            IFS=- read success numGroups directive prefixDirective <<< $line
+                if [ $((directive & shellCompDirectiveError)) -ne 0 ]; then
+                __%[1]s_debug "Completion header notified an error. Ignoring completions."
+                        return
+                fi
+        # The second line of the completions is the completion $PREFIX,
+        elif [ "$parsed" -eq 1 ]; then
+                compPrefix="$line"
+                output=$(echo $out| sed '1,3d') # Remove the 3 headers
+                break # and done with headers
+        fi
+
+        # Else we have not parsed the 3 header lines
+        parsed=$((parsed+1))
+
+    done < <(printf "%%s\n" "${out[@]}")
+
     # Completion group information
     # Each group adds to each of the following arrays:
     local tags=()           # The name of the group (its tag)
@@ -174,11 +190,15 @@ _%[1]s()
     #
     # For each line, there are only three different cases:
     # - A group header (with all info for itself)
+    # - A group description format string
     # - A group completion candidate
     # - A group format string
     #
     while IFS='\n' read -r line; do
-
+        # We should never have an empty line in this section
+        if [ -z "$line" ]; then
+                continue
+        fi
         # If we are in a new group, we are reading the header line
         if [ "$newGroup" = true ]; then
                 newGroup=false  
@@ -187,12 +207,8 @@ _%[1]s()
                 line=${line//\"/\\\"} # quotes "
                 local tab=$(printf '\t')
                 line=${line//$tab/:}
-        
-                __%[1]s_debug " --- Group header: $line"
-
                 # Split and store all header info.
                 IFS=$':' read compType tag desc numComps directive req numStyles fmt <<< "$line"
-
                 # Header infos needed for AFTER parsing
                 tags+="$tag" 
                 types["$tag"]="$compType"
@@ -217,13 +233,11 @@ _%[1]s()
                         continue
                 fi
         fi
-
         # If we have a format string for the group description, push
         # it now to ZSH style, so we don't have to check who's got it.
         if [ "$fmt" = true ]; then
                 fmt=false
                 zstyle ":completion:*:*:%[1]s:*:$tag" format "$line"  
-
                 # If we don't have any completions or styles,
                 # directly continue to the next (new) group
                 if [ $numComps -eq 0 ] ; then
@@ -238,7 +252,6 @@ _%[1]s()
                         continue
                 fi
         fi
-
         # If we are parsing a completion line
         if [ "$inComps" = true ]; then
                 # Escape : signs  and quotes in the description,
@@ -246,17 +259,15 @@ _%[1]s()
                 line=${line//\"/\\\"} # quotes "
                 local tab=$(printf '\t')
                 line=${line//$tab/:}
-                
                 # Add the completion to the buffer
                 __%[1]s_debug "Adding completion: ${line}"
                 comps+=\"${line}\"
-                 
+
                 # If this was the last completion line for the group
                 if [ ${#comps[@]} -eq $numComps ]; then
                         completions["$tag"]="${comps[@]}"
                         comps=()
                         inComps=false
-
                         # We might have styles lines to read, or not
                         if [ $numStyles -gt 0 ]; then
                                 inStyle=true
@@ -266,15 +277,12 @@ _%[1]s()
                         continue
                 fi
         fi
-
         # Or if we are parsing a style (format) line
         if [ "$inStyle" = true ]; then
-                gstyles+="${line}" # We add the raw style line to the styles
-
+                gstyles+="${line}"
                 # If this was the last style, we are done with the group.
                 if [ ${#gstyles[@]} -eq $numStyles ]; then
                         __%[1]s_debug "Formats: ${gstyles[@]}"
-
                         styles["$tag"]="${gstyles[@]}"
                         gstyles=()
                         inStyle=false
@@ -282,13 +290,22 @@ _%[1]s()
                 fi
                 continue
         fi
-
     done < <(printf "%%s\n" "${output[@]}")
 
     #
     # Yielding Completions to ZSH ------------------------------------------------ #
     #
     
+    local prefixDirectiveMove=%[8]d     # Move it to $IPREFIX
+    local prefixDirectiveCut=%[9]d      # Just remove it from $PREFIX (quite rare)
+
+    # First, modify any prefixes/suffixes in the completion
+    # system. The directive and prefix was passed by our program.
+    if [ $((prefixDirective & prefixDirectiveMove )) -ne 0 ]; then
+        __%[1]s_debug "Moving to IPREFIX: $compPrefix" 
+        compset -P "$compPrefix" 
+    fi
+            
     # For each available group of completions
     for tag in "${tags[@]}"
     do
@@ -299,6 +316,14 @@ _%[1]s()
         local formats="${styles["$tag"]}"
         local directive="${directives["$tag"]}"
 
+        # Debugging summary:
+        __%[1]s_debug "Comp type:      $compType"
+        __%[1]s_debug "directive:      $directive"
+        __%[1]s_debug "tag:            $tag"
+        __%[1]s_debug "description:    $description"
+        __%[1]s_debug "required:       $req"
+        __%[1]s_debug "comps:        ${candidates[@]}"
+
         # First add the styles, which must be available
         # to completions as soon as they are added.
         if [ ${#formats[@]} -gt 0 ]; then
@@ -308,14 +333,6 @@ _%[1]s()
 
         # Then add the completions, which might further call 
         # filename completion for this specific group.
-        # Debugging summary:
-        __%[1]s_debug "Comp type:      $compType"
-        __%[1]s_debug "directive:      $directive"
-        __%[1]s_debug "tag:            $tag"
-        __%[1]s_debug "description:    $description"
-        __%[1]s_debug "required:       $req"
-        __%[1]s_debug "comps:        ${candidates[@]}"
-
         # Build the base specification string
         local spec="$tag:$description:"
 
@@ -326,7 +343,7 @@ _%[1]s()
                 if [ $((directive & shellCompDirectiveFilterFileExt)) -ne 0 ]; then
                     local filteringCmd
                     filteringCmd='_files'
-                    for filter in ${comps[@]}; do
+                    for filter in ${candidates[@]}; do
                         # Sanitize surrounding quotes
                         temp="${filter%%\"}"
                         temp="${temp#\"}"
@@ -343,7 +360,7 @@ _%[1]s()
 
                 # File completion for directories only
                 elif [ $((directive & shellCompDirectiveFilterDirs)) -ne 0 ]; then
-                    for dir in ${comps[@]}; do
+                    for dir in ${candidates[@]}; do
                         subdir="${dir%%\"}"
                         subdir="${subdir#\"}"
                         if [ -n "$subdir" ]; then
@@ -355,7 +372,8 @@ _%[1]s()
                         # Add the given subdir path as a prefix to compute candidates.
                         # This, between others, ensures that paths are correctly slash-formatted,
                         # that they get automatically inserted when unique, etc...
-                        _alternative "${spec}_files -/ -W $subdir ${flagPrefix}"
+                        _alternative "${spec}_files -W $subdir ${flagPrefix}"
+                        # _alternative "${spec}_files -/ -W $subdir ${flagPrefix}"
                         result=$?
                         if [ -n "$subdir" ]; then
                             popd >/dev/null 2>&1
@@ -364,6 +382,7 @@ _%[1]s()
                     # TODO: Maybe we should check result for each group and handle.
                     # return $result
                 fi
+                continue
         fi
 
         # Else, the completions are already formatted
@@ -375,7 +394,7 @@ _%[1]s()
     #
     # Final Adjustements & Return ------------------------------------------------ #
     #
-
+    
     # If we have at least one completion, we don't have to add any
     # other completion, and all other directives are irrelevant now.
     if [ ${#completions[@]} -gt 0 ]; then
@@ -415,5 +434,7 @@ if [ "$funcstack[1]" = "_%[1]s" ]; then
 fi
 `, name, compCmd,
 		CompError, CompNoSpace, CompNoFiles,
-		CompFilterExt, CompFilterDirs))
+		CompFilterExt, CompFilterDirs,
+		prefixMove, prefixMove,
+	))
 }
