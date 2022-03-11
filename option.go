@@ -104,14 +104,7 @@ func (option *Option) LongNameWithNamespace() string {
 		return ""
 	}
 
-	// fetch the namespace delimiter from the parser which
-	// is always at the end of the group hierarchy
-	namespaceDelimiter := option.getNamespaceDelimiter(false)
-
-	// And get the correct long name of the option
-	longName := option.getLongname(namespaceDelimiter)
-
-	return longName
+	return option.getLongname()
 }
 
 // EnvKeyWithNamespace returns the option's env key with the group namespaces
@@ -125,7 +118,7 @@ func (option *Option) EnvKeyWithNamespace() string {
 
 	// fetch the namespace delimiter from the parser which
 	// is always at the end of the group hierarchy
-	namespaceDelimiter := option.getNamespaceDelimiter(false)
+	namespaceDelim := option.group.NamespaceDelimiter
 
 	// concatenate long name with namespace
 	key := option.EnvDefaultKey
@@ -134,7 +127,7 @@ func (option *Option) EnvKeyWithNamespace() string {
 	// And get the correct long name of the option with the ENV namespace
 	for group != nil {
 		if group.EnvNamespace != "" {
-			key = group.EnvNamespace + namespaceDelimiter + key
+			key = group.EnvNamespace + namespaceDelim + key
 		}
 
 		switch i := group.parent.(type) {
@@ -230,36 +223,6 @@ func (option *Option) Set(value *string) error {
 // Other helpers -----------------------------------------------------------------
 //
 
-// getNamespaceDelimiter recursively walks the option's groups hierarchy,
-// (walking up toward the parser) to find the correct namespace delimiter.
-func (option *Option) getNamespaceDelimiter(env bool) (delim string) {
-	// group := option.group
-
-	return option.group.NamespaceDelimiter
-
-	// for {
-	//         if p, ok := group.parent.(*Client); ok {
-	//                 // We might want the ENV defined delimiter
-	//                 if env {
-	//                         delim = p.EnvNamespaceDelimiter
-	//                 } else {
-	//                         delim = p.NamespaceDelimiter
-	//                 }
-	//
-	//                 break
-	//         }
-	//
-	//         switch i := group.parent.(type) {
-	//         case *Command:
-	//                 group = i.Group
-	//         case *Group:
-	//                 group = i
-	//         }
-	// }
-
-	// return
-}
-
 func (option *Option) getFullNamespace() string {
 	group := option.group
 
@@ -288,40 +251,15 @@ DONE:
 		namespace += compound[i]
 	}
 
-	// fmt.Println(namespace + string(option.ShortName))
 	return namespace
 }
 
 // getLongname recursively walks up toward the parser to build the correct
 // long option name, given a namespaceDelimiter parameter.
-func (option *Option) getLongname(delim string) (longName string) {
+func (option *Option) getLongname() (longName string) {
 	longName = option.LongName
 	namespace := option.getFullNamespace()
-	// group := option.group
-	//
-	// var compound []string
-	//
-	// for group != nil {
-	//         if group.Namespace != "" {
-	//                 compound = append(compound, group.Namespace+group.NamespaceDelimiter)
-	//                 // longName = group.Namespace + delim + longName
-	//         }
-	//
-	//         switch i := group.parent.(type) {
-	//         case *Command:
-	//                 group = i.Group
-	//         case *Group:
-	//                 group = i
-	//         case *Client:
-	//                 group = nil
-	//         }
-	// }
-	//
-	// var namespace string
-	// for i := (len(compound) - 1); i > 1; i-- {
-	//         namespace += compound[i]
-	// }
-	//
+
 	return namespace + longName
 }
 

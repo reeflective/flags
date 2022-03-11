@@ -161,6 +161,9 @@ func (c *completion) getCompletions() {
 		return
 	}
 
+	// If we have required options, we include them
+	// in the completions before any argument.
+
 	// Else if we are completing a positional argument          // TODO: Here might have to handle lists/single args differently
 	if len(c.positional) > 0 {
 		c.completeValue(c.positional[0].value, c.toComplete)
@@ -453,10 +456,9 @@ func (c *completion) addGroupOptions(group *Group, match string, short, mustPref
 		isSet := false
 
 		// If we have only a long, send it
-		if opt.LongName != "" && strings.HasPrefix(opt.getLongname(opt.group.NamespaceDelimiter), match) {
+		if opt.LongName != "" && strings.HasPrefix(opt.getLongname(), match) {
 			isSet = true
-			optname = defaultLongOptDelimiter + opt.getLongname(opt.group.NamespaceDelimiter)
-			// optname = defaultLongOptDelimiter + opt.LongName
+			optname = defaultLongOptDelimiter + opt.getLongname()
 			comps.suggestions = append(comps.suggestions, optname)
 		}
 
