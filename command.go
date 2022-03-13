@@ -180,6 +180,7 @@ func (c *Command) AddCommand(name, short, long, group string, data Commander) *C
 		panic(err)
 	}
 
+	// Add the command to one of the cmd's groups
 	c.commands = append(c.commands, cmd)
 
 	return cmd
@@ -496,8 +497,8 @@ type lookup struct {
 	commands    map[string]*Command
 
 	// Groups
-	groupList []string // Ordered list of option groups
-	groups    map[string]*Group
+	groupList []string          // Ordered list of option groups
+	groups    map[string]*Group // Used for partial resolution/lookup
 
 	// Options
 	shortNames map[string]*Option
@@ -538,29 +539,9 @@ func (c *Command) fillLookup(ret *lookup, onlyOptions bool) {
 	// First, add the command name to the ordered list
 	ret.commandList = append(ret.commandList, c.Name)
 
-	// Add all option groups bound to the command
-	c.eachGroup(func(group *Group) {
-		// If we are only asked for options, it means that
-		// we are parsing a parent command, so we only add
-		// persistent groups, or required options in groups.
-		// if (onlyOptions && group.Persistent) || (!onlyOptions) {
-
-		// If the group is the one embedded in the command,
-		// this will NOT add the group to our lookup list
-		c.filterUselessGroup(ret, group)
-
-		// Add all options
-		for _, option := range group.options {
-			if option.ShortName != 0 {
-				ret.shortNames[string(option.ShortName)] = option
-			}
-
-			if len(option.LongName) > 0 {
-				ret.longNames[option.LongNameWithNamespace()] = option
-			}
-		}
-		// }
-	})
+	// First take care of all groups of options,
+	// which may be arbitrarily nested.
+	c.lookupOptions(ret)
 
 	if onlyOptions {
 		return
@@ -574,25 +555,6 @@ func (c *Command) fillLookup(ret *lookup, onlyOptions bool) {
 			ret.commands[a] = subcommand
 		}
 	}
-}
-
-func (c *Command) filterUselessGroup(ret *lookup, group *Group) {
-	// If the group is only the one embedded in a command,
-	// (contains the struct data), we don't consider it a group,
-	// so we exclude it from our list of groups
-	if _, isCmd := group.data.(Commander); isCmd {
-		return
-	}
-
-	// First add the group to the ordered list,
-	// for correct order completion lists used later.
-	longName := group.ShortDescription
-	if group.Namespace != "" {
-		longName = group.Namespace + group.NamespaceDelimiter + group.ShortDescription
-	}
-
-	ret.groupList = append(ret.groupList, longName)
-	ret.groups[longName] = group
 }
 
 // Commands.

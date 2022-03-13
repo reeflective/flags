@@ -24,7 +24,7 @@ type Group struct {
 	groups             []*Group    // All the subgroups, which are either subcommands or nested options
 	compGroupName      string      // The name of the group as used by the completions for commands structure
 	parent             interface{} // The parent of the group (a parent command/option) or nil if it has no parent
-	data               interface{} // data is the actual options data
+	data               interface{} // data is the actual command/options struct data.
 }
 
 // AddGroup adds a new group to the command with the given name and data. The
@@ -38,26 +38,6 @@ func (g *Group) AddGroup(short, long string, data interface{}) (*Group, error) {
 
 	group.parent = g
 	group.NamespaceDelimiter = g.NamespaceDelimiter
-
-	if g.isRemote {
-		group.isRemote = true
-	}
-
-	if err := group.scan(); err != nil {
-		return nil, err
-	}
-
-	g.groups = append(g.groups, group)
-
-	return group, nil
-}
-
-func (g *Group) addGroup(short, long, namespace, delim string, data interface{}) (*Group, error) {
-	group := newGroup(short, long, data)
-
-	group.parent = g
-	group.NamespaceDelimiter = delim
-	group.Namespace = namespace
 
 	if g.isRemote {
 		group.isRemote = true
@@ -149,10 +129,32 @@ func newGroup(shortDescription string, longDescription string, data interface{})
 	}
 }
 
+// addGroup is simply modified to build option namespaces at scan time, so that they are cascading.
+// The idea is immediately compound the parents' namespaces to their childs, so that we don't have
+// to take care of this when looking up options/groups.
+func (g *Group) addGroup(short, long, namespace, delim string, data interface{}) (*Group, error) {
+	group := newGroup(short, long, data)
+
+	group.parent = g
+	group.NamespaceDelimiter = delim
+	group.Namespace = namespace
+
+	if g.isRemote {
+		group.isRemote = true
+	}
+
+	if err := group.scan(); err != nil {
+		return nil, err
+	}
+
+	g.groups = append(g.groups, group)
+
+	return group, nil
+}
+
 // scanHandler is a generic handler used for scanning both commands and group structs alike.
 type scanHandler func(reflect.Value, *reflect.StructField) (bool, error)
 
-// scan is used to scan a group's - and only a group's - data (native type).
 func (g *Group) scan() error {
 	return g.scanType(g.scanSubGroupHandler)
 }
@@ -219,7 +221,6 @@ func (g *Group) scanSubGroupHandler(realval reflect.Value, sfield *reflect.Struc
 
 	// Recursively add the new, embedded group
 	group, err := g.addGroup(subgroup, description, namespace, delim, ptrval.Interface())
-	// group, err := g.AddGroup(subgroup, description, ptrval.Interface())
 	if err != nil {
 		return true, err
 	}
@@ -230,6 +231,9 @@ func (g *Group) scanSubGroupHandler(realval reflect.Value, sfield *reflect.Struc
 	// Traditionally the two namespace/delim vars were here as well.
 	group.EnvNamespace = mtag.Get("env-namespace")
 	group.Hidden = mtag.Get("hidden") != ""
+
+	// Child groups might inherit this group's options
+	group.Persistent = mtag.Get("persistent") != ""
 
 	return true, nil
 }
@@ -272,22 +276,22 @@ func (g *Group) scanField(realval reflect.Value, fieldCount int, field reflect.S
 		return nil
 	}
 
-	// Either the embedded is a struct value
+	// Either the embedded fied is a struct value
 	if err := g.scanStructValue(field, fieldCount, realval, handler); err != nil {
 		return err
 	}
 
-	// Or the embedded is a pointer to a struct
+	// Or the embedded field is a pointer to a struct
 	if err := g.scanStructPointer(field, fieldCount, realval, handler); err != nil {
 		return err
 	}
 
 	// By default, always try to scan the field as an option.
-	// If an error is thrown in the process, immediately return it.
 	if err := g.scanOption(mtag, field, realval.Field(fieldCount)); err != nil {
 		return err
 	}
 
+	// We're done with this field regardless of what we actually did with it.
 	return nil
 }
 
@@ -388,41 +392,26 @@ func (g *Group) scanOption(mtag multiTag, field reflect.StructField, val reflect
 }
 
 func (g *Group) checkForDuplicateFlags() *Error {
-	shortNames := make(map[string]*Option)
-	// shortNames := make(map[rune]*Option)
+	// Long names are stored with their full namespaces.
 	longNames := make(map[string]*Option)
+
+	// Short names also include namespaced options:
+	// For instance, a group can have a 1-rune namespace (`P`),
+	// such as any (or group of) option declared under this namespace
+	// can be triggered with it's short name like `-Pn <arg>`.
+	shortNames := make(map[string]*Option)
 
 	var duplicateError *Error
 
 	g.eachGroup(func(g *Group) {
 		for _, option := range g.options {
+			// The namespace also includes the very last delimiter
+			// before the option word itself. If the group is a short
+			// namespaced one, the separator will be empty.
 			namespace := option.getFullNamespace()
-			// name, short := option.getNamespaceName()
-			// fmt.Println("Option: " + name)
-			// if !short {
-			//         if otherOption, ok := longNames[name]; ok {
-			//                 duplicateError = isDuplicate(option, otherOption, true)
-			//
-			//                 return
-			//         }
-			//         longNames[name] = option
-			//         if option.ShortName == 0 {
-			//                 continue
-			//         }
-			// }
-			// // delim := option.getNamespaceDelimiter(false)
-			// name = option.getFullNamespace() + string(option.ShortName)
-			// // namespaceName, _ := option.getNamespaceName()
-			// if otherOption, ok := shortNames[name]; ok {
-			//         // if otherOption, ok := shortNames[option.ShortName]; ok {
-			//         duplicateError = isDuplicate(option, otherOption, false)
-			//
-			//         return
-			// }
-			// shortNames[name] = option
+
 			if option.LongName != "" {
 				longName := namespace + option.LongName
-				// longName := option.LongNameWithNamespace()
 
 				if otherOption, ok := longNames[longName]; ok {
 					duplicateError = isDuplicate(option, otherOption, true)
@@ -431,16 +420,15 @@ func (g *Group) checkForDuplicateFlags() *Error {
 				}
 				longNames[longName] = option
 			}
+
 			if option.ShortName != 0 {
 				shortName := namespace + string(option.ShortName)
 				if otherOption, ok := shortNames[shortName]; ok {
-					// if otherOption, ok := shortNames[option.ShortName]; ok {
 					duplicateError = isDuplicate(option, otherOption, false)
 
 					return
 				}
 				shortNames[shortName] = option
-				// shortNames[option.ShortName] = option
 			}
 		}
 	})
@@ -459,6 +447,53 @@ func isDuplicate(opt, other *Option, long bool) *Error {
 //
 // 3) Command/option/group lookups ------------------------------------------ //
 //
+
+// The group builds a list of all options (building the keys as the full
+// namespace for short and/or long options, if any is available).
+// The function only scans for CHILD options, and will scan the entire tree
+// of options for the given command (the one asking for a lookup).
+func (c *Group) lookupOptions(ret *lookup) {
+	c.eachGroup(func(group *Group) {
+		// If we are only asked for options, it means that
+		// we are parsing a parent command, so we only add
+		// persistent groups, or required options in groups.
+		// if (onlyOptions && group.Persistent) || (!onlyOptions) {
+
+		// If the group is the one embedded in the command,
+		// this will NOT add the group to our lookup list
+		c.filterIgnoredGroup(ret, group)
+
+		for _, option := range group.options {
+			if option.ShortName != 0 {
+				ret.shortNames[string(option.ShortName)] = option
+			}
+
+			if len(option.LongName) > 0 {
+				ret.longNames[option.LongNameWithNamespace()] = option
+			}
+		}
+	})
+}
+
+// various groups should be ignored when looking options.
+func (c *Group) filterIgnoredGroup(ret *lookup, group *Group) {
+	// If the group is only the one embedded in a command,
+	// (contains the struct data), we don't consider it a group,
+	// so we exclude it from our list of groups
+	if _, isCmd := group.data.(Commander); isCmd {
+		return
+	}
+
+	// First add the group to the ordered list,
+	// for correct order completion lists used later.
+	longName := group.ShortDescription
+	if group.Namespace != "" {
+		longName = group.Namespace + group.NamespaceDelimiter + group.ShortDescription
+	}
+
+	ret.groupList = append(ret.groupList, longName)
+	ret.groups[longName] = group
+}
 
 func (g *Group) eachGroup(f func(*Group)) {
 	f(g)
