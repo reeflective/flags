@@ -18,9 +18,13 @@ const (
 // initCompletionCmd binds a special command that is called by the shell
 // to get some completions. This command is bound at the very last minute,
 // so that it's almost perfectly transparent to your application.
-func (p *Client) initCompletionCmd() {
-	// First, check that the completion command was actually called,
-	// otherwise don't bind the command, so as to avoid any collisions.
+func (p *Client) initCompletionCmd(args []string) {
+	// If there are no words other than the main program,
+	// we have not even been asked for completions, so we
+	// don't bind the command used to that effect.
+	if len(args) == 0 {
+		return
+	}
 
 	// If it's actually called, simply bind and return:
 	// the parser will call it later with the command args.
@@ -36,7 +40,18 @@ func (p *Client) initCompletionCmd() {
 		"", // No group needed for this command
 		completer,
 	)
-	complete.Hidden = true
+	complete.Hidden = true // Don't show in help/completions output.
+
+	// The __complete command is always the first word
+	subCmd := p.Find(args[0])
+	if subCmd == nil || subCmd.Name != ShellCompRequestCmd {
+		// Only create this special command if it is actually being called.
+		// This reduces possible side-effects of creating such a command;
+		// for example, having this command would cause problems to a
+		// program that only consists of the root command, since this
+		// command would cause the root command to suddenly have a subcommand.
+		p.removeCommand(complete)
+	}
 }
 
 // completion is both a command and a manager for console completion.
@@ -357,7 +372,7 @@ func (c *completion) completeOptionArgument(optname, split string, argument *str
 
 	// We MUST have found an option anyway
 	if c.opt == nil {
-		return
+		return // TODO: we should not return naked here, as something when wrong
 	}
 
 	// The option might accept several arguments, in which case

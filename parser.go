@@ -145,7 +145,7 @@ func (p *Client) parse(args []string) ([]string, error) {
 
 	// Simply bind a command that will handle the completions.
 	// This command is then used the same way as any other.
-	p.initCompletionCmd()
+	p.initCompletionCmd(args)
 
 	// Add built-in help group to all commands if necessary
 	if (p.Options & HelpFlag) != None {
