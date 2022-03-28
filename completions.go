@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/muesli/termenv"
 )
@@ -62,7 +63,7 @@ type CompletionFunc func(prefix string) Completions
 // Completions.Error(err)), no completions will be offered to the parent
 // shell, and the error will be notified instead, or workflow will continue.
 type Completions struct {
-	defGroup        *CompletionGroup
+	// defGroup        *CompletionGroup
 	groups          []*CompletionGroup
 	prefix          string
 	dynamic         bool
@@ -75,19 +76,19 @@ type Completions struct {
 // to the default list of completions (eg. all of these will appear under a single
 // group heading in the shell caller completion output). Equivalent of group.Add().
 func (c *Completions) Add(completion, description, alias string, color termenv.Color) {
-	c.defaultGroup().Add(completion, description, alias, color)
+	c.defaultGroup(compArgument).Add(completion, description, alias, color)
 }
 
 // FormatMatch adds a mapping between a string pattern (can be either a regexp, or anything),
 // and a color, so that this formatting is applied when completions are used by the shell.
 func (c *Completions) FormatMatch(pattern string, color termenv.Color) {
-	c.defaultGroup().FormatMatch(pattern, color)
+	c.defaultGroup(compArgument).FormatMatch(pattern, color)
 }
 
 // FormatType is used to apply color formatting to either/both of ALL completion
 // candidates (eg. all candidates in red) or descriptions (eg. all descs in grey).
 func (c *Completions) FormatType(completions, descriptions termenv.Color) {
-	c.defaultGroup().FormatType(completions, descriptions)
+	c.defaultGroup(compArgument).FormatType(completions, descriptions)
 }
 
 // NewGroup creates a new group of completions, which you can populate as
@@ -222,6 +223,7 @@ const (
 	compArgument compType = "argument"
 	compOption   compType = "option"
 	compFile     compType = "file"
+	compMessage  compType = "message" // Used when no completions but message to show
 )
 
 type prefixDirective int
@@ -237,16 +239,12 @@ const (
 // for consumption by completion scripts.
 // Note that this is only used for bash/zsh/fish.
 func (c *Completions) output() {
-	// This takes care of all default format
-	// strings, places default groups in the
-	// lists, etc...
-	c.setupDefaultComps()
-
 	// Prepare the first line, containing
 	// summary information for all completions
 	// Success/Err CompDirective NumGroups
 	success := 0
 	if c.err != nil {
+		c.Debugln("Error: "+c.err.Error(), false)
 		success = 1
 	}
 
@@ -254,7 +252,7 @@ func (c *Completions) output() {
 	fmt.Fprintf(os.Stdout, "%d-%d-%d-%d\n",
 		success,
 		len(c.groups),
-		c.defaultGroup().CompDirective,
+		ShellCompDirectiveDefault, // TODO solve for this + get rid of string directives
 		c.prefixDirective,
 	)
 
@@ -278,52 +276,20 @@ func (c *Completions) output() {
 	}
 }
 
-func (c *Completions) setupDefaultComps() {
-	// Return if there's no default group,
-	// as there was no use for it, neither us
-	// or the library's user
-	if c.defGroup == nil {
-		return
-	}
-
-	// Else get it, and return if nothing is defined in it
-	group := c.defaultGroup()
-
-	if group.compStyle == "" && group.descStyle == "" &&
-		len(group.styles) == 0 && len(group.suggestions) == 0 {
-		return
-	}
-
-	// If we are completing commands, we must name
-	// the default group according to some things.
-	if group.argType == compCommand {
-		if len(c.groups) == 0 {
-			group.Name = "commands"
-			group.tag = "flags-commands"
-		} else {
-			group.Name = "other"
-			group.tag = "other"
-		}
-	}
-
-	// Or add the default group to the list of
-	// groups to be completed, if it has some
-	c.groups = append(c.groups, group)
-}
-
+// this avoids changing the default descriptions when we detect that
+// the appropriate word is already used in it.
 func (c *Completions) setGroupDescription(group *CompletionGroup) {
-	// Exception for which we don't modify anything
-	if group.argType == compCommand && group.Name == "commands" {
-		return
-	}
-
 	switch group.argType {
 	case compCommand:
-		group.Name += " commands"
-		group.tag += " commands"
+		if !strings.HasSuffix(group.Name, "commands") {
+			group.Name += " commands"
+			group.tag += " commands"
+		}
 	case compOption:
-		group.tag += " options"
-		group.Name += " options"
+		if !strings.HasSuffix(group.Name, "options") {
+			group.Name += " options"
+			group.tag += " options"
+		}
 	}
 }
 
@@ -441,29 +407,73 @@ func (c *Completions) printStyles(buf io.Writer, group *CompletionGroup) {
 // 4 - Other completions helpers ---------------------------------------------- //
 //
 
-func (c *Completions) defaultGroup() *CompletionGroup {
-	if c.defGroup != nil {
-		return c.defGroup
+// defaultGroup always returns a non-nil completion group that is populated
+// with basic info according to the type of completions it will offer.
+func (c *Completions) defaultGroup(groupType compType) *CompletionGroup {
+	// Either find an existing group matching the type
+	// and return it: in all cases, this will return one
+	// of our builtin types: command/option/argument.
+	for i := (len(c.groups) - 1); i >= 0; i-- {
+		group := c.groups[i]
+		if group.argType == groupType {
+			return group
+		}
 	}
 
-	c.defGroup = &CompletionGroup{
+	// Or create it as needed.
+	group := &CompletionGroup{
 		Name:          "",
 		aliases:       map[string]string{},
 		descriptions:  map[string]string{},
 		CompDirective: ShellCompDirectiveDefault,
-		argType:       compArgument,
+		argType:       groupType,
 		styles:        map[string]string{},
 	}
 
-	return c.defGroup
-}
+	// Default naming/tagging ------------------
+	// Names are set so that they are more or less consistent by default with
+	// both the structure of the program, and should avoid as much as possible
+	// collisions with shell callers' builtins (eg. 'commands', 'options' in ZSH)
+	switch groupType {
+	case compCommand:
+		group.Name = "commands" // Commands is often a builtin
 
-func (c *Completions) getLastGroup() *CompletionGroup {
-	if len(c.groups) == 0 {
-		return c.defaultGroup()
+		// So use a different ZSH tag when possible
+		if len(c.groups) == 0 {
+			group.Name = "commands"
+			group.tag = "flags-commands"
+		} else {
+			group.Name = "other"
+			group.tag = "other"
+		}
+
+	case compArgument:
+		group.Name = "argument"
+	case compOption:
+		group.Name = "options"
+	case compFile:
+		group.Name = "files"
+		group.Name = "flags-files"
 	}
 
-	return c.groups[len(c.groups)-1]
+	// Always add the group to the stack
+	c.groups = append(c.groups, group)
+
+	return group
+}
+
+func (c *Completions) clearGroupsOfType(groupType compType) {
+	var filtered []*CompletionGroup
+
+	for _, group := range c.groups {
+		if group.argType == groupType {
+			continue
+		}
+
+		filtered = append(filtered, group)
+	}
+
+	c.groups = filtered
 }
 
 func (c *Completions) getNumCompLines(group *CompletionGroup) (lines int) {

@@ -20,9 +20,11 @@ type Group struct {
 	Persistent         bool        // If true, this group is inherited by child commands (only applies to option groups)
 	isBuiltinHelp      bool        // Whether the group represents the built-in help group
 	isRemote           bool        // If the group has a remote declaration (similar to command implementation)
+	isNamespaced       bool        // An internal check when the group is embedded in a command
 	options            []*Option   // All the options in the group: only for OPTIONS => commands are in groups
 	groups             []*Group    // All the subgroups, which are either subcommands or nested options
 	compGroupName      string      // The name of the group as used by the completions for commands structure
+	compountNamespace  string      // The namespace of the group since its root parent.
 	parent             interface{} // The parent of the group (a parent command/option) or nil if it has no parent
 	data               interface{} // data is the actual command/options struct data.
 }
@@ -195,7 +197,7 @@ func (g *Group) scanSubGroupHandler(realval reflect.Value, sfield *reflect.Struc
 		return true, err
 	}
 
-	subgroup := mtag.Get("group")
+	subgroup, _ := mtag.Get("group")
 	if len(subgroup) == 0 {
 		return false, nil
 	}
@@ -212,30 +214,60 @@ func (g *Group) scanSubGroupHandler(realval reflect.Value, sfield *reflect.Struc
 		ptrval = realval.Addr()
 	}
 
-	description := mtag.Get("description")
+	description, _ := mtag.Get("description")
 
 	// New change, in order to easily propagate parent namespaces
 	// in heavily/specially nested option groups at bind time.
-	namespace := mtag.Get("namespace")
-	delim := mtag.Get("namespace-delimiter")
+	namespace, _ := mtag.Get("namespace")
+	// delim, _ := mtag.Get("namespace-delimiter")
+	delim, isSet := mtag.Get("namespace-delimiter")
+	if !isSet {
+		delim = g.NamespaceDelimiter
+	}
+
+	chns := g.setNamespace(namespace, delim, isSet)
 
 	// Recursively add the new, embedded group
-	group, err := g.addGroup(subgroup, description, namespace, delim, ptrval.Interface())
+	group, err := g.addGroup(subgroup, description, chns, delim, ptrval.Interface())
+	// group, err := g.addGroup(subgroup, description, namespace, delim, ptrval.Interface())
 	if err != nil {
 		return true, err
 	}
 
+	// Compound the namespace only if we are not a command
+	// if _, dataIsCommand := g.data.(Commander); !dataIsCommand {
+	//         group.compountNamespace = g.compountNamespace + group.NamespaceDelimiter + group.Namespace
+	//         fmt.Println(group.compountNamespace)
+	// }
+
 	// The namespace is immediately compounded to its parent's one
-	group.Namespace = g.Namespace + group.Namespace
+	// group.Namespace = g.Namespace + delim + group.Namespace
+	// group.Namespace = g.Namespace + group.NamespaceDelimiter + group.Namespace
 
 	// Traditionally the two namespace/delim vars were here as well.
-	group.EnvNamespace = mtag.Get("env-namespace")
-	group.Hidden = mtag.Get("hidden") != ""
+	group.EnvNamespace, _ = mtag.Get("env-namespace")
+	_, group.Hidden = mtag.Get("hidden")
 
 	// Child groups might inherit this group's options
-	group.Persistent = mtag.Get("persistent") != ""
+	_, group.Persistent = mtag.Get("persistent")
 
 	return true, nil
+}
+
+func (g *Group) setNamespace(namespace, delim string, delimIsSet bool) (chns string) {
+	// If g has no namespace, we don't add the delimiter
+	if _, isCmd := g.data.(Commander); g.Namespace != "" && !isCmd {
+		chns = g.Namespace
+
+		if delimIsSet {
+			chns += delim
+		} else {
+			chns += g.NamespaceDelimiter
+		}
+	}
+
+	chns += namespace
+	return
 }
 
 // scanStruct performs an exhaustive scan of a struct that we found as field (embedded), either with
@@ -333,11 +365,12 @@ func (g *Group) scanStructPointer(field reflect.StructField, count int, val refl
 
 // scanOption finds if a field is marked as an option, and if yes, scans it and stores the object.
 func (g *Group) scanOption(mtag multiTag, field reflect.StructField, val reflect.Value) error {
-	longname := mtag.Get("long")
-	shortname := mtag.Get("short")
+	longname, _ := mtag.Get("long")
+	shortname, _ := mtag.Get("short")
+	iniName, _ := mtag.Get("ini-name")
 
 	// Need at least either a short or long name
-	if longname == "" && shortname == "" && mtag.Get("ini-name") == "" {
+	if longname == "" && shortname == "" && iniName == "" {
 		return nil
 	}
 
@@ -346,25 +379,31 @@ func (g *Group) scanOption(mtag multiTag, field reflect.StructField, val reflect
 		return err
 	}
 
-	description := mtag.Get("description")
+	description, _ := mtag.Get("description")
 	def := mtag.GetMany("default")
 
 	optionalValue := mtag.GetMany("optional-value")
-	valueName := mtag.Get("value-name")
-	defaultMask := mtag.Get("default-mask")
+	valueName, _ := mtag.Get("value-name")
+	defaultMask, _ := mtag.Get("default-mask")
 
-	optional := !isStringFalsy(mtag.Get("optional"))
-	required := !isStringFalsy(mtag.Get("required"))
+	optionalTag, _ := mtag.Get("optional")
+	optional := !isStringFalsy(optionalTag)
+	requiredTag, _ := mtag.Get("required")
+	required := !isStringFalsy(requiredTag)
 	choices := mtag.GetMany("choice")
-	hidden := !isStringFalsy(mtag.Get("hidden"))
+	hiddenTag, _ := mtag.Get("hidden")
+	hidden := !isStringFalsy(hiddenTag)
+
+	envDefaultKey, _ := mtag.Get("env")
+	envDefaultDelim, _ := mtag.Get("env-delim")
 
 	option := &Option{
 		Description:      description,
 		ShortName:        short,
 		LongName:         longname,
 		Default:          def,
-		EnvDefaultKey:    mtag.Get("env"),
-		EnvDefaultDelim:  mtag.Get("env-delim"),
+		EnvDefaultKey:    envDefaultKey,
+		EnvDefaultDelim:  envDefaultDelim,
 		OptionalArgument: optional,
 		OptionalValue:    optionalValue,
 		Required:         required,
@@ -452,8 +491,8 @@ func isDuplicate(opt, other *Option, long bool) *Error {
 // namespace for short and/or long options, if any is available).
 // The function only scans for CHILD options, and will scan the entire tree
 // of options for the given command (the one asking for a lookup).
-func (c *Group) lookupOptions(ret *lookup) {
-	c.eachGroup(func(group *Group) {
+func (g *Group) lookupOptions(ret *lookup) {
+	g.eachGroup(func(group *Group) {
 		// If we are only asked for options, it means that
 		// we are parsing a parent command, so we only add
 		// persistent groups, or required options in groups.
@@ -461,7 +500,7 @@ func (c *Group) lookupOptions(ret *lookup) {
 
 		// If the group is the one embedded in the command,
 		// this will NOT add the group to our lookup list
-		c.filterIgnoredGroup(ret, group)
+		g.filterIgnoredGroup(ret, group)
 
 		for _, option := range group.options {
 			if option.ShortName != 0 {
@@ -476,7 +515,7 @@ func (c *Group) lookupOptions(ret *lookup) {
 }
 
 // various groups should be ignored when looking options.
-func (c *Group) filterIgnoredGroup(ret *lookup, group *Group) {
+func (g *Group) filterIgnoredGroup(ret *lookup, group *Group) {
 	// If the group is only the one embedded in a command,
 	// (contains the struct data), we don't consider it a group,
 	// so we exclude it from our list of groups
@@ -559,6 +598,54 @@ func (g *Group) optionByName(name string, namematch func(*Option, string) bool) 
 // 3) Other utilities ----------------------------------------------------- //
 //
 
+// The group is being passed a a word against which to match for namespaces.
+// Various parameters are passed:
+// - @word          is the commandline word to match against
+// - @isCmd         is used by the caller to tell us if this group is a command
+// - @force         tells us if the command we're considering is actually namespaced.
+// - @namespace     is either the group's namespace, or the command's name (if isCmd is true).
+func (g *Group) matchNested(word string, isCmd, force bool, namespace string) (nested, expand bool, prefix string) {
+	// The final group string against which we compare the word
+	var qualifiedNamespace string
+
+	// At the end of this branch, we have either a namespace
+	// to match against, or we're out of here.
+	switch {
+	case !isCmd && g.Namespace == "":
+		// Don't bother if this group is actually a
+		// command and we're not interested in this.
+		return false, false, word
+	case isCmd && !force:
+		// Or we don't have anything to do here.
+		return false, false, word
+	default:
+		// we will try to match again ourselves
+		qualifiedNamespace = namespace + g.NamespaceDelimiter
+	}
+
+	// If the command's full namespace + delim equals the word
+	if qualifiedNamespace == word {
+		prefix = ""
+
+		return false, true, prefix
+	}
+
+	// Or if the word has the current namespace in it.
+	if strings.HasPrefix(word, qualifiedNamespace) {
+		prefix = word[len(qualifiedNamespace)-1:]
+
+		return false, true, prefix
+	}
+
+	// If typed input is an incomplete namespace, or empty
+	if strings.HasPrefix(qualifiedNamespace, word) || word == "" {
+		return true, false, prefix
+	}
+
+	// Else we didn't match anything related to the namespaces.
+	return false, false, prefix
+}
+
 func (g *Group) showInHelp() bool {
 	if g.Hidden {
 		return false
@@ -591,7 +678,7 @@ func getFieldTag(field reflect.StructField) (multiTag, bool, error) {
 	}
 
 	// Skip fields with the no-flag tag
-	if mtag.Get("no-flag") != "" {
+	if noFlag, _ := mtag.Get("no-flag"); noFlag != "" {
 		return mtag, true, nil
 	}
 

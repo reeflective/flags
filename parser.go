@@ -503,7 +503,7 @@ func (p *Client) parseOption(s *parseState, option *Option, canarg bool, argumen
 			}
 		}
 
-		if option.tag.Get("unquote") != "false" {
+		if unquote, _ := option.tag.Get("unquote"); unquote != "false" {
 			arg, err = unquoteIfPossible(arg)
 		}
 

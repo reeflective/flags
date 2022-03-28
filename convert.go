@@ -416,7 +416,7 @@ func getBase(options multiTag, base int) (int, error) {
 
 	var ivbase int64
 
-	if sbase := options.Get("base"); sbase != "" {
+	if sbase, _ := options.Get("base"); sbase != "" {
 		ivbase, err = strconv.ParseInt(sbase, baseParseInt, bitsizeParseInt)
 		base = int(ivbase)
 	}

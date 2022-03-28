@@ -258,6 +258,7 @@ DONE:
 // long option name, given a namespaceDelimiter parameter.
 func (option *Option) getLongname() (longName string) {
 	longName = option.LongName
+	// namespace := option.group.Namespace
 	namespace := option.getFullNamespace()
 
 	return namespace + longName

@@ -28,10 +28,14 @@ func argumentIsOption(arg string) bool {
 	return false
 }
 
-func groupIsNestedOption(group *Group) bool {
-	if group.Namespace != "" &&
-		len(group.Namespace) == 1 &&
-		group.NamespaceDelimiter == "" {
+func groupIsNestedOption(group *Group, short bool) bool {
+	// We always must have a non-nil namespace
+	if group.Namespace != "" {
+		// Either short
+		if short && len(group.Namespace) == 1 && group.NamespaceDelimiter == "" {
+			return true
+		}
+		// Else it's a long one
 		return true
 	}
 

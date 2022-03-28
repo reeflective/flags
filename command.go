@@ -45,8 +45,9 @@ type Commander interface {
 // style options and to provide structuring for the command itself.
 type Command struct {
 	// Information & Base -----------------------------------------------
-	Name    string   // Name - The name of the command, as typed in the shell.
-	Aliases []string // Aliases for the command
+	Name       string   // Name - The name of the command, as typed in the shell.
+	Aliases    []string // Aliases for the command
+	Namespaced bool     // If true, any subcommands are invoked like `command.subcommand`, with a delimiter
 
 	// Use is the one-line usage message.
 	// Recommended syntax is as follow:
@@ -143,9 +144,10 @@ type Command struct {
 //         customize your command, bind handlers, set completions, usage, helps, etc.
 //
 func (c *Command) AddCommand(name, short, long, group string, data Commander) *Command {
-	cmd := newCommand(name, short, long, data)
-	cmd.parent = c
-	cmd.compGroupName = group
+	cmd := newCommand(name, short, long, data)    // Base command and its embedded group.
+	cmd.parent = c                                // The command has a reference to its parent struct (albeit as interface)
+	cmd.compGroupName = group                     // This group name is used for grouping commands in comps/help
+	cmd.NamespaceDelimiter = c.NamespaceDelimiter // And if the delimiter is not nil, childs will be attached
 
 	// Command type paths, stored for mapping with client/server peer -----------------
 	// s.mutex.RLock()
@@ -305,6 +307,12 @@ func newCommand(name string, short, long string, data Commander) *Command {
 		Group: newGroup(short, long, data),
 		Name:  name,
 	}
+
+	// By default, the command's embedded group has a namespace
+	// that equals the command name: used when subcommands are
+	// namespaced with a delimiter (usually a dot `.`)
+	// cmd.Namespace = cmd.Name
+
 	if _, remote := data.(CommanderClient); remote {
 		cmd.isRemote = true
 	}
@@ -349,7 +357,7 @@ func (c *Command) scanSubcommandHandler(parentg *Group) scanHandler {
 
 // scanPositional finds a struct tagged as containing positional arguments and scans them.
 func (c *Command) scanPositional(mtag multiTag, realval reflect.Value) (bool, error) {
-	if len(mtag.Get("positional-args")) == 0 {
+	if pargs, _ := mtag.Get("positional-args"); len(pargs) == 0 {
 		return false, nil
 	}
 
@@ -364,7 +372,7 @@ func (c *Command) scanPositional(mtag multiTag, realval reflect.Value) (bool, er
 			return true, err
 		}
 
-		name := fieldTag.Get("positional-arg-name")
+		name, _ := fieldTag.Get("positional-arg-name")
 
 		if len(name) == 0 {
 			name = field.Name
@@ -372,10 +380,11 @@ func (c *Command) scanPositional(mtag multiTag, realval reflect.Value) (bool, er
 
 		// Per-argument field requirements
 		required, maximum := c.parseArgsNumRequired(fieldTag)
+		description, _ := fieldTag.Get("description")
 
 		arg := &Arg{
 			Name:            name,
-			Description:     fieldTag.Get("description"),
+			Description:     description,
 			Required:        required,
 			RequiredMaximum: maximum,
 
@@ -386,7 +395,7 @@ func (c *Command) scanPositional(mtag multiTag, realval reflect.Value) (bool, er
 		c.args = append(c.args, arg)
 
 		// All-args (struct-wise) requirements
-		if len(mtag.Get("required")) != 0 {
+		if req, _ := mtag.Get("required"); len(req) != 0 {
 			c.ArgsRequired = true
 		}
 	}
@@ -399,7 +408,7 @@ func (c *Command) parseArgsNumRequired(fieldTag multiTag) (required, maximum int
 	required = -1
 	maximum = -1
 
-	sreq := fieldTag.Get("required")
+	sreq, _ := fieldTag.Get("required")
 
 	// If no requirements, -1 means unlimited
 	if sreq == "" {
@@ -429,7 +438,7 @@ func (c *Command) parseArgsNumRequired(fieldTag multiTag) (required, maximum int
 
 // scanSubcommand finds if a field is marked as a subcommand, and if yes, scans it.
 func (c *Command) scanSubcommand(mtag multiTag, realval reflect.Value) (bool, error) {
-	subcommand := mtag.Get("command")
+	subcommand, _ := mtag.Get("command")
 	if len(subcommand) == 0 {
 		return false, nil
 	}
@@ -452,16 +461,16 @@ func (c *Command) scanSubcommand(mtag multiTag, realval reflect.Value) (bool, er
 		return false, ErrNotCommander
 	}
 
-	shortDescription := mtag.Get("description")
-	longDescription := mtag.Get("long-description")
-	subcommandsOptional := mtag.Get("subcommands-optional")
+	shortDescription, _ := mtag.Get("description")
+	longDescription, _ := mtag.Get("long-description")
+	subcommandsOptional, _ := mtag.Get("subcommands-optional")
 	aliases := mtag.GetMany("alias")
-	group := mtag.Get("group") // In this case, group applies to the command group
+	group, _ := mtag.Get("group") // In this case, group applies to the command group
 
 	// The provided struct satisfies the Commander interface, so add it as command.
 	subc := c.AddCommand(subcommand, shortDescription, longDescription, group, cmd)
 
-	subc.Hidden = mtag.Get("hidden") != ""
+	_, subc.Hidden = mtag.Get("hidden")
 
 	if len(subcommandsOptional) > 0 {
 		subc.SubcommandsOptional = true
@@ -536,9 +545,6 @@ func (c *Command) makeLookup() lookup {
 }
 
 func (c *Command) fillLookup(ret *lookup, onlyOptions bool) {
-	// First, add the command name to the ordered list
-	ret.commandList = append(ret.commandList, c.Name)
-
 	// First take care of all groups of options,
 	// which may be arbitrarily nested.
 	c.lookupOptions(ret)
@@ -547,12 +553,36 @@ func (c *Command) fillLookup(ret *lookup, onlyOptions bool) {
 		return
 	}
 
-	// Add all subcommands
-	for _, subcommand := range c.commands {
-		ret.commands[subcommand.Name] = subcommand
+	// Add all subcommands...
+	for _, subcmd := range c.commands {
+		c.addSubcommands(ret, subcmd)
+	}
+}
 
-		for _, a := range subcommand.Aliases {
-			ret.commands[a] = subcommand
+// The command name is only added alone if the command
+// has no namespace delimiter: if it has one, that means
+// the command word itself is never to be found alone, and
+// we therefore only add all its subcommands, qualified.
+func (c *Command) addSubcommands(ret *lookup, cmd *Command) {
+	// First build the namespace, even if it ends up to be empty
+	var namespace string
+	if cmd.Namespaced && cmd.NamespaceDelimiter != "" {
+		namespace = cmd.Name + cmd.NamespaceDelimiter
+	}
+
+	// And either add...
+	if namespace != "" {
+		// Each of the command's subcommands attached with namespace.
+		for _, sub := range cmd.commands {
+			ret.commandList = append(ret.commandList, namespace+sub.Name)
+			ret.commands[namespace+sub.Name] = sub
+		}
+	} else {
+		// Or simply the command, possibly qualified, and its aliases
+		ret.commandList = append(ret.commandList, cmd.Name)
+		ret.commands[namespace+cmd.Name] = cmd
+		for _, alias := range cmd.Aliases {
+			ret.commands[namespace+alias] = cmd
 		}
 	}
 }

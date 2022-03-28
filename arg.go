@@ -27,20 +27,6 @@ func (a *Arg) isRemaining() bool {
 	return a.value.Type().Kind() == reflect.Slice
 }
 
-// WithPositionalArgs is used to add zero or more positional arguments to
-// a command, without using a struct containing them for the purpose.
-//
-// In the overwehlming majority of cases, you don't need this, and
-// using the default struct model of reflags is better. However, this
-// function is here so that reflag can integrate external commands.
-func WithPositionalArgs(cmd *Command, args ...*Arg) *Command {
-	cmd.mutex.RLock()
-	defer cmd.mutex.RUnlock()
-	cmd.args = append(cmd.args, args...)
-
-	return cmd
-}
-
 type strArgument struct {
 	value *string
 }

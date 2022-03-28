@@ -25,9 +25,8 @@ func (p *Client) initCompletionCmd() {
 	// If it's actually called, simply bind and return:
 	// the parser will call it later with the command args.
 	completer := &completion{
-		parser:       p,
-		parseState:   &parseState{},
-		nestedGroups: map[string]*Group{},
+		parser:     p,
+		parseState: &parseState{},
 	}
 
 	complete := p.AddCommand(ShellCompRequestCmd,
@@ -53,13 +52,12 @@ type completion struct {
 	// Parsing
 	parser      *Client // Used to determine position/candidates/providers/errors
 	*parseState         // Used to store and manipulate the command-line arguments.
-	toComplete  string  // The last (potentially incomplete/"nil") argument, apart from Args.List
 
-	// Detected candidates/types
-	comps        Completions       // The final list of completions
-	opt          *Option           // The option to complete, if any
-	nestedGroups map[string]*Group // A list of groups we don't immediately add to completions
-	lastGroup    *Group            // The last group of which the options we entirely processed
+	// Completion
+	toComplete string      // The last (potentially incomplete/"nil") argument, apart from Args.List
+	opt        *Option     // The option to complete, if any
+	lastGroup  *Group      // The last group of which the options we entirely processed
+	comps      Completions // The final list of completions and their formatting
 }
 
 //
@@ -131,7 +129,7 @@ func (c *completion) populateInternal() {
 			continue
 		}
 
-		// ...or a command
+		// ...or a command, which might be namespaced.
 		if cmd, ok := c.lookup.commands[arg]; ok {
 			cmd.fillParser(c.parseState)
 		}
@@ -175,8 +173,10 @@ func (c *completion) getCompletions() {
 
 	// If we are still here, we must add completions
 	// for all (if any) subcommands of the current cmd.
+	// TODO: maybe working recursively on commands has an impact
+	// on options..., since we don't update the lookup...
 	if (c.command != nil) && len(c.command.commands) > 0 {
-		c.completeCommands(c.toComplete)
+		c.completeCommands(c.command, c.toComplete)
 	}
 }
 
@@ -186,29 +186,47 @@ func (c *completion) getCompletions() {
 
 // completeCommands builds a list of command completions,
 // potentially strutured in different groups.
-func (c *completion) completeCommands(match string) {
-	for _, cmd := range c.command.commands {
+func (c *completion) completeCommands(command *Command, match string) {
+	for _, cmd := range command.commands {
 		// Filter out unwanted commands, but do not filter based on prefix:
 		// the shell calling for completion will handle it on its own.
 		if cmd.data == c || cmd.Hidden { // or !strings.HasPrefix()
 			continue
 		}
 
-		// Or get the good completion group
-		var group *CompletionGroup
+		// Get the good completion group, here one matching the name
+		// of the command's group, or a default one with presets for
+		// command completion.
+		group := c.getGroup(cmd.Group.compGroupName, compCommand)
 
-		if cmd.Group.compGroupName == "" {
-			group = c.comps.defaultGroup()
-			group.argType = compCommand
-		} else {
-			grp := c.getGroup(cmd.Group.compGroupName)
+		// If the command is marked Namespaced, we add its name
+		// with its delimiter, similarly to namespaced options
+		nested, expand, prefix := cmd.matchNested(match, cmd.Namespaced, true, cmd.Name)
+		if nested {
+			group.suggestions = append(group.suggestions, cmd.Name+cmd.NamespaceDelimiter)
+			group.descriptions[cmd.Name+cmd.NamespaceDelimiter] = cmd.ShortDescription
 
-			if grp == nil {
-				grp = c.comps.NewGroup(cmd.Group.compGroupName)
-				grp.argType = compCommand
-			}
+			continue
+		}
 
-			group = grp
+		// If we actually are in its namespace, rebuild the entire commands
+		// completion cache with the subcommands (recursively call ourselves).
+		if expand {
+			// Update the prefix to use in completions,
+			// moving the current command's name
+			c.comps.prefixDirective = prefixMove
+			c.comps.prefix += cmd.Name + cmd.NamespaceDelimiter
+
+			// And clear all current/existing command completion groups,
+			// since can't reach them from the current namespace.
+			// Note that this has no effect on the lookup itself.
+			c.comps.clearGroupsOfType(compCommand)
+
+			// And recursively call ourselves to give the
+			// same functionality at arbitrary levels of namespacing.
+			c.completeCommands(cmd, prefix)
+
+			return
 		}
 
 		// Or add to completions
@@ -266,7 +284,10 @@ func (c *completion) completeShortOptions(optname string) {
 		if nested {
 			// It's either because we have a namespace waiting for its
 			// options to be completed, so build the completions for them.
-			c.completeSubGroups(subgroups, true, useDashPrefix)
+			for _, group := range subgroups {
+				c.addGroupOptions(group, "", true, false)
+			}
+			// c.completeSubGroups(subgroups, true, useDashPrefix)
 		} else {
 			// Or because we have an error somewhere (eg. an invalid opt)
 			// TODO: Here we should throw an error, like in $RPROMPT
@@ -339,13 +360,16 @@ func (c *completion) completeOptionArgument(optname, split string, argument *str
 		return
 	}
 
+	// The option might accept several arguments, in which case
+	// we need to split the argument word, respecting the quoting.
+
 	// Update the the shell comp prefix, with the whole word anyway
 	// (regardless of whether they are stacked options or not).
-	c.comps.prefix += optname
-	c.comps.prefix += split // The equal sign
+	// c.comps.prefix += optname
+	// c.comps.prefix += split // The equal sign
 
 	// And remove the prefix we have built
-	c.comps.prefixDirective = prefixMove
+	// c.comps.prefixDirective = prefixMove
 
 	// The argument passed as parameter contains only the current           TODO: here the split should be added
 	// argument string, NOT the option '-o' string. We handle shell
@@ -355,18 +379,16 @@ func (c *completion) completeOptionArgument(optname, split string, argument *str
 
 // Build the list of all options completions, because we are asked for one.
 func (c *completion) completeAllOptions(match string, short, mustPrefix bool) {
-	// If completing a long option, try the current
-	// optname against the lookup, and if a long option
-	// is found, complete accordingly
-	if !short {
-		if opt, found := c.lookup.longNames[match]; found {
-			group := c.comps.NewGroup(opt.group.compGroupName)
-			group.argType = compOption
-			c.addOptionComp(group, opt, false, true)
+	// Namespaces for which we have some found some groups
+	nestedGroups := make(map[string]*Group)
 
-			return
-		}
-	}
+	// If completed options are namespaced, we will
+	// update the completion prefix with the namespace.
+	var namespacePrefix string
+
+	// If we have found namespaced options to be "expanded",
+	// ie. that we are inside their namespace.
+	mustExpand := false
 
 	// For each available option group, process
 	// in reverse order so that persistent/parent
@@ -379,49 +401,64 @@ func (c *completion) completeAllOptions(match string, short, mustPrefix bool) {
 			continue
 		}
 
-		// Compare the group against the current match,
-		// and skip if incompatible.
-		nested := c.isNested(group, match)
-		if _, already := c.nestedGroups[group.Namespace]; already && nested {
+		// If we must not add a prefix and currently completing
+		// short options, the current WORD is a stack of short options,
+		// so we don't add namespaced ones.
+		if short && !mustPrefix && group.Namespace != "" {
 			continue
-		} else {
-			c.nestedGroups[group.Namespace] = group
 		}
 
-		// If we need completions, build the list
-		// with 1st-level options, as well as nested groups.
-		c.completeGroupOptions(group, match, short, mustPrefix, nested)
+		// By default we add a dash if the caller has required it only.
+		mustPrefixComps := mustPrefix
+
+		// Analyse the current optname to find any matching (long/short) namespace
+		// in it. Normally this should only apply to long options, as short/stacked
+		// options and their groups have been processed already.
+		nested, expand, _ := group.matchNested(match, false, false, group.Namespace)
+
+		// If the group is a nested one, we just add this group as a single option
+		// into the last completion group we generated. Will skip if already added.
+		if nested {
+			if _, namespaceExists := nestedGroups[group.Namespace]; !namespaceExists {
+				c.addNestedGroupAsOption(group, short)
+				nestedGroups[group.Namespace] = group
+			}
+
+			continue
+		}
+
+		// Else if we have matched the namespace of this group,
+		// and we must "expand" (complete) this group's child options
+		if expand {
+			mustPrefixComps = false
+			mustExpand = true
+			namespacePrefix = group.Namespace + group.NamespaceDelimiter
+		}
+
+		// Else we add the group's options to the completions,
+		// formatting them again their current namespace requirements,
+		// the type of option requested at the command line, etc.
+		c.addGroupOptions(group, match, short, mustPrefixComps)
+
+		// Once the group's options are processed, the group
+		// is marked as the lastest group we processed. This
+		// is used in case the next group is an "embedded" one
+		// with no specified "parent" group, so we generally
+		// add it to the previous one.
+		c.lastGroup = group
 	}
-}
 
-// completeGroupOptions adds the list of options contained in a single group to completions.
-func (c *completion) completeGroupOptions(group *Group, match string, short, mustPrefix, nested bool) {
-	if nested {
-		// If the group is a nested one, we just add this
-		// group as a single option into the last completion
-		// group we generated.
-		c.addNestedGroupAsOption(group, short)
-
-		return
+	// Finally, update the completion prefix if we are completing namespaced options
+	if mustExpand {
+		c.comps.prefixDirective = prefixMove
+		c.comps.prefix += namespacePrefix
 	}
-
-	// Else we add the group's options to the completions,
-	// formatting them again their current namespace requirements,
-	// the type of option requested at the command line, etc.
-	c.addGroupOptions(group, match, short, mustPrefix)
-
-	// Once the group's options are processed, the group
-	// is marked as the lastest group we processed. This
-	// is used in case the next group is an "embedded" one
-	// with no specified "parent" group, so we generally
-	// add it to the previous one.
-	c.lastGroup = group
 }
 
 // adds a namespaced group as a single option, included in another option group,
 // so that its options will only be revealed when the whole group is matched.
 func (c *completion) addNestedGroupAsOption(group *Group, short bool) {
-	comps := c.comps.getLastGroup()
+	comps := c.comps.defaultGroup(compOption)
 
 	var groupComp string
 
@@ -455,10 +492,19 @@ func (c *completion) addGroupOptions(group *Group, match string, short, mustPref
 
 		isSet := false
 
-		// If we have only a long, send it
-		if opt.LongName != "" && strings.HasPrefix(opt.getLongname(), match) {
+		// Long options are only added if:
+		// - We are explicitly asked to with a double dash
+		// - We are NOT completing stacked, short options
+		if ((short && len(match) == 0) || !short) &&
+			opt.LongName != "" && strings.HasPrefix(opt.getLongname(), match) {
 			isSet = true
-			optname = defaultLongOptDelimiter + opt.getLongname()
+
+			if !short && !mustPrefix {
+				optname = opt.LongName
+			} else {
+				optname = defaultLongOptDelimiter + opt.getLongname()
+			}
+
 			comps.suggestions = append(comps.suggestions, optname)
 		}
 
@@ -476,28 +522,12 @@ func (c *completion) addGroupOptions(group *Group, match string, short, mustPref
 	}
 }
 
-// adds all options of a given child group (namespaced, or with a parent) to
-// the completions, including the group's namespace (even if it's nil).
-func (c *completion) completeSubGroups(groups []*Group, short, usePrefix bool) {
-	// First add all 'subgrouped' options
-	for _, group := range groups {
-		comps := c.comps.NewGroup(group.ShortDescription)
-		comps.argType = compOption
-
-		for _, opt := range group.options {
-			c.addOptionComp(comps, opt, short, usePrefix)
-		}
-	}
-}
-
 // addOptionComp adds a given option into a group of completion candidates, taking care of
 // prefixes, dashes and other namespace stuff.
 func (c *completion) addOptionComp(comps *CompletionGroup, opt *Option, short, usePrefix bool) {
 	if opt.Hidden {
 		return
 	}
-
-	// group := opt.group
 
 	var prefix string
 	if usePrefix && short {
@@ -509,10 +539,8 @@ func (c *completion) addOptionComp(comps *CompletionGroup, opt *Option, short, u
 	var optname string
 	if short {
 		optname = prefix + string(opt.ShortName)
-		// optname = prefix + group.Namespace + string(opt.ShortName)
 	} else {
 		optname = prefix + opt.LongName
-		// optname = prefix + group.Namespace + group.NamespaceDelimiter + opt.LongName
 	}
 
 	comps.suggestions = append(comps.suggestions, optname)
@@ -709,7 +737,7 @@ func (c *completion) getStackedOrNested(match string) (last *Option, grps []*Gro
 
 		// Check if the processed string matches one or more groups' namespaces.
 		// If yes, keep these groups as we might have to complete their options.
-		if grps, nested = c.getNamespacedGroups(processed); len(grps) > 0 {
+		if grps, nested = c.getNamespacedGroups(processed, true); len(grps) > 0 {
 			// Either return them to the caller, or process the next
 			// rune, which should be one of these groups' option.
 			continue
@@ -729,10 +757,10 @@ func (c *completion) getStackedOrNested(match string) (last *Option, grps []*Gro
 
 // given a string assumed to be a valid namespace, check the current lookup for all groups
 // matching this namespace.
-func (c *completion) getNamespacedGroups(processed string) (grps []*Group, nested bool) {
+func (c *completion) getNamespacedGroups(processed string, short bool) (grps []*Group, nested bool) {
 	for _, name := range c.lookup.groupList {
 		group := c.lookup.groups[name]
-		if groupIsNestedOption(group) && group.Namespace == processed {
+		if groupIsNestedOption(group, short) && group.Namespace+group.NamespaceDelimiter == processed {
 			nested = true
 
 			grps = append(grps, group)
@@ -742,42 +770,30 @@ func (c *completion) getNamespacedGroups(processed string) (grps []*Group, neste
 	return
 }
 
-// needsCompletion verifies that given the current match and the group's
-// various properties, whether or not this group needs to add some completions.
-func (c *completion) isNested(g *Group, optname string) bool {
-	if g.Namespace == "" {
-		return false
-	}
-
-	namespace := g.Namespace + g.NamespaceDelimiter
-
-	// If the group's full namespace + delim equals the option
-	if namespace == optname {
-		return false
-	}
-
-	// Or if the current option has the current namespace in it.
-	if strings.HasPrefix(optname, namespace) {
-		return false
-	}
-
-	// If typed input is an incomplete namespace, or empty
-	if strings.HasPrefix(namespace, optname) || optname == "" {
-		return true
-	}
-
-	return true
-}
-
 // getGroup is a short lookup method.
-func (c *completion) getGroup(name string) *CompletionGroup {
+func (c *completion) getGroup(name string, fallback compType) *CompletionGroup {
+	// Return the default group for the type if no name
+	if name == "" {
+		return c.comps.defaultGroup(fallback)
+	}
+
+	// Or find a group matching the name we want
+	var group *CompletionGroup
+
 	for _, grp := range c.comps.groups {
 		if grp.Name == name {
-			return grp
+			group = grp
 		}
 	}
 
-	return nil
+	// If the group is still nil (no matching tags),
+	// return a new one with the name given
+	if group == nil {
+		group = c.comps.NewGroup(name)
+		group.argType = fallback
+	}
+
+	return group
 }
 
 func (c *completion) skipPositional(n int) {
@@ -838,7 +854,7 @@ func (c *completion) absorb(comps Completions) {
 	// if it contains at least one completion. This is
 	// an easy way to transfer all user-defined default
 	// formats (colors) onto our own completions object.
-	if len(comps.defaultGroup().suggestions) > 0 {
-		c.comps.defGroup = comps.defaultGroup()
-	}
+	// if len(comps.defaultGroup().suggestions) > 0 {
+	//         c.comps.defGroup = comps.defaultGroup()
+	// }
 }

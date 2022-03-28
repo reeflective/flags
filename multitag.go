@@ -138,14 +138,14 @@ func (x *multiTag) cached() map[string][]string {
 	return x.cache
 }
 
-func (x *multiTag) Get(key string) string {
+func (x *multiTag) Get(key string) (string, bool) {
 	c := x.cached()
 
 	if v, ok := c[key]; ok {
-		return v[len(v)-1]
+		return v[len(v)-1], true
 	}
 
-	return ""
+	return "", false
 }
 
 func (x *multiTag) GetMany(key string) []string {
