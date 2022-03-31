@@ -396,6 +396,7 @@ func (g *Group) scanOption(mtag multiTag, field reflect.StructField, val reflect
 
 	envDefaultKey, _ := mtag.Get("env")
 	envDefaultDelim, _ := mtag.Get("env-delim")
+	argsDelim, _ := mtag.Get("args-delim")
 
 	option := &Option{
 		Description:      description,
@@ -424,6 +425,19 @@ func (g *Group) scanOption(mtag multiTag, field reflect.StructField, val reflect
 			"boolean flag `%s' may not have default values, they always default to `false' and can only be turned on",
 			option.shortAndLongName())
 	}
+
+	if len(argsDelim) > 1 {
+		return newErrorf(ErrInvalidTag,
+			"Argument delimiter for flag `%s' cannot be longer than 1 (rune)",
+			option.shortAndLongName())
+	}
+
+	argumentDelim, size := utf8.DecodeRuneInString(argsDelim)
+	if size == 0 {
+		argumentDelim, _ = utf8.DecodeRuneInString(defaultArgumentDelimiter)
+	}
+
+	option.ArgsDelim = argumentDelim
 
 	g.options = append(g.options, option)
 

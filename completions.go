@@ -37,7 +37,7 @@ import (
 // groups, customize their appearance/style, or even reference builtin completers
 // or shell directives. Please see the package documentation for exhaustive help.
 type Completer interface {
-	Complete(prefix string) Completions
+	Complete(comps *Completions)
 }
 
 // CompletionFunc - Function yielding one or more completions groups.
@@ -48,7 +48,7 @@ type Completer interface {
 //
 // @Completions - See the type documentation for information on methods
 // or tools available through this Completions type.
-type CompletionFunc func(prefix string) Completions
+type CompletionFunc func(comps *Completions)
 
 // Completions is essentially a list of completion groups, with
 // several helper functions for adding groups, accessing colors
@@ -63,12 +63,27 @@ type CompletionFunc func(prefix string) Completions
 // Completions.Error(err)), no completions will be offered to the parent
 // shell, and the error will be notified instead, or workflow will continue.
 type Completions struct {
-	// defGroup        *CompletionGroup
-	groups          []*CompletionGroup
-	prefix          string
-	dynamic         bool
+	groups []*CompletionGroup
+
+	// Internal part used to store the `--flag` part of a word.
+	// This is needed by the shell, but never needed by users.
+	flagPrefix string
+	// This prefix is the whole last word being completed, excluding
+	// any flag name when the argument is embedded/attached (eg. -f=/path/arg)
+	// This does not consider multi-argument flags: it will return all of them.
+	// See PrefixFull() for an example.
+	prefix string
+	// The last prefix is only the part of the prefix that is relevant to an
+	// individual completer, such as the current argument of a []string option.
+	// See PrefixLast() for an example.
+	last string
+	// splitPrefix is another internal prefix, never exposed to the user.
+	// It is equal to prefix - last, and is used only when the argument being
+	// completed is embedded/attached to its multi-arg option (slice/map).
+	splitPrefix string
+
 	prefixDirective prefixDirective
-	last            string
+	dynamic         bool
 	err             error
 }
 
@@ -77,6 +92,21 @@ type Completions struct {
 // group heading in the shell caller completion output). Equivalent of group.Add().
 func (c *Completions) Add(completion, description, alias string, color termenv.Color) {
 	c.defaultGroup(compArgument).Add(completion, description, alias, color)
+}
+
+// AddMapValues is a special function that will only work if the type (arg/opt) being completed is
+// a map: if it's the case, and that this function is called AT LEAST ONCE, the completion system
+// will automatically complete either the key, or if a colon (:) is found, the values for that key.
+//
+// NOTE: The `completion` is normally an existing (already added) completion. If not, it will automatically
+// be added as such. Also note that you can analyze your command/options struct, because they are populated
+// with command-line args in real-time, as the user types them in the shell.
+//
+// @completion      - The candidate used as key for the map completion.
+// @values          - The list of candidates that will be proposed as values to the key.
+// @descriptions    - The descriptions mapped to each of the @values.
+func (c *Completions) AddMapValues(completion string, values []string, descriptions map[string]string) {
+	c.defaultGroup(compArgument).AddMapValues(completion, values, descriptions)
 }
 
 // FormatMatch adds a mapping between a string pattern (can be either a regexp, or anything),
@@ -95,17 +125,58 @@ func (c *Completions) FormatType(completions, descriptions termenv.Color) {
 // you wish. It's tracked, so you don't need to bind it in a further function.
 func (c *Completions) NewGroup(name string) *CompletionGroup {
 	group := &CompletionGroup{
-		Name:          name,
-		CompDirective: ShellCompDirectiveDefault,
-		aliases:       map[string]string{},
-		descriptions:  map[string]string{},
-		styles:        map[string]string{},
-		argType:       compArgument,
-		tag:           name,
+		Name:            name,
+		CompDirective:   ShellCompDirectiveDefault,
+		aliases:         map[string]string{},
+		descriptions:    map[string]string{},
+		mapValues:       map[string][]string{},
+		mapDescriptions: map[string]string{},
+		styles:          map[string]string{},
+		argType:         compArgument,
+		tag:             name,
 	}
 	c.groups = append(c.groups, group)
 
 	return group
+}
+
+// GetGroupOrCreate always return a group of completions, either one
+// named after the name function parameter, or a new one created with it.
+func (c *Completions) GetGroupOrCreate(name string) *CompletionGroup {
+	for _, group := range c.groups {
+		if group.isInternal {
+			continue
+		}
+		if group.Name == name {
+			return group
+		}
+	}
+
+	return c.NewGroup(name)
+}
+
+// PrefixLast returns the part of the last shell word that is currently
+// considered as the $PREFIX relevant to the argument being completed.
+//
+// Example:     --files=/path1,/second/path,/third/path
+//
+// is an option of type []string, accepting multiple arguments. This function
+// will return the currently completed argument only, here `/third/path`.
+func (c *Completions) PrefixLast() string {
+	return c.last
+}
+
+// PrefixFull returns the part of the last shell word that is currently completed,
+// (also considered $PREFIX). This differs slightly from PrefixLast(), in that
+// this function will return the whole argument word without consideration for
+// the type of the argument being completed (slice/map or not).
+//
+// Example:     --files=/path1,/second/path,/third/path
+//
+// will return `/path1,/second/path,/third/path`, and not only the last,
+// current argument (`/third/path`), but without the `--files` flag itself.
+func (c *Completions) PrefixFull() string {
+	return c.prefix // TODO: exclude the flag name ifself
 }
 
 // SetDynamic is used to signal the completer that we want to replace the
@@ -113,6 +184,24 @@ func (c *Completions) NewGroup(name string) *CompletionGroup {
 func (c *Completions) SetDynamic(last string) {
 	c.dynamic = true
 	c.last = last
+}
+
+// GetOptionValues allows the completer to retrieve the values that are currently
+// set for a given option flag, as parsed on the current command-line words.
+// This enables to write provide completions that are dependent on the current
+// state of another option.
+//
+// Parameters:
+// @short   - The short name of an option flag (eg. `p` of a `-p` flag).
+// @long    - The long name of an option, possibly namespaced.
+//
+// If both parameters are non-nil ("") and they're not designating
+// the same option flag, the long name will have precedence.
+//
+// The user is also left in charge of casting/asserting the returned interface
+// to the type of the option itself, handling any error if the cast is invalid.
+func (c *Completions) GetOptionValues(short, long string) interface{} {
+	return nil
 }
 
 // Debug prints the specified string to the same file as where the
@@ -234,6 +323,29 @@ const (
 	prefixCut
 )
 
+// getShellPrefix computes the correct prefix to be passed to the shell,
+// depending on which flag/last/full prefix prevails. This does not take
+// care of the directive, as this is set in the completion code itself,
+// depending on the needs. Thus, and although this might return an non-empty
+// prefix string, it might be ignored by the shell completion system still.
+func (c *Completions) getShellPrefix() (shellPrefix string) {
+	// Always add the flag prefix, even if empty
+	shellPrefix += c.flagPrefix
+
+	if c.splitPrefix != "" {
+		// If the splitPrefix is not nil, we are currently
+		// completing a multi-arg option arguments, so we add
+		// this prefix instead of the full one.
+		shellPrefix += c.splitPrefix
+	} else {
+		// Or use the full prefix, which is used by several
+		// things such as namespaced commands, or custom completers.
+		shellPrefix += c.prefix
+	}
+
+	return
+}
+
 // output builds the complete list of completions
 // according to the shell type, and prints them to stdout
 // for consumption by completion scripts.
@@ -257,7 +369,7 @@ func (c *Completions) output() {
 	)
 
 	// Then print the completion prefix, and an empty line.
-	fmt.Fprintln(os.Stdout, c.prefix)
+	fmt.Fprintln(os.Stdout, c.getShellPrefix())
 	fmt.Fprint(os.Stdout, "\n")
 
 	// And print any options (as an array) that

@@ -11,4 +11,8 @@ const (
 
 	bashCompLogFilePerm = 0o644
 	argumentWordReq     = "argument"
+
+	defaultArgumentDelimiter   = ","
+	argumentListExpansionBegin = "{"
+	argumentListExpansionEnd   = "}"
 )

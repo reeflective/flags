@@ -72,6 +72,12 @@ type Option struct {
 	// without any space separating them from the option name itself.
 	NoSpace bool
 
+	// If the option accepts multiple arguments (it's a slice or map), the argument
+	// separator is used to split the argument string (word) into multiple ones.
+	// The option list/slice is then populated with these splitted arguments.
+	// By default, this separator is a comma (`,`).
+	ArgsDelim rune
+
 	// Determines if the option will be always quoted in the INI output
 	iniQuote bool
 
@@ -91,7 +97,9 @@ type Option struct {
 	// The struct field value which the option represents.
 	value reflect.Value
 
-	// Completion
+	// The completer is not nil when the option struct has either:
+	// - been tagged with a completer function (builtin or custom)
+	// - a completer bound directly to the command parser for a given arg/opt.
 	completer CompletionFunc
 }
 
@@ -587,4 +595,33 @@ func (option *Option) isValidValue(arg string) error {
 	}
 
 	return nil
+}
+
+// Check if option type allows for repetition.
+func (option *Option) optionNotRepeatable() bool {
+	switch option.Field().Type.Kind() {
+	// Fields for which we cannot call twice the --option, but to which we
+	// might pass comma-separated values to a single --option.
+	case reflect.Bool:
+		return true
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return true
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		return true
+	case reflect.Float32, reflect.Float64:
+		return true
+	case reflect.String:
+		return true
+	case reflect.Func:
+		return true
+
+	// Fields that can be set both with comma-separated or multiple --option
+	// calls, in any combination wished.
+	case reflect.Array:
+		return false
+	case reflect.Map:
+		return false
+	default:
+		return false
+	}
 }
