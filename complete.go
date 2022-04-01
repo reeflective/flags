@@ -1,6 +1,7 @@
 package flags
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
@@ -31,6 +32,7 @@ func (p *Client) initCompletionCmd(args []string) {
 	completer := &completion{
 		parser:     p,
 		parseState: &parseState{},
+		comps:      &Completions{},
 	}
 
 	complete := p.AddCommand(ShellCompRequestCmd,
@@ -61,12 +63,14 @@ func (p *Client) initCompletionCmd(args []string) {
 type completion struct {
 	// Command line arguments
 	Args struct {
-		List []string `description:"The command-line words to parse for completion"`
+		Shell string `description:"The name of the shell (either system $SHELL or library), calling for completions"`
+		// List []string `description:"The command-line words to parse for completion"`
 	} `positional-args:"yes" required:"yes"`
 
 	// Parsing
 	parser      *Client // Used to determine position/candidates/providers/errors
 	*parseState         // Used to store and manipulate the command-line arguments.
+	parseErr    *Error  // The parser might legitimately throw an error on which we must act later.
 
 	// Completion
 	toComplete string       // The last (potentially incomplete/"nil") argument, apart from Args.List
@@ -84,17 +88,34 @@ type completion struct {
 // command builds the list of completions according to the given context
 // and tools/types/info available.
 func (c *completion) Execute(args []string) (err error) {
-	// The last argument, which is not completely typed by the user,
-	// should not be part of the list of arguments. It can be either ""
-	// or an incomplete word. Populate the parser with those trimmed args.
-	c.toComplete = c.Args.List[len(c.Args.List)-1]
-	c.args = c.Args.List[:len(c.Args.List)-1]
+	// Populate our working struct with argument words
+	// accordingly to the current context/shell, etc.
+	c.prepareWords(args)
 
-	// Initialize the object storing all completions and shell details.
-	c.comps = &Completions{}
+	// The first step is identical to parsing for execution.
+	// We first populate our lookups (commands/groups/options)
+	c.parser.fillParser(c.parseState)
 
-	// First, pre-parse the command-line string
-	// exactly as we would do for command execution.
+	// And parse the command words onto their data struct fields.
+	// This might produce an error (like a missing required option)
+	c.parser.parseCommandWords(c.parseState)
+
+	// Some errors are fatal in the sense that no completions can
+	// be performed (wrong option somewhere, invalid command, etc)
+	if isFatal := c.processParseError(c.err); isFatal {
+		// We should have a function here building
+		// the errors into detailed messages.
+		c.comps.output()
+
+		return
+	}
+
+	// Now we reset our internal list of arguments, because
+	// we need to do a second, different parsing.
+	c.prepareWords(args)
+
+	// The first step is identical to parsing for execution.
+	// We first populate our lookups (commands/groups/options)
 	c.parser.fillParser(c.parseState)
 
 	// Then populate any Command/Option/other objects
@@ -111,7 +132,67 @@ func (c *completion) Execute(args []string) (err error) {
 	// and print all completion candidates to stdout.
 	c.comps.output()
 
-	return
+	return err
+}
+
+func (c *completion) processParseError(err error) bool {
+	// Notify if no command has been found in the command-line string
+	if len(c.command.commands) != 0 && !c.command.SubcommandsOptional {
+		err = c.estimateCommand()
+	}
+
+	// Don't bother if there has been no error arising from anywhere.
+	if err == nil {
+		return false
+	}
+
+	c.parseErr = &Error{}
+	errors.As(err, &c.parseErr)
+
+	//
+	// FATAL errors & cases -----------------
+	//
+
+	// An unknown command is only relevant when it has been detected
+	// in a word BEFORE the last one (no matter what this word is)
+	if c.parseErr.Type == ErrUnknownCommand {
+		c.err = fmt.Errorf("unknown command: %s", c.retargs[0])
+
+		return true
+	}
+
+	// Essentially, when the parser gets to think there is an argument
+	// to a boolean, this means this argument "is lost, orphaned", and
+	// this is ambiguous, so we return the error now so the user is
+	// warned clearly, no matter how far he goes on typing.
+	if c.parseErr.Type == ErrNoArgumentForBool {
+		c.err = fmt.Errorf("%s (argument might end up orphaned)", c.parseErr.Message)
+
+		return true
+	}
+
+	// Errors arising from options are more context-dependent.
+
+	//
+	// NON-fatal errors & cases -----------------
+	//
+
+	// If we are still missing arguments, compute the ration and spread them
+	// a special type of error that is only displayed in special prompts/lines.
+	// The error is never fatal.
+	if c.parseErr.Type == ErrExpectedArgument {
+	}
+
+	return false
+}
+
+// prepareWords takes care of populating arguments in some places
+// so we can work with them more easily. Various adjustements are
+// made depending things like which shell called us, how many words, etc.
+func (c *completion) prepareWords(args []string) {
+	c.toComplete = args[len(args)-1]
+	c.args = args[:len(args)-1]
+	c.comps.Debugln(fmt.Sprintf("%s", c.args), false)
 }
 
 // populateInternal is used to detect which types (command/option/arg/some)
@@ -149,12 +230,9 @@ func (c *completion) populateInternal() {
 
 		// ...or a command, which might be namespaced.
 		if cmd, ok := c.lookup.commands[arg]; ok {
+			c.comps.Debug(cmd.Name, false)
 			cmd.fillParser(c.parseState)
 		}
-
-		// Anyway (arg or command), no option to process yet,
-		// delete any current and continue to next word.
-		c.opt = nil
 	}
 }
 
@@ -177,11 +255,9 @@ func (c *completion) getCompletions() {
 		return
 	}
 
-	// If we have required options, we include them
-	// in the completions before any argument.
-
 	// Else if we are completing a positional argument          // TODO: Here might have to handle lists/single args differently
 	if len(c.positional) > 0 {
+		c.comps.Debug(c.positional[0].Name, false)
 		c.completeValue(c.positional[0].value, c.toComplete)
 	}
 
@@ -614,7 +690,7 @@ func (c *completion) completeValue(value reflect.Value, match string) {
 
 	// If we have to do some file completion, we will have to modify
 	// the prefix for the shell caller to handle it on its own.
-	var mustFilePrefix = false
+	mustFilePrefix := false
 
 	// Always modify the type of completions we annonce
 	// to the shell script, depending on the shell completion
@@ -686,7 +762,17 @@ func (c *completion) processOption(arg string) (done bool) {
 	prefix, optname, islong := stripOptionPrefix(arg)
 	optname, _, argument := splitOption(prefix, optname, islong)
 
-	// If we have remaining words, we can skip right away.
+	// If we are mandated to pass after the first word that is not
+	// an option, we don't bother scanning the rest of command-line
+	if optname == "" && islong && (c.parser.Options&PassAfterNonOption) != None {
+		c.skipPositional(len(c.args))
+
+		return true
+	}
+
+	// If the option is attached to its argument with like -p=arg
+	// and that we have a non-nil argument, we don't need to pop
+	// the next word.
 	if argument != nil {
 		return false
 	}
@@ -695,69 +781,28 @@ func (c *completion) processOption(arg string) (done bool) {
 	// which might be several short options stacked together.
 	// Also returns an indication on what we are supposed to
 	// proceed with completion for this option.
-	//
-	// If the option is long, this will just lookup return it.
-	opt, canarg := c.getStackedOption(optname, islong)
-
-	// If we are mandated to pass after the first word that is not
-	// an option, we don't bother scanning the rest of command-line
-	if opt == nil && (c.parser.Options&PassAfterNonOption) != None {
-		c.opt = nil
-		c.skipPositional(len(c.args))
-
-		return true
+	if !islong {
+		c.opt, _, _, _, _ = c.getStackedOrNested(optname)
+	} else {
+		c.opt = c.lookup.longNames[optname]
 	}
 
-	// Or, we have an option that requires an argument:
-	// - We either already have it, so we skip it (+1 with pop)
-	// - Or we have an option for which to provide completion !
-	if opt != nil && opt.canArgument() && !opt.OptionalArgument && canarg {
-		if len(c.args) > 0 {
-			c.pop()
+	// Or, we have an option...
+	if c.opt != nil {
+		if c.opt.canArgument() && !c.opt.OptionalArgument {
+			// requiring an argument, so pop one if possible
+			// and forget about this option
+			if len(c.args) > 0 {
+				c.pop()
+				c.opt = nil
+			}
 		} else {
-			c.opt = opt
+			// Or the option cannot argument, and we also forget it
+			c.opt = nil
 		}
 	}
 
 	return false
-}
-
-func (c *completion) getStackedOption(optname string, isLong bool) (*Option, bool) {
-	var opt *Option
-
-	// By default, all options can have an argument
-	canarg := true
-
-	// Long options cannot be stacked, so lookup the whole word
-	if isLong {
-		opt = c.lookup.longNames[optname]
-
-		return opt, canarg
-	}
-
-	// Else, loop over each character (rune) in -what is assumed to be-
-	// the array of short options stacked together.
-	for idx, r := range optname {
-		sname := string(r)
-		opt = c.lookup.shortNames[sname]
-
-		// If the option is invalid, don't go further, and notify
-		// the completion/hint system we have an invalid option.
-		if opt == nil {
-			break
-		}
-
-		// Else if the first short option in the -assumed- "array of options"
-		// requires an argument and the array is longer than the option name,
-		// we assume the remainder to actually be that argument.
-		if idx == 0 && opt.canArgument() && len(optname) != len(sname) {
-			canarg = false
-
-			break
-		}
-	}
-
-	return opt, canarg
 }
 
 // getStackedOrNested takes a string that can be either a set of stacked options or namespaced short options,

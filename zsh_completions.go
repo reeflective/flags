@@ -120,8 +120,9 @@ _%[1]s()
         flagPrefix="-P ${BASH_REMATCH}"
     fi
 
-    # Prepare the command to obtain completions
-    requestComp="${words[1]} %[2]s ${words[2,-1]}"
+    # Prepare the command to obtain completions.
+    # The "zsh" parameter is used to notify the shell we are a Z-shell.
+    requestComp="${words[1]} %[2]s zsh ${words[2,-1]}"
     if [ "${lastChar}" = "" ]; then
         # If the last parameter is complete (there is a space following it)
         # We add an extra empty parameter so we can indicate this to the go completion code.

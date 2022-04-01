@@ -86,7 +86,7 @@ func (g *CompletionGroup) AddMapValues(completion string, values []string, descr
 	}
 
 	// Add the KEY completion if it does not exist yet.
-	var found = false
+	found := false
 	for _, comp := range g.suggestions {
 		if comp == completion {
 			found = true

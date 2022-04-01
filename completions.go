@@ -82,6 +82,11 @@ type Completions struct {
 	// completed is embedded/attached to its multi-arg option (slice/map).
 	splitPrefix string
 
+	// cmdWords contains all set options (and their arguments) for the current
+	// command-line. This allows user-completers to get the values for an option
+	// on which they might depend for completing themselves.
+	cmdWords map[string]interface{}
+
 	prefixDirective prefixDirective
 	dynamic         bool
 	err             error
@@ -344,6 +349,16 @@ func (c *Completions) getShellPrefix() (shellPrefix string) {
 	}
 
 	return
+}
+
+func (c *completion) newCompletions() *Completions {
+	comps := &Completions{
+		cmdWords: map[string]interface{}{},
+	}
+
+	// Build the list of currently parsed options
+
+	return comps
 }
 
 // output builds the complete list of completions

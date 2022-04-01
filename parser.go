@@ -593,7 +593,7 @@ func (p *parseState) checkRequired(cmd *Command) error {
 // iterates through all looked-up positional arguments, and builds an
 // error if any of them has remaining, missing shell words.
 func (p *parseState) checkRequiredArgs() error {
-	if len(p.positional) > 0 {
+	if len(p.positional) == 0 {
 		return nil
 	}
 
@@ -616,6 +616,11 @@ func (p *parseState) checkRequiredArgs() error {
 // returns a list of positional arguments that have been provided
 // an insufficient number of corresponding shell words.
 func (p *parseState) getRequiredArgNames() (reqnames []string) {
+	// A counter to print the correct, accumulated
+	// number of positional missing/required, if any.
+	accumulatedArgsNeeded := 0
+
+	// For each registered positional argument in our current command.
 	for _, arg := range p.positional {
 		if !p.argIsRequired(arg) {
 			continue
@@ -624,6 +629,7 @@ func (p *parseState) getRequiredArgNames() (reqnames []string) {
 		// If we have a required arg, but not last, just note it.
 		if !arg.isRemaining() {
 			reqnames = append(reqnames, "`"+arg.Name+"`")
+			accumulatedArgsNeeded += 1
 
 			continue
 		}
@@ -638,7 +644,8 @@ func (p *parseState) getRequiredArgNames() (reqnames []string) {
 				arguments = argumentWordReq
 			}
 
-			reqnames = append(reqnames, "`"+arg.Name+" (at least "+fmt.Sprintf("%d", arg.Required)+" "+arguments+")`")
+			reqnames = append(reqnames, "`"+arg.Name+" (at least "+fmt.Sprintf("%d",
+				accumulatedArgsNeeded+arg.Required)+" "+arguments+")`")
 
 			continue
 		}
