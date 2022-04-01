@@ -192,7 +192,6 @@ func (c *completion) processParseError(err error) bool {
 func (c *completion) prepareWords(args []string) {
 	c.toComplete = args[len(args)-1]
 	c.args = args[:len(args)-1]
-	c.comps.Debugln(fmt.Sprintf("%s", c.args), false)
 }
 
 // populateInternal is used to detect which types (command/option/arg/some)
@@ -230,7 +229,6 @@ func (c *completion) populateInternal() {
 
 		// ...or a command, which might be namespaced.
 		if cmd, ok := c.lookup.commands[arg]; ok {
-			c.comps.Debug(cmd.Name, false)
 			cmd.fillParser(c.parseState)
 		}
 	}
@@ -242,7 +240,7 @@ func (c *completion) getCompletions() {
 	// If the last complete word is an option waiting for an
 	// argument, we are completing it with the $CURRENT word.
 	if c.opt != nil {
-		c.completeValue(c.opt.value, c.toComplete) // TODO: in here, will need to handle lists vs individual args
+		c.completeOptionArgument("", "", &c.toComplete)
 
 		return
 	}
@@ -255,9 +253,8 @@ func (c *completion) getCompletions() {
 		return
 	}
 
-	// Else if we are completing a positional argument          // TODO: Here might have to handle lists/single args differently
+	// Else if we are completing a positional argument
 	if len(c.positional) > 0 {
-		c.comps.Debug(c.positional[0].Name, false)
 		c.completeValue(c.positional[0].value, c.toComplete)
 	}
 
@@ -354,7 +351,13 @@ func (c *completion) completeOption(match string) {
 
 	// Else if we have a partial/complete argument
 	if argument != nil {
-		c.completeOptionArgument(optname, split, argument, islong)
+		if !islong {
+			c.opt, _, _, _, _ = c.getStackedOrNested(optname)
+		} else {
+			c.opt = c.lookup.longNames[optname]
+		}
+
+		c.completeOptionArgument(optname, split, argument)
 
 		return
 	}
@@ -439,21 +442,7 @@ func (c *completion) completeShortOptions(optname string) {
 }
 
 // as soon as we have a valid "argument" currently typed, we handle its completion here.
-func (c *completion) completeOptionArgument(optname, split string, argument *string, long bool) {
-	// If we are told that the option is a short one,
-	// we might have been passed stacked options, so
-	// get the one we are actually supposed to complete.
-	if !long {
-		c.opt, _, _, _, _ = c.getStackedOrNested(optname)
-	} else {
-		c.opt = c.lookup.longNames[optname]
-	}
-
-	// We MUST have found an option anyway
-	if c.opt == nil {
-		return // TODO: we should not return naked here, as something when wrong
-	}
-
+func (c *completion) completeOptionArgument(optname, split string, argument *string) {
 	// Update the the shell comp prefix, with the whole word anyway
 	// (regardless of whether they are stacked options or not).
 	c.comps.flagPrefix += optname
@@ -477,18 +466,16 @@ func (c *completion) completeOptionArgument(optname, split string, argument *str
 	args := strings.Split(*argument, argDelim)
 
 	// The last element is the one we are currently completing, even if empty.
-	toComplete := args[len(args)-1]
+	lastArgument := args[len(args)-1]
 
 	// If we have more than one item, get the last, currently completed
 	// argument and set it as the last $PREFIX, for individual completions.
 	if len(args) > 1 && string((*argument)[0]) != argumentListExpansionBegin {
 		c.comps.splitPrefix = strings.Join(args[:len(args)-1], argDelim) + argDelim
-		// c.comps.prefix += prefix
-		c.comps.last += args[len(args)-1]
 	}
 
 	// Regardless, pass the current split argument to the completer
-	c.completeValue(c.opt.value, toComplete)
+	c.completeValue(c.opt.value, lastArgument)
 }
 
 // Build the list of all options completions, because we are asked for one.
@@ -664,6 +651,11 @@ func (c *completion) addOptionComp(comps *CompletionGroup, opt *Option, short, u
 
 // completeValue generates completions for a given command/option argument value.
 func (c *completion) completeValue(value reflect.Value, match string) {
+	// Since this function is ALWAYS considering a unique argument
+	// (eg. a int in a []int), we only -but always- consider this
+	// match parameter as the last, relevant prefix here.
+	c.comps.last += match
+
 	// Initialize blank if needed
 	if value.Kind() == reflect.Slice {
 		value = reflect.New(value.Type().Elem())
