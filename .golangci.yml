@@ -145,7 +145,6 @@ linters:
     - ineffassign # Detects when assignments to existing variables are not used (fast)
     - staticcheck # A ton of static analysis checks ()
     - structcheck # Finds unused struct fields ()
-    - typecheck   # Like the front-end of the Go compiler, parses and type-checks Go code ()
     - unused      # Checks for unused constants, variables, functions and types ()
     - varcheck    # Finds unused global variables and constants ()
 
@@ -164,7 +163,7 @@ linters:
     - errchkjson      # checks types passed to JSON encoding functions & related  (bugs)
     - errname         # checks that sentinel errors are prefix with Err           (style)
     - errorlint       # finds potential problems with Go 1.13 error wrap scheme   (bugs, err)
-    # - exhaustive      # checks exhaustiveness of enum switch statements           (bugs)
+    - exhaustive      # checks exhaustiveness of enum switch statements           (bugs)
     # - exhaustivestruct # checks if all struct fields are initialized              (style,test)
     - exportloopref   # checks for pointers to enclosing loop variables           (bugs)
     # - forbidigo       # Forbids identifiers                                       (style)
@@ -221,6 +220,7 @@ linters:
     # - testpackage     # makes you use a separate _test package                    (style,test)
     - thelper         # detects test helpers without t.Helper(), checks consistent (style)
     - tparallel       # detects inappropriate use of t.Parallel() in your tests   (style,test)
+    # - typecheck   # Like the front-end of the Go compiler, parses and type-checks Go code ()
     - unconvert       # remove unnecessary type convertions                       (style)
     - unparam         # reports unused function parameters                        (unused)
     - varnamelen      # checks that the length of a var name matches its scope    (style)
@@ -243,17 +243,16 @@ linters:
     # - ineffassign
     # - staticcheck
     # - structcheck
-    # - typecheck
+    - typecheck
     # - unused
     # - varcheck
-     
-    - exhaustive      # checks exhaustiveness of enum switch statements           (bugs)
-    - exhaustivestruct # checks if all struct fields are initialized              (style,test)
     
     # Deactivated linters above (explicitly deactived here, so that `presets` section
     # above does not activate them again)
     - asciicheck    # Checks that code does not contain non-ASCII identifiers     (bugs,style)
     - depguard        # checks if imports are in list of acceptable pkgs      (style,imp,mod)
+    - exhaustruct     # checks if all struct fields are initialized              (style,test)
+    - exhaustivestruct # checks if all struct fields are initialized              (style,test)
     - forbidigo       # Forbids identifiers                                       (style)
     - gochecknoinits  # checks that no init functions are present                 (style)
     - goimports       # fixes imports, formats code same as gofmt                 (fmt,import)
@@ -373,7 +372,7 @@ issues:
   # Default: []
   # rules:
   #   - linters:
-  #       - unparam 
+  #       - dupl
   #     severity: info
 
 #
