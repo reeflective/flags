@@ -1,6 +1,7 @@
 package completions
 
 import (
+	"errors"
 	"reflect"
 	"strings"
 
@@ -50,13 +51,16 @@ const (
 	ShellCompDirectiveDefault CompDirective = 0
 )
 
-var completeTagName = "complete"
+var errCommandNotFound = errors.New("command not found")
 
 const (
+	completeTagName     = "complete"
 	completeTagMaxParts = 2
 )
 
-func getCompletionAction(name, value string) (action comp.Action) {
+func getCompletionAction(name, value string) comp.Action {
+	var action comp.Action
+
 	switch name {
 	case "NoSpace":
 		return action.NoSpace()
@@ -77,10 +81,10 @@ func getCompletionAction(name, value string) (action comp.Action) {
 
 	// Should normally not be used often
 	case "Default":
-		return
+		return action
 	}
 
-	return
+	return action
 }
 
 // the appropriate number of completers (equivalents carapace.ActionCallback)
@@ -120,7 +124,7 @@ func typeCompleter(val reflect.Value) comp.CompletionCallback {
 }
 
 // taggedCompletions builds a list of completion actions with struct tag specs.
-func taggedCompletions(tag tag.MultiTag) (cb comp.CompletionCallback, found bool) {
+func taggedCompletions(tag tag.MultiTag) (comp.CompletionCallback, bool) {
 	compTag := tag.GetMany(completeTagName) // TODO constants
 
 	if len(compTag) == 0 {

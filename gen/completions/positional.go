@@ -1,9 +1,11 @@
 package completions
 
 import (
+	"fmt"
 	"reflect"
 
 	"github.com/reeflective/flags/internal/positional"
+	"github.com/reeflective/flags/internal/scan"
 	"github.com/reeflective/flags/internal/tag"
 	comp "github.com/rsteube/carapace"
 )
@@ -21,7 +23,7 @@ func positionals(comps *comp.Carapace, tag tag.MultiTag, val reflect.Value) (boo
 	// tools to manage, parse words and raise any errors related
 	args, err := positional.ScanArgs(val, tag)
 	if err != nil || args == nil {
-		return true, err
+		return true, fmt.Errorf("%w: %s", scan.ErrScan, err.Error())
 	}
 
 	// Find all completer implementations, or
@@ -208,7 +210,7 @@ func (c *compCache) useCompleter(index int) {
 // flush returns all the completions cached by our positional arguments,
 // so we invoke each of them with the context so that they can perform
 // so filtering tasks if they need to.
-func (c *compCache) flush(ctx comp.Context) (action comp.Action) {
+func (c *compCache) flush(ctx comp.Context) comp.Action {
 	actions := make([]comp.Action, 0)
 
 	// fixed-max positional completers

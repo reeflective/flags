@@ -162,7 +162,7 @@ func newCommand(name string, mtag tag.MultiTag, parent *cobra.Group) *cobra.Comm
 
 	// - Either specifically mentionned on the command (thus has priority)
 	if group, isSet := mtag.Get("group"); isSet {
-		subc.AddGroup(&cobra.Group{Title: group})
+		setGroupForCommand(subc, group)
 	}
 
 	// TODO: here inherit from struct marked group, with commands and options.
@@ -188,4 +188,25 @@ func setRuns(cmd *cobra.Command, impl flags.Commander) {
 
 		return impl.Execute(retargs)
 	}
+}
+
+func setGroupForCommand(subc *cobra.Command, groupID string) {
+	var group *cobra.Group
+
+	var parent *cobra.Command
+
+	if subc.HasParent() {
+		for _, grp := range parent.Groups() {
+			if grp.ID == groupID {
+				group = grp
+			}
+		}
+	}
+
+	if group == nil {
+		group = &cobra.Group{ID: groupID}
+		parent.AddGroup(group)
+	}
+
+	subc.GroupID = group.ID
 }

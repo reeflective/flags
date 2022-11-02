@@ -2,6 +2,7 @@ package completions
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 
 	"github.com/reeflective/flags"
@@ -17,10 +18,10 @@ import (
 var ErrShortNameTooLong = errors.New("short names can only be 1 character long")
 
 // flagsGroup finds if a field is marked as a subgroup of options, and if yes, scans it recursively.
-func groupComps(comps *comp.Carapace, cmd *cobra.Command, val reflect.Value, sfield *reflect.StructField) (bool, error) {
-	mtag, none, err := tag.GetFieldTag(*sfield)
+func groupComps(comps *comp.Carapace, cmd *cobra.Command, val reflect.Value, fld *reflect.StructField) (bool, error) {
+	mtag, none, err := tag.GetFieldTag(*fld)
 	if none || err != nil {
-		return true, err
+		return true, fmt.Errorf("%w: %s", scan.ErrScan, err.Error())
 	}
 
 	// description, _ := mtag.Get("description")
@@ -40,12 +41,9 @@ func groupComps(comps *comp.Carapace, cmd *cobra.Command, val reflect.Value, sfi
 	// We are either waiting for:
 	// A group of options ("group" is the legacy name)
 	optionsGroup, isSet := mtag.Get("group")
-	if isSet && optionsGroup != "" {
-		cmd.AddGroup(&cobra.Group{
-			Title: optionsGroup,
-		})
 
-		// Parse the options for completions
+	// Parse the options for completions
+	if isSet && optionsGroup != "" {
 		err := addFlagComps(comps, mtag, ptrval.Interface())
 
 		return true, err
@@ -54,21 +52,14 @@ func groupComps(comps *comp.Carapace, cmd *cobra.Command, val reflect.Value, sfi
 	// Or a group of commands and/or options, which we also scan,
 	// as each command will produce a new carapace, a new set of
 	// flag/positional completers, etc
-	commandGroup, isSet := mtag.Get("commands")
-	if isSet {
-		var group *cobra.Group
-		if !isStringFalsy(commandGroup) {
-			group = &cobra.Group{
-				Title: commandGroup,
-			}
-			cmd.AddGroup(group)
-		}
+	_, isSet = mtag.Get("commands")
 
-		// Parse for commands
+	// Parse for commands
+	if isSet {
 		scannerCommand := scanCompletions(cmd, comps)
 		err := scan.Type(ptrval.Interface(), scannerCommand)
 
-		return true, err
+		return true, fmt.Errorf("%w: %s", scan.ErrScan, err.Error())
 	}
 
 	return true, nil
@@ -104,7 +95,7 @@ func addFlagComps(comps *comp.Carapace, mtag tag.MultiTag, data interface{}) err
 	// we're just interested in running the handler on their values.
 	_, err := genflags.ParseFlags(data, flagOpts...)
 	if err != nil {
-		return err
+		return fmt.Errorf("%w: %s", flags.ErrParse, err.Error())
 	}
 
 	// If we are done parsing the flags without error and we have
@@ -118,7 +109,7 @@ func addFlagComps(comps *comp.Carapace, mtag tag.MultiTag, data interface{}) err
 
 // flagCompsScanner builds a scanner that will register some completers for an option flag.
 func flagCompsScanner(actions *map[string]comp.Action) flags.FlagFunc {
-	handler := func(flag string, tag tag.MultiTag, val reflect.Value) (err error) {
+	handler := func(flag string, tag tag.MultiTag, val reflect.Value) error {
 		// First bind any completer implementation if found
 		if completer := typeCompleter(val); completer != nil {
 			(*actions)[flag] = comp.ActionCallback(completer)
@@ -135,87 +126,83 @@ func flagCompsScanner(actions *map[string]comp.Action) flags.FlagFunc {
 	return handler
 }
 
-func isStringFalsy(s string) bool {
-	return s == "" || s == "false" || s == "no" || s == "0"
-}
-
 // scanOption finds if a field is marked as an option, and if yes, scans it and stores the object.
-func scanOption(mtag tag.MultiTag, field reflect.StructField, val reflect.Value) error {
-	// longname, _ := mtag.Get("long")                                      DONE
-	// shortname, _ := mtag.Get("short")                                    DONE
-	// iniName, _ := mtag.Get("ini-name")
-	//
-	// // Need at least either a short or long name
-	// if longname == "" && shortname == "" && iniName == "" {
-	//         return nil
-	// }
-	//
-	// short, err := getShortName(shortname)
-	// if err != nil {
-	//         return err
-	// }
-	//
-	// description, _ := mtag.Get("description")                            DONE
-	// def := mtag.GetMany("default")
-	//
-	// optionalValue := mtag.GetMany("optional-value")
-	// valueName, _ := mtag.Get("value-name")
-	// defaultMask, _ := mtag.Get("default-mask")
-	//
-	// optionalTag, _ := mtag.Get("optional")
-	// optional := !isStringFalsy(optionalTag)
-	// requiredTag, _ := mtag.Get("required")                               DONE
-	// required := !isStringFalsy(requiredTag)
-	// choices := mtag.GetMany("choice")                                    DONE
-	// hiddenTag, _ := mtag.Get("hidden")
-	// hidden := !isStringFalsy(hiddenTag)
-	//
-	// envDefaultKey, _ := mtag.Get("env")
-	// envDefaultDelim, _ := mtag.Get("env-delim")
-	// argsDelim, _ := mtag.Get("args-delim")
-	//
-	// option := &Flag{
-	//         Description:      description,
-	//         ShortName:        short,
-	//         LongName:         longname,
-	//         Default:          def,
-	//         EnvDefaultKey:    envDefaultKey,
-	//         EnvDefaultDelim:  envDefaultDelim,
-	//         OptionalArgument: optional,
-	//         OptionalValue:    optionalValue,
-	//         Required:         required,
-	//         ValueName:        valueName,
-	//         DefaultMask:      defaultMask,
-	//         Choices:          choices,
-	//         Hidden:           hidden,
-	//
-	//         // group: g,
-	//
-	//         field: field,
-	//         value: val,
-	//         tag:   mtag,
-	// }
-	//
-	// if option.isBool() && option.Default != nil {
-	//         return newErrorf(ErrInvalidTag,
-	//                 "boolean flag `%s' may not have default values, they always default to `false' and can only be turned on",
-	//                 option.shortAndLongName())
-	// }
-	//
-	// if len(argsDelim) > 1 {
-	//         return newErrorf(ErrInvalidTag,
-	//                 "Argument delimiter for flag `%s' cannot be longer than 1 (rune)",
-	//                 option.shortAndLongName())
-	// }
-	//
-	// argumentDelim, size := utf8.DecodeRuneInString(argsDelim)
-	// if size == 0 {
-	//         argumentDelim, _ = utf8.DecodeRuneInString(defaultArgumentDelimiter)
-	// }
-	//
-	// option.ArgsDelim = argumentDelim
+// func scanOption(mtag tag.MultiTag, field reflect.StructField, val reflect.Value) error {
+// longname, _ := mtag.Get("long")                                      DONE
+// shortname, _ := mtag.Get("short")                                    DONE
+// iniName, _ := mtag.Get("ini-name")
+//
+// // Need at least either a short or long name
+// if longname == "" && shortname == "" && iniName == "" {
+//         return nil
+// }
+//
+// short, err := getShortName(shortname)
+// if err != nil {
+//         return err
+// }
+//
+// description, _ := mtag.Get("description")                            DONE
+// def := mtag.GetMany("default")
+//
+// optionalValue := mtag.GetMany("optional-value")
+// valueName, _ := mtag.Get("value-name")
+// defaultMask, _ := mtag.Get("default-mask")
+//
+// optionalTag, _ := mtag.Get("optional")
+// optional := !isStringFalsy(optionalTag)
+// requiredTag, _ := mtag.Get("required")                               DONE
+// required := !isStringFalsy(requiredTag)
+// choices := mtag.GetMany("choice")                                    DONE
+// hiddenTag, _ := mtag.Get("hidden")
+// hidden := !isStringFalsy(hiddenTag)
+//
+// envDefaultKey, _ := mtag.Get("env")
+// envDefaultDelim, _ := mtag.Get("env-delim")
+// argsDelim, _ := mtag.Get("args-delim")
+//
+// option := &Flag{
+//         Description:      description,
+//         ShortName:        short,
+//         LongName:         longname,
+//         Default:          def,
+//         EnvDefaultKey:    envDefaultKey,
+//         EnvDefaultDelim:  envDefaultDelim,
+//         OptionalArgument: optional,
+//         OptionalValue:    optionalValue,
+//         Required:         required,
+//         ValueName:        valueName,
+//         DefaultMask:      defaultMask,
+//         Choices:          choices,
+//         Hidden:           hidden,
+//
+//         // group: g,
+//
+//         field: field,
+//         value: val,
+//         tag:   mtag,
+// }
+//
+// if option.isBool() && option.Default != nil {
+//         return newErrorf(ErrInvalidTag,
+//                 "boolean flag `%s' may not have default values, they always default to `false' and can only be turned on",
+//                 option.shortAndLongName())
+// }
+//
+// if len(argsDelim) > 1 {
+//         return newErrorf(ErrInvalidTag,
+//                 "Argument delimiter for flag `%s' cannot be longer than 1 (rune)",
+//                 option.shortAndLongName())
+// }
+//
+// argumentDelim, size := utf8.DecodeRuneInString(argsDelim)
+// if size == 0 {
+//         argumentDelim, _ = utf8.DecodeRuneInString(defaultArgumentDelimiter)
+// }
+//
+// option.ArgsDelim = argumentDelim
 
-	// g.flags = append(g.flags, option)
+// g.flags = append(g.flags, option)
 
-	return nil
-}
+// 	return nil
+// }

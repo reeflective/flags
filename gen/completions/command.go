@@ -11,6 +11,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// Gen uses a carapace completion builder to register various completions
+// to its underlying cobra command, parsing again the native struct for type
+// and struct tags' information.
+// Returns the carapace, so you can work with completions should you like.
 func Generate(cmd *cobra.Command, data interface{}, comps *comp.Carapace) (*comp.Carapace, error) {
 	if comps == nil {
 		comps = comp.Gen(cmd)
@@ -21,27 +25,7 @@ func Generate(cmd *cobra.Command, data interface{}, comps *comp.Carapace) (*comp
 
 	// Scan the struct recursively, for both arg/option groups and subcommands
 	if err := scan.Type(data, compScanner); err != nil {
-		return comps, err
-	}
-
-	return comps, nil
-}
-
-// Gen uses a carapace completion builder to register various completions
-// to its underlying cobra command, parsing again the native struct for type
-// and struct tags' information.
-// Returns the carapace, so you can work with completions should you like.
-func Gen(cmd *cobra.Command, data flags.Commander, comps *comp.Carapace) (*comp.Carapace, error) {
-	if comps == nil {
-		comps = comp.Gen(cmd)
-	}
-
-	// A command always accepts embedded subcommand struct fields, so scan them.
-	compScanner := scanCompletions(cmd, comps)
-
-	// Scan the struct recursively, for both arg/option groups and subcommands
-	if err := scan.Type(data, compScanner); err != nil {
-		return comps, err
+		return comps, fmt.Errorf("%w: %s", scan.ErrScan, err.Error())
 	}
 
 	return comps, nil
@@ -53,7 +37,7 @@ func scanCompletions(cmd *cobra.Command, comps *comp.Carapace) scan.Handler {
 	handler := func(val reflect.Value, sfield *reflect.StructField) (bool, error) {
 		mtag, none, err := tag.GetFieldTag(*sfield)
 		if none || err != nil {
-			return true, err
+			return true, fmt.Errorf("%w: %s", scan.ErrScan, err.Error())
 		}
 
 		// If the field is marked as -one or more- positional arguments, we
@@ -85,11 +69,9 @@ func command(cmd *cobra.Command, tag tag.MultiTag, val reflect.Value) (bool, err
 	}
 
 	// ... and check the field implements at least the Commander interface
-	val, implements, commander := flags.IsCommand(val)
-	if !implements && len(name) != 0 && commander == nil {
+	_, implements, commander := flags.IsCommand(val)
+	if !implements {
 		return false, nil
-	} else if !implements && len(name) == 0 {
-		return false, nil // Skip to next field
 	}
 
 	var subc *cobra.Command
@@ -102,13 +84,13 @@ func command(cmd *cobra.Command, tag tag.MultiTag, val reflect.Value) (bool, err
 	}
 
 	if subc == nil {
-		return false, fmt.Errorf("Did not find subcommand with name %s", name)
+		return false, fmt.Errorf("%w: %s", errCommandNotFound, name)
 	}
 
 	// Simply generate a new carapace around this command,
 	// so that we can register different positional arguments
 	// without overwriting those of our root command.
-	if _, err := Gen(subc, commander, nil); err != nil {
+	if _, err := Generate(subc, commander, nil); err != nil {
 		return true, err
 	}
 
