@@ -149,16 +149,21 @@ func TestParse(t *testing.T) {
 
 func TestParseToDef(t *testing.T) {
 	oldCommandLine := pflag.CommandLine
+
 	defer func() {
 		pflag.CommandLine = oldCommandLine
 	}()
+
 	cfg := &cfg1{StringValue1: "value1"}
 	pflag.CommandLine = pflag.NewFlagSet(os.Args[0], pflag.ContinueOnError)
+
 	err := parseToDef(cfg)
 	assert.NoError(t, err)
+
 	err = pflag.CommandLine.Parse([]string{"--string-value1", "value2"})
 	assert.NoError(t, err)
 	assert.Equal(t, "value2", cfg.StringValue1)
+
 	err = parseToDef("bad string")
 	assert.Error(t, err)
 }

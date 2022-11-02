@@ -6,6 +6,9 @@ import (
 )
 
 var (
+	// ErrParse is a general error used to wrap more specific errors.
+	ErrParse = errors.New("parse error")
+
 	// ErrNotPointerToStruct indicates that a provided data container is not
 	// a pointer to a struct. Only pointers to structs are valid data containers
 	// for options.

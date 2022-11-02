@@ -1,6 +1,7 @@
 package flags
 
 import (
+	"fmt"
 	"reflect"
 
 	"github.com/reeflective/flags"
@@ -32,19 +33,20 @@ func flagScan(cmd *cobra.Command) scan.Handler {
 func flagsGroup(settings cliOpts, cmd *cobra.Command, val reflect.Value, sfield *reflect.StructField) (bool, error) {
 	mtag, skip, err := tag.GetFieldTag(*sfield)
 	if err != nil {
-		return true, err
+		return true, fmt.Errorf("%w: %s", flags.ErrParse, err.Error())
 	} else if skip {
 		return false, nil
 	}
 
-	var groupName string
+	// var groupName string
 
 	legacyGroup, legacyIsSet := mtag.Get("group")
-	optionsGroup, optionsIsSet := mtag.Get("options")
+	// optionsGroup, optionsIsSet := mtag.Get("options")
 	commandGroup, commandsIsSet := mtag.Get("commands")
 	// description, _ := mtag.Get("description")
 
-	if !legacyIsSet && !optionsIsSet && !commandsIsSet {
+	// if !legacyIsSet && !optionsIsSet && !commandsIsSet {
+	if !legacyIsSet && !commandsIsSet {
 		return false, nil
 	}
 
@@ -62,17 +64,17 @@ func flagsGroup(settings cliOpts, cmd *cobra.Command, val reflect.Value, sfield 
 
 	// then settle on the name of the group, and the type of
 	// scan we must launch on it thereof.
-	if legacyIsSet {
-		groupName = legacyGroup
-	} else if optionsIsSet {
-		groupName = optionsGroup
-	}
+	// if legacyIsSet {
+	// 	groupName = legacyGroup
+	// } else if optionsIsSet {
+	// 	groupName = optionsGroup
+	// }
 
 	// A group of options ("group" is the legacy name)
 	if legacyIsSet && legacyGroup != "" {
-		cmd.AddGroup(&cobra.Group{
-			Title: groupName,
-		})
+		// cmd.AddGroup(&cobra.Group{
+		// 	Title: groupName,
+		// })
 
 		err := addFlagSet(cmd, mtag, ptrval.Interface())
 
@@ -91,9 +93,11 @@ func flagsGroup(settings cliOpts, cmd *cobra.Command, val reflect.Value, sfield 
 
 		// Parse for commands
 		scannerCommand := scanRoot(settings, cmd, group)
-		err := scan.Type(ptrval.Interface(), scannerCommand)
+		if err := scan.Type(ptrval.Interface(), scannerCommand); err != nil {
+			return true, fmt.Errorf("%w: %s", scan.ErrScan, err.Error())
+		}
 
-		return true, err
+		return true, nil
 	}
 
 	// If we are here, we didn't find a command or a group.

@@ -2,6 +2,7 @@ package scan
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 
 	"github.com/reeflective/flags/internal/tag"
@@ -11,6 +12,9 @@ import (
 // a pointer to a struct. Only pointers to structs are valid data containers
 // for options.
 var ErrNotPointerToStruct = errors.New("object must be a pointer to struct or interface")
+
+// ErrScan indicates an error in scanning struct fields.
+var ErrScan = errors.New("scan error")
 
 // Handler is a generic handler used for scanning both commands and group structs alike.
 type Handler func(reflect.Value, *reflect.StructField) (bool, error)
@@ -79,7 +83,7 @@ func scanField(val reflect.Value, field reflect.StructField, scan Handler) error
 	// Get the field tag and return/continue if failed/needed
 	_, skip, err := tag.GetFieldTag(field)
 	if err != nil {
-		return err
+		return fmt.Errorf("%w: %s", ErrScan, err)
 	} else if skip {
 		return nil
 	}

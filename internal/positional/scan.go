@@ -1,17 +1,14 @@
 package positional
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
 
+	"github.com/reeflective/flags/internal/scan"
 	"github.com/reeflective/flags/internal/tag"
 )
-
-// ErrScan indicates an error in parsing positional arguments.
-var ErrScan = errors.New("scan error")
 
 // ScanArgs scans an entire value (must be ensured to be a struct) and creates
 // a list of positional arguments, along with many required minimum total number
@@ -99,7 +96,7 @@ func (args *Args) scanArg(field reflect.StructField, value reflect.Value, reqAll
 func parsePositionalTag(field reflect.StructField) (tag.MultiTag, string, error) {
 	tag, none, err := tag.GetFieldTag(field)
 	if none || err != nil {
-		return tag, field.Name, fmt.Errorf("%w: %s", ErrScan, err)
+		return tag, field.Name, fmt.Errorf("%w: %s", scan.ErrScan, err)
 	}
 
 	name, _ := tag.Get("positional-arg-name")

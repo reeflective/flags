@@ -1,6 +1,7 @@
 package flags
 
 import (
+	"fmt"
 	"os"
 	"reflect"
 
@@ -62,7 +63,7 @@ func scanRoot(settings cliOpts, cmd *cobra.Command, group *cobra.Group) scan.Han
 		// Parse the tag or die tryin. We should find one, or we're not interested.
 		mtag, none, err := tag.GetFieldTag(*sfield)
 		if none || err != nil {
-			return true, err
+			return true, fmt.Errorf("%w: %s", scan.ErrScan, err.Error())
 		}
 
 		// First, having a tag means this field should have our attention for
@@ -96,7 +97,7 @@ func scanRoot(settings cliOpts, cmd *cobra.Command, group *cobra.Group) scan.Han
 
 // command finds if a field is marked as a subcommand, and if yes, scans it. We have different cases:
 // - When our application can run its commands as modules, we must build appropriate handlers.
-func command(settings cliOpts, cmd *cobra.Command, grp *cobra.Group, tag tag.MultiTag, val reflect.Value) (bool, error) {
+func command(opts cliOpts, cmd *cobra.Command, grp *cobra.Group, tag tag.MultiTag, val reflect.Value) (bool, error) {
 	// Parse the command name on struct tag...
 	name, _ := tag.Get("command")
 	if len(name) == 0 {
@@ -120,9 +121,9 @@ func command(settings cliOpts, cmd *cobra.Command, grp *cobra.Group, tag tag.Mul
 	setRuns(subc, cmdType)
 
 	// Scan the struct recursively, for both arg/option groups and subcommands
-	scanner := scanRoot(settings, subc, grp)
+	scanner := scanRoot(opts, subc, grp)
 	if err := scan.Type(val.Interface(), scanner); err != nil {
-		return true, err
+		return true, fmt.Errorf("%w: %s", scan.ErrScan, err.Error())
 	}
 
 	// If we have more than one subcommands and that we are NOT
@@ -179,8 +180,9 @@ func setRuns(cmd *cobra.Command, impl flags.Commander) {
 		return
 	}
 
-	// Main run
-	cmd.RunE = func(c *cobra.Command, args []string) error {
+	// The args passed to the command have already been parsed,
+	// this is why we mute the args []string function parameter.
+	cmd.RunE = func(c *cobra.Command, _ []string) error {
 		retargs := getRemainingArgs(c)
 		cmd.SetArgs(retargs)
 

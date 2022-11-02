@@ -37,8 +37,8 @@ type root struct {
 }
 
 // Execute - The root command implementation.
-func (*root) Execute(args []string) (err error) {
-	return
+func (*root) Execute(args []string) error {
+	return nil
 }
 
 // command - Generic command that is used as child command in command-tree programs.
@@ -52,7 +52,7 @@ type testCommand struct {
 }
 
 // Execute - Generic command that is used as child command to programs.
-func (t *testCommand) Execute(args []string) (err error) {
+func (t *testCommand) Execute(args []string) error {
 	return nil
 }
 

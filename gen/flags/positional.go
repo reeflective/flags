@@ -1,10 +1,12 @@
 package flags
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
 
 	"github.com/reeflective/flags/internal/positional"
+	"github.com/reeflective/flags/internal/scan"
 	"github.com/reeflective/flags/internal/tag"
 	"github.com/spf13/cobra"
 )
@@ -22,7 +24,7 @@ func positionals(cmd *cobra.Command, stag tag.MultiTag, val reflect.Value) (bool
 	// tools to manage, parse words and raise any errors related
 	positionals, err := positional.ScanArgs(val, stag)
 	if err != nil || positionals == nil {
-		return true, err
+		return true, fmt.Errorf("%w: %s", scan.ErrScan, err.Error())
 	}
 
 	// Finally, assemble all the parsers into our cobra Args function.
@@ -55,17 +57,17 @@ func setRemainingArgs(cmd *cobra.Command, retargs []string) {
 	// Add these arguments in an annotation to be used
 	// in our Run implementation, where we pass just the
 	// unparsed positional arguments to the command Execute(args []string).
-	cmd.Annotations["sflags"] = strings.Join(retargs, " ")
+	cmd.Annotations["flags"] = strings.Join(retargs, " ")
 }
 
-func getRemainingArgs(cmd *cobra.Command) (args []string) {
+func getRemainingArgs(cmd *cobra.Command) []string {
 	if cmd.Annotations == nil {
-		return
+		return nil
 	}
 
-	if argString, found := cmd.Annotations["sflags"]; found {
+	if argString, found := cmd.Annotations["flags"]; found {
 		return strings.Split(argString, " ")
 	}
 
-	return
+	return nil
 }

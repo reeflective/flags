@@ -10,15 +10,16 @@ const (
 )
 
 type cliOpts struct {
-	// viper handler is used to bind each flag set as
-	// "a new section" to a single, global configuration.
-	viperHandler bool
+	multiple            *cobra.Command
+	multipleCommandName string
 
 	// multipleManager is used to register command implementations
 	// as separate instances when the program can run multiple stuff.
-	multipleManager     bool
-	multipleCommandName string
-	multiple            *cobra.Command
+	multipleManager bool
+
+	// viper handler is used to bind each flag set as
+	// "a new section" to a single, global configuration.
+	viperHandler bool
 
 	// moduleHandler is used when our flag set is going to be targeted
 	// by a a set of module management commands.

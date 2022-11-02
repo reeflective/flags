@@ -1,6 +1,7 @@
 package flags
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/reeflective/flags"
@@ -23,6 +24,7 @@ func generateTo(src []*flags.Flag, dst flagSet) {
 
 		// Annotations used for things like completions
 		flag.Annotations = map[string][]string{}
+
 		var annots []string
 
 		if boolFlag, casted := srcFlag.Value.(flags.BoolFlag); casted && boolFlag.IsBoolFlag() {
@@ -33,7 +35,9 @@ func generateTo(src []*flags.Flag, dst flagSet) {
 			// Only non-boolean flags can be required.
 			annots = append(annots, "required")
 		}
+
 		flag.Hidden = srcFlag.Hidden
+
 		if srcFlag.Deprecated {
 			// we use Usage as Deprecated message for a pflag
 			flag.Deprecated = srcFlag.Usage
@@ -52,22 +56,26 @@ func generateTo(src []*flags.Flag, dst flagSet) {
 // This is generally not needed if you intend to generate a directly working CLI:
 // This function is used for generating things like completions for flags, etc.
 func ParseFlags(cfg interface{}, optFuncs ...flags.OptFunc) (*pflag.FlagSet, error) {
-	fs := pflag.NewFlagSet(os.Args[0], pflag.ExitOnError)
-	err := parseTo(cfg, fs, optFuncs...)
+	flagSet := pflag.NewFlagSet(os.Args[0], pflag.ExitOnError)
+
+	err := parseTo(cfg, flagSet, optFuncs...)
 	if err != nil {
 		return nil, err
 	}
-	return fs, nil
+
+	return flagSet, nil
 }
 
 // parseTo parses cfg, that is a pointer to some structure,
 // and puts it to dst.
 func parseTo(cfg interface{}, dst flagSet, optFuncs ...flags.OptFunc) error {
-	flags, err := flags.ParseStruct(cfg, optFuncs...)
+	flagSet, err := flags.ParseStruct(cfg, optFuncs...)
 	if err != nil {
-		return err
+		return fmt.Errorf("%w: %s", flags.ErrParse, err.Error())
 	}
-	generateTo(flags, dst)
+
+	generateTo(flagSet, dst)
+
 	return nil
 }
 
@@ -78,5 +86,6 @@ func parseToDef(cfg interface{}, optFuncs ...flags.OptFunc) error {
 	if err != nil {
 		return err
 	}
+
 	return nil
 }

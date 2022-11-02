@@ -2,7 +2,8 @@ package flags
 
 import (
 	"errors"
-	"fmt"
+
+	"github.com/reeflective/flags/internal/scan"
 )
 
 var (
@@ -28,10 +29,6 @@ var (
 	// longer than one character.
 	ErrShortNameTooLong = errors.New("short names can only be 1 character long")
 
-	ErrRequired = errors.New("required argument")
+	// ErrRequired indicates that a required argument was not provided.
+	ErrRequired = scan.ErrScan
 )
-
-// simple wrapper for errors.
-func newError(err error, msg string) error {
-	return fmt.Errorf("%w: %s", err, msg)
-}
