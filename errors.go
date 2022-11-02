@@ -31,7 +31,7 @@ var (
 
 // simple wrapper for errors.
 func newError(err error, msg string) error {
-	return fmt.Errorf("%w: %s", err, msg)
+	return fmt.Errorf("%s: %w", msg, err)
 }
 
 // ParserError represents the type of error.

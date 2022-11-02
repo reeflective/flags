@@ -91,6 +91,7 @@ func hasOption(options []string, option string) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -111,13 +112,17 @@ func ParseStruct(cfg interface{}, optFuncs ...OptFunc) ([]*Flag, error) {
 	if cfg == nil {
 		return nil, ErrObjectIsNil
 	}
+
 	v := reflect.ValueOf(cfg)
+
 	if v.Kind() != reflect.Ptr {
 		return nil, ErrNotPointerToStruct
 	}
+
 	if v.IsNil() {
 		return nil, ErrObjectIsNil
 	}
+
 	switch e := v.Elem(); e.Kind() {
 	case reflect.Struct:
 		return parseStruct(e, optFuncs...), nil
@@ -128,67 +133,78 @@ func ParseStruct(cfg interface{}, optFuncs ...OptFunc) ([]*Flag, error) {
 
 // ParseField parses a single struct field as a list (often only made of only one) flags.
 // This function can be used when you want to scan only some fields for which you want a flag.
-func ParseField(value reflect.Value, field reflect.StructField, optFuncs ...OptFunc) (flags []*Flag, found bool) {
-	opt := defOpts().apply(optFuncs...) // TODO move from here ?
+func ParseField(value reflect.Value, field reflect.StructField, optFuncs ...OptFunc) ([]*Flag, bool) {
+	opt := defOpts().apply(optFuncs...)
 
+	// Check struct tags, parse the field value if needed, and return the whole.
+	flag, flagSet, val, tag := parse(value, field, opt)
+
+	// If our value is nil, we don't have to perform further validations on it,
+	// and we only add flags if we have parsed some on our struct field value.
+	if val == nil {
+		return flagSet, true
+	}
+
+	// Else, field contains a simple value.
+	if opt.validator != nil {
+		val = &validateValue{
+			Value: val,
+			validateFunc: func(val string) error {
+				return opt.validator(val, field, value.Interface())
+			},
+		}
+	}
+
+	flag.Value = val
+	flag.DefValue = val.String()
+	flagSet = append(flagSet, flag)
+
+	// If the user provided some custom flag
+	// value handlers/scanners, run on it.
+	if opt.flagFunc != nil {
+		var name string
+		if flag.Name != "" {
+			name = flag.Name
+		} else {
+			name = flag.Short
+		}
+
+		// As usual, we immediately panic if the handler raises an error,
+		// so that the program is not allowed to actually run the commands.
+		if err := opt.flagFunc(name, *tag, value); err != nil {
+			panic(newError(err, fmt.Sprintf("Custom handler for flag %s failed", name)))
+		}
+	}
+
+	return flagSet, true
+}
+
+func parse(value reflect.Value, fld reflect.StructField, opt opts) (flag *Flag, set []*Flag, val Value, tag *tag.MultiTag) {
 	// skip unexported and non anonymous fields
-	if field.PkgPath != "" && !field.Anonymous {
-		return nil, false
+	if fld.PkgPath != "" && !fld.Anonymous {
+		return
 	}
 
 	// We should have a flag and a tag, legacy or not, and with valid values.
-	flag, tag := parseFlagTag(field, opt)
+	flag, tag = parseFlagTag(fld, opt)
 	if flag == nil {
-		return nil, false
+		return
 	}
 
-	flag.EnvName = parseEnvTag(flag.Name, field, opt)
+	flag.EnvName = parseEnvTag(flag.Name, fld, opt)
 	prefix := flag.Name + opt.flagDivider
-	if field.Anonymous && opt.flatten {
+
+	if fld.Anonymous && opt.flatten {
 		prefix = opt.prefix
 	}
 
 	// We might have to scan for an arbitrarily nested structure of flags
-	nestedFlags, val := parseVal(value,
+	set, val = parseVal(value,
 		copyOpts(opt),
 		Prefix(prefix),
 	)
 
-	// field contains a simple value.
-	if val != nil {
-		if opt.validator != nil {
-			val = &validateValue{
-				Value: val,
-				validateFunc: func(val string) error {
-					return opt.validator(val, field, value.Interface())
-				},
-			}
-		}
-		flag.Value = val
-		flag.DefValue = val.String()
-		flags = append(flags, flag)
-
-		// If the user provided some custom flag
-		// value handlers/scanners, run on it.
-		if opt.flagFunc != nil {
-			var name string
-			if flag.Name != "" {
-				name = flag.Name
-			} else {
-				name = flag.Short
-			}
-			opt.flagFunc(name, *tag, value)
-		}
-
-		return flags, true
-	}
-
-	// field is a structure
-	if len(nestedFlags) > 0 {
-		flags = append(flags, nestedFlags...)
-	}
-
-	return flags, true
+	return flag, set, val, tag
 }
 
 func parseVal(value reflect.Value, optFuncs ...OptFunc) ([]*Flag, Value) {
@@ -196,6 +212,7 @@ func parseVal(value reflect.Value, optFuncs ...OptFunc) ([]*Flag, Value) {
 	if value.CanAddr() && value.Addr().CanInterface() {
 		valueInterface := value.Addr().Interface()
 		val := parseGenerated(valueInterface)
+
 		if val != nil {
 			return nil, val
 		}
@@ -210,42 +227,28 @@ func parseVal(value reflect.Value, optFuncs ...OptFunc) ([]*Flag, Value) {
 		if value.IsNil() {
 			value.Set(reflect.New(value.Type().Elem()))
 		}
+
 		val := parseGeneratedPtrs(value.Addr().Interface())
+
 		if val != nil {
 			return nil, val
 		}
+
 		return parseVal(value.Elem(), optFuncs...)
+
 	case reflect.Struct:
 		flags := parseStruct(value, optFuncs...)
+
 		return flags, nil
+
 	case reflect.Map:
-		mapType := value.Type()
-		keyKind := value.Type().Key().Kind()
-
-		// check that map key is string or integer
-		if !anyOf(MapAllowedKinds, keyKind) {
-			break
-		}
-
-		if value.IsNil() {
-			value.Set(reflect.MakeMap(mapType))
-		}
-
-		valueInterface := value.Addr().Interface()
-		val := parseGeneratedMap(valueInterface)
-		if val != nil {
-			return nil, val
-		}
+		return parseMap(value)
 	}
+
 	return nil, nil
 }
 
 func parseStruct(value reflect.Value, optFuncs ...OptFunc) []*Flag {
-	// TODO: this call is now made for every field in ParseField,
-	// so that external callers don't have to access opts, only OptFuncs.
-	// Maybe change this, quite inefficient.
-	// opt := defOpts().apply(optFuncs...)
-
 	flags := []*Flag{}
 
 	valueType := value.Type()
@@ -273,6 +276,25 @@ fields:
 	return flags
 }
 
+func parseMap(value reflect.Value) ([]*Flag, Value) {
+	mapType := value.Type()
+	keyKind := value.Type().Key().Kind()
+
+	// check that map key is string or integer
+	if !anyOf(MapAllowedKinds, keyKind) {
+		return nil, nil
+	}
+
+	if value.IsNil() {
+		value.Set(reflect.MakeMap(mapType))
+	}
+
+	valueInterface := value.Addr().Interface()
+	val := parseGeneratedMap(valueInterface)
+
+	return nil, val
+}
+
 func anyOf(kinds []reflect.Kind, needle reflect.Kind) bool {
 	for _, kind := range kinds {
 		if kind == needle {
@@ -293,7 +315,7 @@ func getShortName(name string) (rune, error) {
 
 	// Either an invalid option name
 	if runeCount > 1 {
-		msg := fmt.Sprintf("not provided `%s'", name)
+		msg := fmt.Sprintf("flag `%s'", name)
 
 		return short, newError(ErrShortNameTooLong, msg)
 	}

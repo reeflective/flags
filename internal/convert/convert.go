@@ -23,6 +23,10 @@ var (
 	errUnmarshaler = errors.New("type assertion to `flags.Unmarshaler` failed")
 )
 
+// ErrConvertion is used to notify that converting
+// a string value onto a native type has failed.
+var ErrConvertion = errors.New("conversion error")
+
 // TODO: Remove those 3 interfaces, and also from the convert functions below:
 // we mostly use this code for positional arguments now, since sflags already
 // has its code for option flags. However:

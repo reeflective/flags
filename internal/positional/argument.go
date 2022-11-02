@@ -94,16 +94,21 @@ func (args *Args) Parse(words []string) (retargs []string, err error) {
 		// returns an error when it cannot fulfill its requirements.
 		err := args.consumeWords(args, arg)
 
-		// Either the positional argument has had not enough words
+		// Either the positional argument has not had enough words
 		if errors.Is(err, ErrRequired) {
 			return retargs, args.positionalRequiredErr(*arg)
 		}
 
 		// Or we have failed to parse the word onto the struct field
 		// value, most probably because it's the wrong type.
-		// if errors.Is(err, convert.Err) {
-		//
-		// }
+		if errors.Is(err, convert.ErrConvertion) {
+			return retargs, err
+		}
+
+		// Or return the error as is
+		if err != nil {
+			return retargs, err
+		}
 	}
 
 	// Finally, if we have some return arguments, we verify that
@@ -112,17 +117,16 @@ func (args *Args) Parse(words []string) (retargs []string, err error) {
 	return retargs, args.checkRequirementsFinal()
 }
 
-// Positionals returns the list of "slots" that have been
-// created when parsing a struct of positionals.
-func (args *Args) Positionals() []*Arg {
-	return args.slots
-}
-
+// ParseConcurrent is to parse all positional arguments onto their slots
+// without them to wait for the previous slot to be done parsing its words.
+// This is used by things like completion engines, which just need to know
+// which positional argument to complete, and optionally to ensure that the
+// previously completed ones do not raise conversion errors.
 func (args *Args) ParseConcurrent(words []string) {
 	workers := &sync.WaitGroup{}
 
 	for _, arg := range args.slots {
-		// Make a copy of our positionals, so that they can each
+		// Make a copy of our positionals, so that each arg slot can
 		// work on the same word list while doing different things.
 		argsC := args.copyArgs()
 		argsC.words = words
@@ -149,6 +153,12 @@ func (args *Args) ParseConcurrent(words []string) {
 	workers.Wait()
 }
 
+// Positionals returns the list of "slots" that have been
+// created when parsing a struct of positionals.
+func (args *Args) Positionals() []*Arg {
+	return args.slots
+}
+
 // copyArgs is used to make several instances of our args
 // to work on the same list of command words (copies of it).
 func (args *Args) copyArgs() *Args {
@@ -168,7 +178,7 @@ func (args *Args) copyArgs() *Args {
 // consumePositionals parses one or more words from the current list of positionals into
 // their struct fields, and returns once its own requirements are satisfied and/or the
 // next positional arguments require words to be passed along.
-func (args *Args) consumeWords(self *Args, arg *Arg) (err error) {
+func (args *Args) consumeWords(self *Args, arg *Arg) error {
 	// As long as we've got a word, and nothing told us to quit.
 	for !self.Empty() {
 		// If we have reached the maximum number of args we accept.
@@ -186,11 +196,11 @@ func (args *Args) consumeWords(self *Args, arg *Arg) (err error) {
 		// of arguments, we are cleared to consume one.
 		next := args.Pop()
 
+		// Parse the string value onto its native type, returning any errors.
+		// We also break this loop immediately if we are not parsing onto a list.
 		if err := convert.Value(next, arg.Value, arg.Tag); err != nil {
-			// Any conversion error is fatal: TODO maybe handle errors
-			return err
+			return fmt.Errorf("%w: %s", convert.ErrConvertion, err.Error())
 		} else if arg.Value.Type().Kind() != reflect.Slice {
-			// And individual fields only ever need to parse one word.
 			return nil
 		}
 	}
@@ -213,7 +223,7 @@ func (args *Args) consumeWords(self *Args, arg *Arg) (err error) {
 
 // checkPositionals is only called if ALL positional slots have successfully worked,
 // and makes some final checks about these positionals. Some checks are here for retrocompat.
-func (args *Args) checkRequirementsFinal() (err error) {
+func (args *Args) checkRequirementsFinal() error {
 	slots := args.slots
 	if len(slots) == 0 {
 		return nil
@@ -228,9 +238,9 @@ func (args *Args) checkRequirementsFinal() (err error) {
 	// silently passing the excess args onto the Execute() parameters.
 	if isSlice && current.Value.Len() == current.Maximum && len(args.words) > 0 {
 		overweight := argHasTooMany(*current, len(args.words))
-		msgErr := fmt.Errorf("%s was not provided", overweight)
+		msgErr := fmt.Sprintf("%s was not provided", overweight)
 
-		return fmt.Errorf("required argument: %w", msgErr)
+		return fmt.Errorf("%w: %s", ErrRequired, msgErr)
 	}
 
 	return nil
@@ -249,7 +259,7 @@ func (args *Args) positionalRequiredErr(arg Arg) error {
 				strings.Join(names[:len(names)-1], ", "), names[len(names)-1])
 		}
 
-		return fmt.Errorf("required argument: %w", errors.New(msg))
+		return fmt.Errorf("%w: %s", ErrRequired, msg)
 	}
 
 	return nil
