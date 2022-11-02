@@ -3,9 +3,8 @@ package flags
 import (
 	"os"
 
-	"github.com/spf13/pflag"
-
 	"github.com/reeflective/flags"
+	"github.com/spf13/pflag"
 )
 
 // flagSet describes interface,
@@ -69,5 +68,15 @@ func parseTo(cfg interface{}, dst flagSet, optFuncs ...flags.OptFunc) error {
 		return err
 	}
 	generateTo(flags, dst)
+	return nil
+}
+
+// ParseToDef parses cfg, that is a pointer to some structure and
+// puts it to the default pflag.CommandLine.
+func parseToDef(cfg interface{}, optFuncs ...flags.OptFunc) error {
+	err := parseTo(cfg, pflag.CommandLine, optFuncs...)
+	if err != nil {
+		return err
+	}
 	return nil
 }

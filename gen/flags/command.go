@@ -4,11 +4,10 @@ import (
 	"os"
 	"reflect"
 
-	"github.com/spf13/cobra"
-
 	"github.com/reeflective/flags"
 	"github.com/reeflective/flags/internal/scan"
 	"github.com/reeflective/flags/internal/tag"
+	"github.com/spf13/cobra"
 )
 
 // Generate returns a root cobra Command to be used directly as an entry-point.

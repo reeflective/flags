@@ -4,9 +4,8 @@ import (
 	"reflect"
 	"strings"
 
-	comp "github.com/rsteube/carapace"
-
 	"github.com/reeflective/flags/internal/tag"
+	comp "github.com/rsteube/carapace"
 )
 
 // Completer represents a type that is able to return some

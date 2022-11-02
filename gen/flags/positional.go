@@ -4,10 +4,9 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/spf13/cobra"
-
 	"github.com/reeflective/flags/internal/positional"
 	"github.com/reeflective/flags/internal/tag"
+	"github.com/spf13/cobra"
 )
 
 // positionals finds a struct tagged as containing positionals arguments and scans them.

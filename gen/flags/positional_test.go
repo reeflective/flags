@@ -418,8 +418,8 @@ func TestTwoInfiniteSlicesExplicitFail(t *testing.T) {
 //
 
 func newCommandWithArgs(data interface{}, args []string) *cobra.Command {
-	cmd := Parse(data) // Generate the command
-	cmd.SetArgs(args)  // And use our args for execution
+	cmd := Generate(data) // Generate the command
+	cmd.SetArgs(args)     // And use our args for execution
 
 	// We don't want the errors to be printed to stdout.
 	cmd.SilenceErrors = true

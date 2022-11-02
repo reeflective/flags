@@ -3,11 +3,10 @@ package flags
 import (
 	"reflect"
 
-	"github.com/spf13/cobra"
-
 	"github.com/reeflective/flags"
 	"github.com/reeflective/flags/internal/scan"
 	"github.com/reeflective/flags/internal/tag"
+	"github.com/spf13/cobra"
 )
 
 // flagScan builds a small struct field handler so that we can scan

@@ -4,13 +4,12 @@ import (
 	"errors"
 	"reflect"
 
-	comp "github.com/rsteube/carapace"
-	"github.com/spf13/cobra"
-
 	"github.com/reeflective/flags"
 	genflags "github.com/reeflective/flags/gen/flags"
 	"github.com/reeflective/flags/internal/scan"
 	"github.com/reeflective/flags/internal/tag"
+	comp "github.com/rsteube/carapace"
+	"github.com/spf13/cobra"
 )
 
 // ErrShortNameTooLong indicates that a short flag name was specified,

@@ -1,48 +1,14 @@
 package govalidator
 
 import (
-	"flag"
-	"fmt"
-	"io/ioutil"
-	"log"
 	"testing"
 
-	"github.com/reeflective/flags"
-	"github.com/reeflective/flags/gen/gflag"
 	"github.com/stretchr/testify/assert"
 )
 
-func ExampleNew() {
-	type config struct {
-		Host string `valid:"host"`
-		Port int    `valid:"port"`
-	}
-	cfg := &config{
-		Host: "127.0.0.1",
-		Port: 6000,
-	}
-	// Use gflags.ParseToDef if you want default `flag.CommandLine`
-	fs, err := gflag.Parse(cfg, flags.Validator(New()))
-	if err != nil {
-		log.Fatalf("err: %v", err)
-	}
-	fs.Init("text", flag.ContinueOnError)
-	fs.SetOutput(ioutil.Discard)
-
-	// if we pass a wrong domain to the host flag, we'll get a error.
-	if err = fs.Parse([]string{"-host", "wrong domain"}); err != nil {
-		fmt.Printf("err: %v\n", err)
-	}
-	// if we pass a wrong port to the port flag, we'll get a error.
-	if err = fs.Parse([]string{"-port", "800000"}); err != nil {
-		fmt.Printf("err: %v\n", err)
-	}
-	// Output:
-	// err: invalid value "wrong domain" for flag -host: `wrong domain` does not validate as host
-	// err: invalid value "800000" for flag -port: `800000` does not validate as port
-}
-
 func Test_isValidTag(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		arg  string
 		want bool
@@ -59,6 +25,8 @@ func Test_isValidTag(t *testing.T) {
 }
 
 func Test_parseTagIntoMap(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		tag  string
 		want tagOptionsMap
@@ -89,6 +57,8 @@ func Test_parseTagIntoMap(t *testing.T) {
 }
 
 func Test_validateFunc(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		val     string
 		options tagOptionsMap

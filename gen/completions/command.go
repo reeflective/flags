@@ -4,12 +4,11 @@ import (
 	"fmt"
 	"reflect"
 
-	comp "github.com/rsteube/carapace"
-	"github.com/spf13/cobra"
-
 	"github.com/reeflective/flags"
 	"github.com/reeflective/flags/internal/scan"
 	"github.com/reeflective/flags/internal/tag"
+	comp "github.com/rsteube/carapace"
+	"github.com/spf13/cobra"
 )
 
 func Generate(cmd *cobra.Command, data interface{}, comps *comp.Carapace) (*comp.Carapace, error) {

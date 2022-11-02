@@ -8,11 +8,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/reeflective/flags"
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/reeflective/flags"
 )
 
 type cfg1 struct {
@@ -121,7 +120,7 @@ func TestParse(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			fs, err := Parse(test.cfg)
+			fs, err := ParseFlags(test.cfg)
 			if test.expErr1 != nil {
 				require.Error(t, err)
 				require.Equal(t, test.expErr1, err)
@@ -155,12 +154,12 @@ func TestParseToDef(t *testing.T) {
 	}()
 	cfg := &cfg1{StringValue1: "value1"}
 	pflag.CommandLine = pflag.NewFlagSet(os.Args[0], pflag.ContinueOnError)
-	err := ParseToDef(cfg)
+	err := parseToDef(cfg)
 	assert.NoError(t, err)
 	err = pflag.CommandLine.Parse([]string{"--string-value1", "value2"})
 	assert.NoError(t, err)
 	assert.Equal(t, "value2", cfg.StringValue1)
-	err = ParseToDef("bad string")
+	err = parseToDef("bad string")
 	assert.Error(t, err)
 }
 
@@ -220,7 +219,7 @@ func TestPFlagGetters(t *testing.T) {
 		StringSliceValue: []string{"one", "two"},
 		IntSliceValue:    []int{10, 20},
 	}
-	flagSet, err := Parse(cfg)
+	flagSet, err := ParseFlags(cfg)
 	require.NoError(t, err)
 
 	intValue, err := flagSet.GetInt("int-value")

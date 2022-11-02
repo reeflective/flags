@@ -3,10 +3,9 @@ package completions
 import (
 	"reflect"
 
-	comp "github.com/rsteube/carapace"
-
 	"github.com/reeflective/flags/internal/positional"
 	"github.com/reeflective/flags/internal/tag"
+	comp "github.com/rsteube/carapace"
 )
 
 // positionals finds a struct tagged as containing positional arguments and scans them.
