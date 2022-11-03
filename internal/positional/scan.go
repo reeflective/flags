@@ -94,8 +94,8 @@ func (args *Args) scanArg(field reflect.StructField, value reflect.Value, reqAll
 
 // parsePositionalTag extracts and fully parses a struct (positional) field tag.
 func parsePositionalTag(field reflect.StructField) (tag.MultiTag, string, error) {
-	tag, none, err := tag.GetFieldTag(field)
-	if none || err != nil {
+	tag, _, err := tag.GetFieldTag(field)
+	if err != nil {
 		return tag, field.Name, fmt.Errorf("%w: %s", scan.ErrScan, err)
 	}
 
@@ -115,17 +115,18 @@ func positionalReqs(val reflect.Value, mtag tag.MultiTag, all bool) (min, max in
 
 	// When the argument field is not a slice, we have to adjust for some defaults
 	isSlice := val.Type().Kind() == reflect.Slice || val.Type().Kind() == reflect.Map
+	if !isSlice {
+		max = 1
+	}
 
 	switch {
 	case !isSlice && required > 0:
 		// Individual fields cannot have more than one required
 		min = 1
-		max = 1
 	case !set && !isSlice && all:
 		// If we have a struct of untagged fields, but all required,
 		// we automatically set min/max to one if the field is individual.
 		min = 1
-		max = 1
 	case set && isSlice && required > 0:
 		// If a slice has at least one required, add this minimum
 		// Increase the total number of positional args wanted.

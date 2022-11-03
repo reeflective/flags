@@ -1,7 +1,6 @@
 package flags
 
 import (
-	"errors"
 	"strings"
 	"testing"
 
@@ -34,14 +33,13 @@ func TestAllOptional(t *testing.T) {
 	}{}
 
 	cmd := newCommandWithArgs(&opts, []string{"10", "arg_test.go", "a", "b"})
-	_, err := cmd.ExecuteC()
+	err := cmd.Execute()
 
 	pt := assert.New(t)
 	pt.Nilf(err, "Unexpected error: %v", err)
 	pt.Equal(10, opts.Positional.Command, "Expected opts.Positional.Command to match")
 	pt.Equal("arg_test.go", opts.Positional.Filename, "Expected opts.Positional.Filename to match")
 	pt.Equal([]string{"a", "b"}, opts.Positional.Rest, "Expected opts.Positional.Rest to match")
-	// pt.Equal([]string{}, cmd.Flags().Args(), "Expected return arguments to be empty")
 }
 
 // TestStructRequiredWithRestFail checks positionals without per-field tag minimum
@@ -61,10 +59,10 @@ func TestAllRequired(t *testing.T) {
 	}{}
 
 	cmd := newCommandWithArgs(&opts, []string{"10"})
-	_, err := cmd.ExecuteC()
+	err := cmd.Execute()
 
 	pt := assert.New(t)
-	pt.EqualError(errors.Unwrap(err), "`Filename` was not provided")
+	pt.ErrorContains(err, "`Filename` was not provided")
 }
 
 // TestRequiredRestUndefinedFail checks that fields marked with a non-numeric
@@ -81,10 +79,10 @@ func TestRequiredRestUndefinedFail(t *testing.T) {
 	}{}
 
 	cmd := newCommandWithArgs(&opts, []string{})
-	_, err := cmd.ExecuteC()
+	err := cmd.Execute()
 
 	pt := assert.New(t)
-	pt.EqualError(errors.Unwrap(err),
+	pt.ErrorContains(err,
 		"`Rest (at least 1 argument)` was not provided")
 }
 
@@ -102,7 +100,7 @@ func TestRequiredRestUndefinedPass(t *testing.T) {
 	}{}
 
 	cmd := newCommandWithArgs(&opts, []string{"rest1"})
-	_, err := cmd.ExecuteC()
+	err := cmd.Execute()
 
 	pt := assert.New(t)
 	pt.Nilf(err, "Unexpected error: %v", err)
@@ -125,10 +123,10 @@ func TestRequiredRestQuantityFail(t *testing.T) {
 	}{}
 
 	cmd := newCommandWithArgs(&opts, []string{"rest1"})
-	_, err := cmd.ExecuteC()
+	err := cmd.Execute()
 
 	pt := assert.New(t)
-	pt.EqualError(errors.Unwrap(err),
+	pt.ErrorContains(err,
 		"`Rest (at least 2 arguments, but got only 1)` was not provided")
 }
 
@@ -146,7 +144,7 @@ func TestRequiredRestQuantityPass(t *testing.T) {
 	}{}
 
 	cmd := newCommandWithArgs(&opts, []string{"rest1", "rest2", "rest3"})
-	_, err := cmd.ExecuteC()
+	err := cmd.Execute()
 
 	pt := assert.New(t)
 	pt.Nilf(err, "Unexpected error: %v", err)
@@ -170,10 +168,10 @@ func TestRequiredRestRangeFail(t *testing.T) {
 	}{}
 
 	cmd := newCommandWithArgs(&opts, []string{"rest1", "rest2", "rest3"})
-	_, err := cmd.ExecuteC()
+	err := cmd.Execute()
 
 	pt := assert.New(t)
-	pt.EqualError(errors.Unwrap(err),
+	pt.ErrorContains(err,
 		"`Rest (at most 2 arguments, but got 3)` was not provided")
 }
 
@@ -196,10 +194,10 @@ func TestRequiredRestRangeEmptyFail(t *testing.T) {
 	}{}
 
 	cmd := newCommandWithArgs(&opts, []string{"some", "thing"})
-	_, err := cmd.ExecuteC()
+	err := cmd.Execute()
 
 	pt := assert.New(t)
-	pt.EqualError(errors.Unwrap(err), "`Rest (zero arguments)` was not provided")
+	pt.ErrorContains(err, "`Rest (zero arguments)` was not provided")
 }
 
 //
@@ -224,7 +222,7 @@ func TestOptionalNonRestRangeMinimumPass(t *testing.T) {
 	}{}
 
 	cmd := newCommandWithArgs(&opts, []string{"second", "third"})
-	_, err := cmd.ExecuteC()
+	err := cmd.Execute()
 
 	pt := assert.New(t)
 	pt.Nilf(err, "Unexpected error: %v", err)
@@ -254,7 +252,7 @@ func TestRequiredNonRestRangeExcessPass(t *testing.T) {
 
 	args := []string{"nonrest1", "nonrest2", "second", "third", "lambda"}
 	cmd := newCommandWithArgs(&opts, args)
-	_, err := cmd.ExecuteC()
+	err := cmd.Execute()
 
 	pt := assert.New(t)
 	pt.Nilf(err, "Unexpected error: %v", err)
@@ -282,10 +280,10 @@ func TestRequiredNonRestRangeFail(t *testing.T) {
 
 	args := []string{"nonrest1", "nonrest2", "second"}
 	cmd := newCommandWithArgs(&opts, args)
-	_, err := cmd.ExecuteC()
+	err := cmd.Execute()
 
 	pt := assert.New(t)
-	pt.EqualError(errors.Unwrap(err), "`Third` was not provided")
+	pt.ErrorContains(err, "`Third` was not provided")
 }
 
 // TestMixedSlicesMaxIsMinDefault checks that a struct containing
@@ -307,7 +305,7 @@ func TestMixedSlicesMaxIsMinDefault(t *testing.T) {
 
 	args := []string{"first1", "first2", "second1", "second2", "third"}
 	cmd := newCommandWithArgs(&opts, args)
-	_, err := cmd.ExecuteC()
+	err := cmd.Execute()
 
 	pt := assert.New(t)
 	pt.Nilf(err, "Unexpected error: %v", err)
@@ -335,7 +333,7 @@ func TestMixedSlicesMinimumNonRestPass(t *testing.T) {
 
 	args := []string{"first1", "first2", "second1", "third"}
 	cmd := newCommandWithArgs(&opts, args)
-	_, err := cmd.ExecuteC()
+	err := cmd.Execute()
 
 	pt := assert.New(t)
 	pt.Nilf(err, "Unexpected error: %v", err)
@@ -363,10 +361,10 @@ func TestMixedSlicesMinimumNonRestFail(t *testing.T) {
 
 	args := []string{"first1", "first2", "second1"}
 	cmd := newCommandWithArgs(&opts, args)
-	_, err := cmd.ExecuteC()
+	err := cmd.Execute()
 
 	pt := assert.New(t)
-	pt.EqualError(errors.Unwrap(err), "`Third` was not provided")
+	pt.ErrorContains(err, "`Third` was not provided")
 }
 
 // TestMixedSlicesLastHasPriority checks that 2 slices of positionals,
@@ -395,7 +393,7 @@ func TestMixedSlicesLastHasPriority(t *testing.T) {
 
 	args := []string{"first1", "first2", "second1", "third1", "third2", "single"}
 	cmd := newCommandWithArgs(&opts, args)
-	_, err := cmd.ExecuteC()
+	err := cmd.Execute()
 
 	pt := assert.New(t)
 	pt.Nilf(err, "Unexpected error: %v", err)

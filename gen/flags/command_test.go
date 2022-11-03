@@ -62,16 +62,14 @@ func (t *testCommand) Execute(args []string) error {
 
 // TestParseCommand is the most basic test for this library, which verifies
 // the Parse function returns at least a non-nil cobra command, or an error.
-// TODO: Finish this, way better than that.
 func TestParseCommand(t *testing.T) {
 	t.Parallel()
 
-	t.Log("TODO: TestParseCommand not written")
-	// var data interface{}
-	// cmd := Parse(data) // Generate the command
+	data := &testCommand{}
+	cmd := Generate(data)
 
-	// test := assert.New(t)
-	// test.NotNil(cmd, "The command parser should have returned a command")
+	test := assert.New(t)
+	test.NotNil(cmd, "The command parser should have returned a command")
 }
 
 // TestCommandInline checks that a command embedded in a struct
@@ -143,8 +141,6 @@ func TestCommandFlagOrderFail(t *testing.T) {
 	pt := assert.New(t)
 	pt.NotNil(cmd)
 	pt.NotNil(err, "Command should have raised an unknown flag error")
-
-	// TODO: change this, very unstable long term.
 	pt.ErrorContains(err, "unknown shorthand flag: 'g' in -g")
 }
 
@@ -161,13 +157,12 @@ func TestCommandFlagOrderSuccess(t *testing.T) {
 		Command testCommand `command:"cmd"`
 	}{}
 
-	root := newCommandWithArgs(&opts, []string{"cmd", "-v", "-g"})
-	cmd, _ := root.ExecuteC()
-	// cmd, err := root.ExecuteC()
+	root := newCommandWithArgs(&opts, []string{"-v", "cmd", "-g"})
+	cmd, err := root.ExecuteC()
 
 	pt := assert.New(t)
 	pt.NotNil(cmd)
-	// pt.Nil(err, "Command should have successfully parsed the flags") //
+	pt.Nil(err, "Command should have successfully parsed the flags")
 }
 
 // TestCommandFlagPersistentSuccess checks that flag groups marked
@@ -214,9 +209,10 @@ func TestCommandFlagPersistentFail(t *testing.T) {
 
 	pt := assert.New(t)
 	pt.NotNil(cmd)
-	pt.Equal("", cmd.Name()) // We didn't successfully traversed to cmd, since we have an error
 	pt.NotNil(err, "Command should have raised an unknown flag error")
 	pt.ErrorContains(err, "unknown shorthand flag: 'p' in -p")
+	// We didn't successfully traversed to cmd, since we have an error
+	pt.Equal(cmd.Name(), root.Name())
 }
 
 // TestCommandFlagOverrideParent checks that when child commands declare

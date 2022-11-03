@@ -49,6 +49,15 @@ func Generate(data interface{}, optFuncs ...OptFunc) *cobra.Command {
 		}
 	} else if _, isCmd, impl := flags.IsCommand(reflect.ValueOf(data)); isCmd {
 		setRuns(cmd, impl)
+	} else {
+		// The args passed to the command have already been parsed,
+		// this is why we mute the args []string function parameter.
+		cmd.RunE = func(c *cobra.Command, _ []string) error {
+			retargs := getRemainingArgs(c)
+			cmd.SetArgs(retargs)
+
+			return nil
+		}
 	}
 
 	return cmd
@@ -61,9 +70,9 @@ func Generate(data interface{}, optFuncs ...OptFunc) *cobra.Command {
 func scanRoot(settings cliOpts, cmd *cobra.Command, group *cobra.Group) scan.Handler {
 	handler := func(val reflect.Value, sfield *reflect.StructField) (bool, error) {
 		// Parse the tag or die tryin. We should find one, or we're not interested.
-		mtag, none, err := tag.GetFieldTag(*sfield)
-		if none || err != nil {
-			return true, fmt.Errorf("%w: %s", scan.ErrScan, err.Error())
+		mtag, _, err := tag.GetFieldTag(*sfield)
+		if err != nil {
+			return true, fmt.Errorf("%w: %s", tag.ErrTag, err.Error())
 		}
 
 		// First, having a tag means this field should have our attention for

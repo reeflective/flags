@@ -78,12 +78,12 @@ func scanStruct(val reflect.Value, sfield *reflect.StructField, scan Handler) er
 
 // scanField attempts to grab a tag on a struct field, and depending on the field's type,
 // either scans recursively if the field is an embedded struct/pointer, or attempts to scan
-// the field as an option of the group. TODO: simplify.
+// the field as an option of the group.
 func scanField(val reflect.Value, field reflect.StructField, scan Handler) error {
 	// Get the field tag and return/continue if failed/needed
 	_, skip, err := tag.GetFieldTag(field)
 	if err != nil {
-		return fmt.Errorf("%w: %s", ErrScan, err)
+		return fmt.Errorf("%w: %s", tag.ErrTag, err.Error())
 	} else if skip {
 		return nil
 	}

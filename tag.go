@@ -11,8 +11,6 @@ import (
 func parseFlagTag(field reflect.StructField, opt opts) (*Flag, *tag.MultiTag, error) {
 	flag := &Flag{}
 
-	var skip bool // the flag might be explicitly mark skip (with `-`)
-
 	ignoreFlagPrefix := false
 	flag.Name = camelToFlag(field.Name, opt.flagDivider)
 
