@@ -15,7 +15,11 @@ import (
 func flagScan(cmd *cobra.Command) scan.Handler {
 	flagScanner := func(val reflect.Value, sfield *reflect.StructField) (bool, error) {
 		// Parse a single field, returning one or more generic Flags
-		flagSet, found := flags.ParseField(val, *sfield)
+		flagSet, found, err := flags.ParseField(val, *sfield)
+		if err != nil {
+			return found, err
+		}
+
 		if !found {
 			return false, nil
 		}

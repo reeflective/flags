@@ -8,15 +8,6 @@ import (
 	"github.com/reeflective/flags/internal/tag"
 )
 
-const (
-	defaultDescTag     = "desc"
-	defaultFlagTag     = "flag"
-	defaultEnvTag      = "env"
-	defaultFlagDivider = "-"
-	defaultEnvDivider  = "_"
-	defaultFlatten     = true
-)
-
 // ValidateFunc describes a validation func,
 // that takes string val for flag from command line,
 // field that's associated with this flag in structure cfg.
@@ -29,28 +20,12 @@ type ValidateFunc func(val string, field reflect.StructField, cfg interface{}) e
 // for completer implementations, bind to viper configurations, etc.
 type FlagFunc func(flag string, tag tag.MultiTag, val reflect.Value) error
 
-type opts struct {
-	descTag     string
-	flagTag     string
-	prefix      string
-	envPrefix   string
-	flagDivider string
-	envDivider  string
-	flatten     bool
-	validator   ValidateFunc
-	flagFunc    FlagFunc
-}
-
-func (o opts) apply(optFuncs ...OptFunc) opts {
-	for _, optFunc := range optFuncs {
-		optFunc(&o)
-	}
-
-	return o
-}
-
 // OptFunc sets values in opts structure.
 type OptFunc func(opt *opts)
+
+//
+// Global Parsing Options ------------------------------------------------------------------ //
+//
 
 // DescTag sets custom description tag. It is "desc" by default.
 func DescTag(val string) OptFunc { return func(opt *opts) { opt.descTag = val } }
@@ -83,27 +58,13 @@ func FlagHandler(val FlagFunc) OptFunc { return func(opt *opts) { opt.flagFunc =
 // Set to false if you don't want anonymous structure fields to be flatten.
 func Flatten(val bool) OptFunc { return func(opt *opts) { opt.flatten = val } }
 
-func copyOpts(val opts) OptFunc { return func(opt *opts) { *opt = val } }
+// ParseAll orders the parser to generate a flag for all struct fields,
+// even if there isn't a struct tag attached to them.
+func ParseAll() OptFunc { return func(opt *opts) { opt.parseAll = true } }
 
-func hasOption(options []string, option string) bool {
-	for _, opt := range options {
-		if opt == option {
-			return true
-		}
-	}
-
-	return false
-}
-
-func defOpts() opts {
-	return opts{
-		descTag:     defaultDescTag,
-		flagTag:     defaultFlagTag,
-		flagDivider: defaultFlagDivider,
-		envDivider:  defaultEnvDivider,
-		flatten:     defaultFlatten,
-	}
-}
+//
+// Parsing Functions --------------------------------------------------------------------- //
+//
 
 // ParseStruct parses structure and returns list of flags based on this structure.
 // This list of flags can be used by generators for flag, kingpin, cobra, pflag, urfave/cli.
@@ -125,7 +86,7 @@ func ParseStruct(cfg interface{}, optFuncs ...OptFunc) ([]*Flag, error) {
 
 	switch e := v.Elem(); e.Kind() {
 	case reflect.Struct:
-		return parseStruct(e, optFuncs...), nil
+		return parseStruct(e, optFuncs...)
 	default:
 		return nil, ErrNotPointerToStruct
 	}
@@ -133,16 +94,19 @@ func ParseStruct(cfg interface{}, optFuncs ...OptFunc) ([]*Flag, error) {
 
 // ParseField parses a single struct field as a list (often only made of only one) flags.
 // This function can be used when you want to scan only some fields for which you want a flag.
-func ParseField(value reflect.Value, field reflect.StructField, optFuncs ...OptFunc) ([]*Flag, bool) {
+func ParseField(value reflect.Value, field reflect.StructField, optFuncs ...OptFunc) ([]*Flag, bool, error) {
 	opt := defOpts().apply(optFuncs...)
 
 	// Check struct tags, parse the field value if needed, and return the whole.
-	flag, flagSet, val, tag := parse(value, field, opt)
+	flag, flagSet, val, tag, err := parse(value, field, opt)
+	if err != nil {
+		return flagSet, true, err
+	}
 
 	// If our value is nil, we don't have to perform further validations on it,
 	// and we only add flags if we have parsed some on our struct field value.
 	if val == nil {
-		return flagSet, true
+		return flagSet, true, nil
 	}
 
 	// Else, field contains a simple value.
@@ -176,18 +140,18 @@ func ParseField(value reflect.Value, field reflect.StructField, optFuncs ...OptF
 		}
 	}
 
-	return flagSet, true
+	return flagSet, true, nil
 }
 
-func parse(value reflect.Value, fld reflect.StructField, opt opts) (flag *Flag, set []*Flag, val Value, tag *tag.MultiTag) {
+func parse(value reflect.Value, fld reflect.StructField, opt opts) (flag *Flag, set []*Flag, val Value, tag *tag.MultiTag, err error) {
 	// skip unexported and non anonymous fields
 	if fld.PkgPath != "" && !fld.Anonymous {
 		return
 	}
 
 	// We should have a flag and a tag, legacy or not, and with valid values.
-	flag, tag = parseFlagTag(fld, opt)
-	if flag == nil {
+	flag, tag, err = parseFlagTag(fld, opt)
+	if flag == nil || err != nil {
 		return
 	}
 
@@ -199,26 +163,26 @@ func parse(value reflect.Value, fld reflect.StructField, opt opts) (flag *Flag, 
 	}
 
 	// We might have to scan for an arbitrarily nested structure of flags
-	set, val = parseVal(value,
+	set, val, err = parseVal(value,
 		copyOpts(opt),
 		Prefix(prefix),
 	)
 
-	return flag, set, val, tag
+	return flag, set, val, tag, err
 }
 
-func parseVal(value reflect.Value, optFuncs ...OptFunc) ([]*Flag, Value) {
+func parseVal(value reflect.Value, optFuncs ...OptFunc) ([]*Flag, Value, error) {
 	// value is addressable, let's check if we can parse it
 	if value.CanAddr() && value.Addr().CanInterface() {
 		valueInterface := value.Addr().Interface()
 		val := parseGenerated(valueInterface)
 
 		if val != nil {
-			return nil, val
+			return nil, val, nil
 		}
 		// check if field implements Value interface
 		if val, casted := valueInterface.(Value); casted {
-			return nil, val
+			return nil, val, nil
 		}
 	}
 
@@ -231,24 +195,26 @@ func parseVal(value reflect.Value, optFuncs ...OptFunc) ([]*Flag, Value) {
 		val := parseGeneratedPtrs(value.Addr().Interface())
 
 		if val != nil {
-			return nil, val
+			return nil, val, nil
 		}
 
 		return parseVal(value.Elem(), optFuncs...)
 
 	case reflect.Struct:
-		flags := parseStruct(value, optFuncs...)
+		flags, err := parseStruct(value, optFuncs...)
 
-		return flags, nil
+		return flags, nil, err
 
 	case reflect.Map:
-		return parseMap(value)
+		val := parseMap(value)
+
+		return nil, val, nil
 	}
 
-	return nil, nil
+	return nil, nil, nil
 }
 
-func parseStruct(value reflect.Value, optFuncs ...OptFunc) []*Flag {
+func parseStruct(value reflect.Value, optFuncs ...OptFunc) ([]*Flag, error) {
 	flags := []*Flag{}
 
 	valueType := value.Type()
@@ -261,8 +227,12 @@ fields:
 			continue fields
 		}
 
-		// Scan the field, potentially a structure.
-		fieldFlags, found := ParseField(fieldValue, field, optFuncs...)
+		// Scan the field, potentially a structure, any error stops the process
+		fieldFlags, found, err := ParseField(fieldValue, field, optFuncs...)
+		if err != nil {
+			return flags, err
+		}
+
 		if !found || len(fieldFlags) == 0 {
 			continue fields
 		}
@@ -273,16 +243,16 @@ fields:
 		continue fields
 	}
 
-	return flags
+	return flags, nil
 }
 
-func parseMap(value reflect.Value) ([]*Flag, Value) {
+func parseMap(value reflect.Value) Value {
 	mapType := value.Type()
 	keyKind := value.Type().Key().Kind()
 
 	// check that map key is string or integer
 	if !anyOf(MapAllowedKinds, keyKind) {
-		return nil, nil
+		return nil
 	}
 
 	if value.IsNil() {
@@ -292,7 +262,7 @@ func parseMap(value reflect.Value) ([]*Flag, Value) {
 	valueInterface := value.Addr().Interface()
 	val := parseGeneratedMap(valueInterface)
 
-	return nil, val
+	return val
 }
 
 func anyOf(kinds []reflect.Kind, needle reflect.Kind) bool {

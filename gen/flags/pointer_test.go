@@ -10,7 +10,7 @@ import (
 // tests, which might be either on options or on commands.
 
 //
-// Command structs -------------------------------------------------------------------- //
+// Command structs -------------------------------------------------------- //
 //
 
 // pointerRoot is a root struct (entrypoint) containing multiple pointers to

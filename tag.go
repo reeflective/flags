@@ -8,30 +8,27 @@ import (
 )
 
 // parseFlagTag now also handles some of the tags used in jessevdk/go-flags.
-func parseFlagTag(field reflect.StructField, opt opts) (*Flag, *tag.MultiTag) {
-	flag := Flag{}
+func parseFlagTag(field reflect.StructField, opt opts) (*Flag, *tag.MultiTag, error) {
+	flag := &Flag{}
+
 	var skip bool // the flag might be explicitly mark skip (with `-`)
+
 	ignoreFlagPrefix := false
 	flag.Name = camelToFlag(field.Name, opt.flagDivider)
 
-	// Get struct tag or die tryin'
-	flagTags, none, err := tag.GetFieldTag(field)
-	if none || err != nil {
-		return nil, nil
+	// Parse the struct tag
+	flagTags, skip, err := getFlagTags(field, opt)
+	if err != nil {
+		return nil, nil, err
 	}
 
-	flagsTag, _ := flagTags.Get(opt.flagTag)
-	sflagValues := strings.Split(flagsTag, ",")
+	if skip {
+		return nil, nil, nil
+	}
 
-	if flagsTag != "" && len(sflagValues) > 0 {
-		// Either we have found the legacy flags tag value.
-		skip, ignoreFlagPrefix = parseflagsTag(flagsTag, &flag)
-		if skip {
-			return nil, &flagTags
-		}
-	} else {
-		// Or we try for the go-flags tags.
-		parseGoFlagsTag(&flagTags, &flag)
+	// Parse all base struct tag flags attributes and populate the flag object.
+	if skip, ignoreFlagPrefix = parseBaseFlagAttributes(flagTags, flag, opt); skip {
+		return nil, flagTags, nil
 	}
 
 	// Descriptions
@@ -53,11 +50,54 @@ func parseFlagTag(field reflect.StructField, opt opts) (*Flag, *tag.MultiTag) {
 	if opt.prefix != "" && !ignoreFlagPrefix {
 		flag.Name = opt.prefix + flag.Name
 	}
-	return &flag, &flagTags
+
+	return flag, flagTags, nil
+}
+
+// getFlagTags tries to parse any struct tag we need, and tells the caller if
+// we should actually build a flag object out of the struct field, or skip it.
+func getFlagTags(field reflect.StructField, opt opts) (*tag.MultiTag, bool, error) {
+	flagTags, none, err := tag.GetFieldTag(field)
+	if err != nil {
+		return nil, true, err
+	}
+
+	// If the global options specify that we must build a flag
+	// out of each struct field, regardless of them being tagged.
+	if opt.parseAll {
+		return &flagTags, false, nil
+	}
+
+	// Else we skip this field only if there's not tag on it
+	if none {
+		return &flagTags, true, nil
+	}
+
+	return &flagTags, false, nil
+}
+
+// parseBaseFlagAttributes checks which type of struct tags we found, parses them
+// accordingly (legacy, or not), taking into account any global config settings.
+func parseBaseFlagAttributes(flagTags *tag.MultiTag, flag *Flag, opt opts) (skip, ignorePrefix bool) {
+	sflagsTag, _ := flagTags.Get(opt.flagTag)
+	sflagValues := strings.Split(sflagsTag, ",")
+
+	if sflagsTag != "" && len(sflagValues) > 0 {
+		// Either we have found the legacy flags tag value.
+		skip, ignorePrefix = parseflagsTag(sflagsTag, flag)
+		if skip {
+			return true, false
+		}
+	} else {
+		// Or we try for the go-flags tags.
+		parseGoFlagsTag(flagTags, flag)
+	}
+
+	return false, ignorePrefix
 }
 
 // parseflagsTag parses only the original tag values of this library flags.
-func parseflagsTag(flagsTag string, flag *Flag) (ignore, ignorePrefix bool) {
+func parseflagsTag(flagsTag string, flag *Flag) (skip, ignorePrefix bool) {
 	values := strings.Split(flagsTag, ",")
 
 	// Base / legacy flags tag
@@ -71,6 +111,7 @@ func parseflagsTag(flagsTag string, flag *Flag) (ignore, ignorePrefix bool) {
 			fName = fNameSplitted[0]
 			flag.Short = fNameSplitted[1]
 		}
+
 		if strings.HasPrefix(fName, "~") {
 			flag.Name = fName[1:]
 			ignorePrefix = true
@@ -78,6 +119,7 @@ func parseflagsTag(flagsTag string, flag *Flag) (ignore, ignorePrefix bool) {
 			flag.Name = fName
 		}
 	}
+
 	flag.Hidden = hasOption(values[1:], "hidden")
 	flag.Deprecated = hasOption(values[1:], "deprecated")
 
@@ -106,6 +148,7 @@ func parseGoFlagsTag(flagTags *tag.MultiTag, flag *Flag) {
 func parseEnvTag(flagName string, field reflect.StructField, opt opts) string {
 	ignoreEnvPrefix := false
 	envVar := flagToEnv(flagName, opt.flagDivider, opt.envDivider)
+
 	if envTags := strings.Split(field.Tag.Get(defaultEnvTag), ","); len(envTags) > 0 {
 		switch envName := envTags[0]; envName {
 		case "-":
@@ -130,8 +173,10 @@ func parseEnvTag(flagName string, field reflect.StructField, opt opts) string {
 			}
 		}
 	}
+
 	if envVar != "" && opt.envPrefix != "" && !ignoreEnvPrefix {
 		envVar = opt.envPrefix + envVar
 	}
+
 	return envVar
 }

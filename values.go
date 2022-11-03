@@ -58,6 +58,7 @@ func (v *validateValue) IsBoolFlag() bool {
 	if boolFlag, casted := v.Value.(BoolFlag); casted {
 		return boolFlag.IsBoolFlag()
 	}
+
 	return false
 }
 
@@ -65,6 +66,7 @@ func (v *validateValue) IsCumulative() bool {
 	if cumulativeFlag, casted := v.Value.(RepeatableFlag); casted {
 		return cumulativeFlag.IsCumulative()
 	}
+
 	return false
 }
 
@@ -72,6 +74,7 @@ func (v *validateValue) String() string {
 	if v == nil || v.Value == nil {
 		return ""
 	}
+
 	return v.Value.String()
 }
 
@@ -82,6 +85,7 @@ func (v *validateValue) Set(val string) error {
 			return err
 		}
 	}
+
 	return v.Value.Set(val)
 }
 
@@ -105,8 +109,10 @@ func (v *Counter) Set(s string) error {
 	// flag package pass true if BoolFlag doesn't have an argument.
 	if s == "" || s == "true" {
 		*v++
+
 		return nil
 	}
+
 	parsed, err := strconv.ParseInt(s, 0, 0)
 	if err != nil {
 		return err
@@ -117,6 +123,7 @@ func (v *Counter) Set(s string) error {
 	} else {
 		*v = Counter(parsed)
 	}
+
 	return nil
 }
 
@@ -147,6 +154,7 @@ func parseIP(s string) (net.IP, error) {
 	if ip == nil {
 		return nil, fmt.Errorf("failed to parse IP: %q", s)
 	}
+
 	return ip, nil
 }
 
@@ -155,6 +163,7 @@ func parseTCPAddr(s string) (net.TCPAddr, error) {
 	if err != nil {
 		return net.TCPAddr{}, fmt.Errorf("failed to parse TCPAddr: %q", s)
 	}
+
 	return *tcpADDR, nil
 }
 
@@ -163,5 +172,6 @@ func parseIPNet(s string) (net.IPNet, error) {
 	if err != nil {
 		return net.IPNet{}, err
 	}
+
 	return *ipNet, nil
 }

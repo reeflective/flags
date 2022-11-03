@@ -2,6 +2,7 @@ package flags
 
 import (
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net"
 	"os"
@@ -14,7 +15,23 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type cfg1 struct {
+//
+// Flag structs & test helpers -------------------------------------------------------- //
+//
+
+// testConfig stores all data needed for a single test.
+// This is different from flagsConfig, which is the CLI
+// structure to be parsed and used.
+type testConfig struct {
+	cfg     interface{} // Initial state of the struct before parsing arguments
+	expCfg  interface{} // Expected state of the struct after parsing arguments.
+	args    []string    // Command-line args
+	expErr1 error       // flags Parse error
+	expErr2 error       // pflag Parse error
+}
+
+// flagsConfig is an example structure to be used to produce CLI flags.
+type flagsConfig struct {
 	StringValue1 string
 	StringValue2 string `flag:"string-value-two s"`
 
@@ -24,181 +41,239 @@ type cfg1 struct {
 	DeprecatedValue1  string `flag:",deprecated" desc:"DEP_MESSAGE"`
 }
 
-func TestParse(t *testing.T) {
-	tests := []struct {
-		name string
+// allPflags contains all possible types to be parsed as pflags.
+type allPflags struct {
+	IntValue   int
+	Int8Value  int8
+	Int32Value int32
+	Int64Value int64
 
-		cfg     interface{}
-		args    []string
-		expCfg  interface{}
-		expErr1 error // sflag Parse error
-		expErr2 error // pflag Parse error
-	}{
-		{
-			name: "Test cfg1",
-			cfg: &cfg1{
-				StringValue1: "string_value1_value",
-				StringValue2: "string_value2_value",
+	UintValue   uint
+	Uint8Value  uint8
+	Uint16Value uint16
+	Uint32Value uint32
+	Uint64Value uint64
 
-				CounterValue1: 1,
+	Float32Value float32
+	Float64Value float64
 
-				StringSliceValue1: []string{"one", "two"},
-			},
-			expCfg: &cfg1{
-				StringValue1: "string_value1_value2",
-				StringValue2: "string_value2_value2",
+	BoolValue     bool
+	StringValue   string
+	DurationValue time.Duration
+	CountValue    flags.Counter
 
-				CounterValue1: 3,
+	IPValue    net.IP
+	IPNetValue net.IPNet
 
-				StringSliceValue1: []string{
-					"one2", "two2", "three", "4",
-				},
-			},
-			args: []string{
-				"--string-value1", "string_value1_value2",
-				"--string-value-two", "string_value2_value2",
-				"--counter-value1", "--counter-value1",
-				"--string-slice-value1", "one2",
-				"--string-slice-value1", "two2",
-				"--string-slice-value1", "three,4",
+	StringSliceValue []string
+	IntSliceValue    []int
+}
+
+// run condenses all CLI/flags parsing steps, and compares
+// all structs/errors against their expected state.
+func run(t *testing.T, test *testConfig) {
+	t.Helper()
+
+	// We must parse all struct fields regardless of them being tagged.
+	parseOptions := flags.ParseAll()
+
+	flagSet, err := ParseFlags(test.cfg, parseOptions)
+
+	if test.expErr1 != nil {
+		require.Error(t, err)
+		require.Equal(t, test.expErr1, err)
+	} else {
+		require.NoError(t, err)
+	}
+
+	if err != nil {
+		return
+	}
+
+	flagSet.Init("pflagTest", pflag.ContinueOnError)
+	flagSet.SetOutput(ioutil.Discard)
+
+	err = flagSet.Parse(test.args)
+	if test.expErr2 != nil {
+		require.Error(t, err)
+		require.Equal(t, test.expErr2, err)
+	} else {
+		require.NoError(t, err)
+	}
+
+	if err != nil {
+		return
+	}
+
+	assert.Equal(t, test.expCfg, test.cfg)
+}
+
+//
+// Tests ---------------------------------------------------------------------------- //
+//
+
+// TestFlagsBase tests for a simple (old sflags) struct to be parsed.
+func TestFlagsBase(t *testing.T) {
+	t.Parallel()
+
+	// Test setup
+	test := &testConfig{
+		cfg: &flagsConfig{
+			StringValue1: "string_value1_value",
+			StringValue2: "string_value2_value",
+
+			CounterValue1: 1,
+
+			StringSliceValue1: []string{"one", "two"},
+		},
+		expCfg: &flagsConfig{
+			StringValue1: "string_value1_value2",
+			StringValue2: "string_value2_value2",
+
+			CounterValue1: 3,
+
+			StringSliceValue1: []string{
+				"one2", "two2", "three", "4",
 			},
 		},
-		{
-			name: "Test cfg1 no args",
-			cfg: &cfg1{
-				StringValue1: "string_value1_value",
-				StringValue2: "",
-			},
-			expCfg: &cfg1{
-				StringValue1: "string_value1_value",
-				StringValue2: "",
-			},
-			args: []string{},
-		},
-		{
-			name: "Test cfg1 short option",
-			cfg: &cfg1{
-				StringValue2: "string_value2_value",
-			},
-			expCfg: &cfg1{
-				StringValue2: "string_value2_value2",
-			},
-			args: []string{
-				"-s=string_value2_value2",
-			},
-		},
-		{
-			name: "Test cfg1 without default values",
-			cfg:  &cfg1{},
-			expCfg: &cfg1{
-				StringValue1: "string_value1_value2",
-				StringValue2: "string_value2_value2",
-
-				CounterValue1: 3,
-			},
-			args: []string{
-				"--string-value1", "string_value1_value2",
-				"--string-value-two", "string_value2_value2",
-				"--counter-value1=2", "--counter-value1",
-			},
-		},
-		{
-			name: "Test cfg1 bad option",
-			cfg: &cfg1{
-				StringValue1: "string_value1_value",
-			},
-			args: []string{
-				"--bad-value=string_value1_value2",
-			},
-			expErr2: errors.New("unknown flag: --bad-value"),
-		},
-		{
-			name:    "Test bad cfg value",
-			cfg:     "bad config",
-			expErr1: errors.New("object must be a pointer to struct or interface"),
+		args: []string{
+			"--string-value1", "string_value1_value2",
+			"--string-value-two", "string_value2_value2",
+			"--counter-value1", "--counter-value1",
+			"--string-slice-value1", "one2",
+			"--string-slice-value1", "two2",
+			"--string-slice-value1", "three,4",
 		},
 	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			fs, err := ParseFlags(test.cfg)
-			if test.expErr1 != nil {
-				require.Error(t, err)
-				require.Equal(t, test.expErr1, err)
-			} else {
-				require.NoError(t, err)
-			}
-			if err != nil {
-				return
-			}
-			fs.Init("pflagTest", pflag.ContinueOnError)
-			fs.SetOutput(ioutil.Discard)
-			err = fs.Parse(test.args)
-			if test.expErr2 != nil {
-				require.Error(t, err)
-				require.Equal(t, test.expErr2, err)
-			} else {
-				require.NoError(t, err)
-			}
-			if err != nil {
-				return
-			}
-			assert.Equal(t, test.expCfg, test.cfg)
-		})
+
+	run(t, test)
+}
+
+// TestParseNoArgs tests that no arguments
+// passed as command-line invocation works.
+func TestParseNoArgs(t *testing.T) {
+	t.Parallel()
+
+	test := &testConfig{
+		cfg: &flagsConfig{
+			StringValue1: "string_value1_value",
+			StringValue2: "",
+		},
+		expCfg: &flagsConfig{
+			StringValue1: "string_value1_value",
+			StringValue2: "",
+		},
+		args: []string{},
 	}
+
+	run(t, test)
+}
+
+// TestParseShortOptions checks that flags
+// invoked as short options correctly parse.
+func TestParseShortOptions(t *testing.T) {
+	t.Parallel()
+
+	test := &testConfig{
+		cfg: &flagsConfig{
+			StringValue2: "string_value2_value",
+		},
+		expCfg: &flagsConfig{
+			StringValue2: "string_value2_value2",
+		},
+		args: []string{
+			"-s=string_value2_value2",
+		},
+	}
+
+	run(t, test)
+}
+
+// TestParseBadOptions checks that flag invoked while not
+// existing in the struct will correctly error out.
+func TestParseBadOptions(t *testing.T) {
+	t.Parallel()
+
+	test := &testConfig{
+		cfg: &flagsConfig{
+			StringValue1: "string_value1_value",
+		},
+		args: []string{
+			"--bad-value=string_value1_value2",
+		},
+		expErr2: errors.New("unknown flag: --bad-value"),
+	}
+
+	run(t, test)
+}
+
+// TestParseNoDefaultValues checks that flags that do NOT specify
+// their default values will leave their current state untouched.
+func TestParseNoDefaultValues(t *testing.T) {
+	t.Parallel()
+
+	test := &testConfig{
+		cfg: &flagsConfig{},
+		expCfg: &flagsConfig{
+			StringValue1: "string_value1_value2",
+			StringValue2: "string_value2_value2",
+
+			CounterValue1: 3,
+		},
+		args: []string{
+			"--string-value1", "string_value1_value2",
+			"--string-value-two", "string_value2_value2",
+			"--counter-value1=2", "--counter-value1",
+		},
+	}
+
+	run(t, test)
+}
+
+// TestParseBadConfig checks that unsupported types are correctly rejected.
+func TestParseBadConfig(t *testing.T) {
+	t.Parallel()
+
+	pointerErr := fmt.Errorf("%w: %s", flags.ErrParse, ErrNotPointerToStruct.Error())
+	test := &testConfig{
+		cfg:     "bad config",
+		expErr1: pointerErr,
+	}
+
+	run(t, test)
 }
 
 func TestParseToDef(t *testing.T) {
+	t.Parallel()
+
 	oldCommandLine := pflag.CommandLine
 
 	defer func() {
 		pflag.CommandLine = oldCommandLine
 	}()
 
-	cfg := &cfg1{StringValue1: "value1"}
+	cfg := &flagsConfig{StringValue1: "value1"}
 	pflag.CommandLine = pflag.NewFlagSet(os.Args[0], pflag.ContinueOnError)
 
-	err := parseToDef(cfg)
+	parseOptions := flags.ParseAll()
+
+	err := parseToDef(cfg, parseOptions)
 	assert.NoError(t, err)
 
 	err = pflag.CommandLine.Parse([]string{"--string-value1", "value2"})
 	assert.NoError(t, err)
 	assert.Equal(t, "value2", cfg.StringValue1)
 
-	err = parseToDef("bad string")
+	err = parseToDef("bad string", parseOptions)
 	assert.Error(t, err)
 }
 
+// Test that pflag getter functions like GetInt work as expected.
 func TestPFlagGetters(t *testing.T) {
-	// Test that pflag getter functions like GetInt work as expected.
 	_, ipNet, err := net.ParseCIDR("127.0.0.1/24")
 	require.NoError(t, err)
 
-	cfg := &struct {
-		IntValue   int
-		Int8Value  int8
-		Int32Value int32
-		Int64Value int64
-
-		UintValue   uint
-		Uint8Value  uint8
-		Uint16Value uint16
-		Uint32Value uint32
-		Uint64Value uint64
-
-		Float32Value float32
-		Float64Value float64
-
-		BoolValue     bool
-		StringValue   string
-		DurationValue time.Duration
-		CountValue    flags.Counter
-
-		IPValue    net.IP
-		IPNetValue net.IPNet
-
-		StringSliceValue []string
-		IntSliceValue    []int
-	}{
+	cfg := &allPflags{
 		IntValue:   10,
 		Int8Value:  11,
 		Int32Value: 12,
@@ -224,7 +299,10 @@ func TestPFlagGetters(t *testing.T) {
 		StringSliceValue: []string{"one", "two"},
 		IntSliceValue:    []int{10, 20},
 	}
-	flagSet, err := ParseFlags(cfg)
+
+	parseOptions := flags.ParseAll()
+
+	flagSet, err := ParseFlags(cfg, parseOptions)
 	require.NoError(t, err)
 
 	intValue, err := flagSet.GetInt("int-value")
