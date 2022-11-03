@@ -215,51 +215,55 @@ func new{{MapValueName $value . | Title}}(m *map[{{.}}]{{$value.Type}}) *{{MapVa
 }
 
 func (v *{{MapValueName $value .}}) Set(s string) error {
-	ss := strings.Split(s, ":")
-    if len(ss) < 2 {
-        return errors.New("invalid map flag syntax, use -map=key1:val1")
+	values := strings.Split(s, ",")
+
+	for _, value := range values {
+        ss := strings.Split(value, ":")
+        if len(ss) < 2 {
+            return errors.New("invalid map flag syntax, use -map=key1:val1")
+        }
+
+        {{ $kindVal := KindValue . }}
+
+        value = ss[0]
+
+        {{if $kindVal.Parser }}\nn
+        parsedKey, err := {{$kindVal.Parser}}
+        if err != nil {
+            return err
+        }
+
+        {{if $kindVal.Convert}}\nn
+        key := ({{$kindVal.Type}})(parsedKey)
+        {{else}}\nn
+        key := parsedKey
+        {{end}}\nn
+
+        {{ else }}\nn
+        key := value 
+        {{end}}\nn
+
+
+        value = ss[1]
+     
+        {{if $value.Parser }}\nn
+        parsedVal, err := {{$value.Parser}}
+        if err != nil {
+            return err
+        }
+
+        {{if $value.Convert}}\nn
+        val := ({{$value.Type}})(parsedVal)
+        {{else}}\nn
+        val := parsedVal
+        {{end}}\nn
+
+        {{ else }}\nn
+        val := value 
+        {{end}}\nn
+
+        (*v.value)[key] = val
     }
-
-	{{ $kindVal := KindValue . }}
-
-	s = ss[0]
-
-	{{if $kindVal.Parser }}\nn
-	parsedKey, err := {{$kindVal.Parser}}
-	if err != nil {
-        return err
-	}
-
-	{{if $kindVal.Convert}}\nn
-	key := ({{$kindVal.Type}})(parsedKey)
-	{{else}}\nn
-	key := parsedKey
-	{{end}}\nn
-
-	{{ else }}\nn
-	key := s
-	{{end}}\nn
-
-
-	s = ss[1]
- 
-	{{if $value.Parser }}\nn
-	parsedVal, err := {{$value.Parser}}
-	if err != nil {
-        return err
-	}
-
-	{{if $value.Convert}}\nn
-	val := ({{$value.Type}})(parsedVal)
-	{{else}}\nn
-	val := parsedVal
-	{{end}}\nn
-
-	{{ else }}\nn
-	val := s
-	{{end}}\nn
-
-	(*v.value)[key] = val
 
 	return nil
 }
