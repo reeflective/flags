@@ -10,7 +10,6 @@ import (
 // All arguments subcommands are bound to this root.
 //
 
-// rootCommand contains all subcommands showing positional arguments usage.
 type rootCommand struct {
 	MultipleListsArgs  `command:"multiple-lists" description:"Declare multiple lists as positional arguments, and how words are dispatched"`
 	FirstListArgs      `command:"list-first" description:"Use several positionals, of which the first is a list, but not the last."`
