@@ -157,7 +157,12 @@ func newCommand(name string, mtag tag.MultiTag, parent *cobra.Group) *cobra.Comm
 		Annotations: map[string]string{},
 	}
 
-	subc.Short, _ = mtag.Get("description")
+	if desc, _ := mtag.Get("description"); desc != "" {
+		subc.Short = desc
+	} else if desc, _ := mtag.Get("desc"); desc != "" {
+		subc.Short = desc
+	}
+
 	subc.Long, _ = mtag.Get("long-description")
 	subc.Aliases = mtag.GetMany("alias")
 	_, subc.Hidden = mtag.Get("hidden")
