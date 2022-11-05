@@ -181,7 +181,7 @@ func choiceCompletions(tag tag.MultiTag, val reflect.Value) comp.CompletionCallb
 
 	if flagIsList {
 		for _, choice := range choices {
-			allChoices = append(allChoices, strings.Split(choice, ",")...)
+			allChoices = append(allChoices, strings.Split(choice, " ")...)
 		}
 	} else {
 		allChoices = choices

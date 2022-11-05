@@ -6,6 +6,7 @@ import (
 	"strings"
 )
 
+// ErrInvalidChoice indicates that the provided flag argument is not among the valid choices.
 var ErrInvalidChoice = errors.New("invalid choice")
 
 // setValidations binds all validators required for the flag:
@@ -53,7 +54,7 @@ func setValidations(flag *Flag, flagVal Value, field reflect.StructField, value 
 
 // validateChoice checks the given value(s) is among valid choices.
 func validateChoice(val string, choices []string) error {
-	values := strings.Split(val, " ")
+	values := strings.Split(val, ",")
 
 	for _, value := range values {
 		if !stringInSlice(value, choices) {
