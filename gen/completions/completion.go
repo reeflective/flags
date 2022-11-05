@@ -166,3 +166,30 @@ func taggedCompletions(tag tag.MultiTag) (comp.CompletionCallback, bool) {
 
 	return callback, true
 }
+
+// choiceCompletions builds completions from field tag choices.
+func choiceCompletions(tag tag.MultiTag, val reflect.Value) comp.CompletionCallback {
+	choices := tag.GetMany("choice")
+
+	if len(choices) == 0 {
+		return nil
+	}
+
+	var allChoices []string
+
+	flagIsList := val.Kind() == reflect.Slice || val.Kind() == reflect.Map
+
+	if flagIsList {
+		for _, choice := range choices {
+			allChoices = append(allChoices, strings.Split(choice, ",")...)
+		}
+	} else {
+		allChoices = choices
+	}
+
+	callback := func(ctx comp.Context) comp.Action {
+		return comp.ActionValues(allChoices...)
+	}
+
+	return callback
+}

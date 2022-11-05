@@ -17,11 +17,19 @@ import (
 // longer than one character.
 var ErrShortNameTooLong = errors.New("short names can only be 1 character long")
 
+// flagSetComps is an alias for storing per-flag completions.
+type flagSetComps map[string]comp.Action
+
 // flagsGroup finds if a field is marked as a subgroup of options, and if yes, scans it recursively.
 func groupComps(comps *comp.Carapace, cmd *cobra.Command, val reflect.Value, fld *reflect.StructField) (bool, error) {
 	mtag, none, err := tag.GetFieldTag(*fld)
 	if none || err != nil {
 		return true, fmt.Errorf("%w: %s", scan.ErrScan, err.Error())
+	}
+
+	// If not tagged as group, skip it.
+	if _, isGroup := mtag.Get("group"); !isGroup {
+		return false, nil
 	}
 
 	// description, _ := mtag.Get("description")
@@ -56,7 +64,9 @@ func groupComps(comps *comp.Carapace, cmd *cobra.Command, val reflect.Value, fld
 
 	// Parse for commands
 	if isSet {
-		scannerCommand := scanCompletions(cmd, comps)
+		defaultFlagComps := flagSetComps{}
+
+		scannerCommand := completionScanner(cmd, comps, &defaultFlagComps)
 		err := scan.Type(ptrval.Interface(), scannerCommand)
 
 		return true, fmt.Errorf("%w: %s", scan.ErrScan, err.Error())
@@ -84,10 +94,9 @@ func addFlagComps(comps *comp.Carapace, mtag tag.MultiTag, data interface{}) err
 		flagOpts = append(flagOpts, flags.EnvPrefix(envNamespace))
 	}
 
-	// All completions for this flag set
-	flagCompletions := make(map[string]comp.Action)
-
+	// All completions for this flag set only.
 	// The handler will append to the completions map as each flag is parsed
+	flagCompletions := flagSetComps{}
 	compScanner := flagCompsScanner(&flagCompletions)
 	flagOpts = append(flagOpts, flags.FlagHandler(compScanner))
 
@@ -107,12 +116,45 @@ func addFlagComps(comps *comp.Carapace, mtag tag.MultiTag, data interface{}) err
 	return nil
 }
 
+// flagScan builds a small struct field handler so that we can scan
+// it as an option and add it to our current command flags.
+func flagComps(comps *comp.Carapace, flagComps *flagSetComps) scan.Handler {
+	flagScanner := func(val reflect.Value, sfield *reflect.StructField) (bool, error) {
+		compScanner := flagCompsScanner(flagComps)
+
+		// Parse a single field, returning one or more generic Flags
+		_, found, err := flags.ParseField(val, *sfield, flags.FlagHandler(compScanner))
+		if err != nil {
+			return found, err
+		}
+
+		// If we are done parsing the flags without error and we have
+		// some completers found on them (implemented or tagged), bind them.
+		if len(*flagComps) > 0 {
+			comps.FlagCompletion(comp.ActionMap(*flagComps))
+		}
+
+		if !found {
+			return false, nil
+		}
+
+		return true, nil
+	}
+
+	return flagScanner
+}
+
 // flagCompsScanner builds a scanner that will register some completers for an option flag.
-func flagCompsScanner(actions *map[string]comp.Action) flags.FlagFunc {
+func flagCompsScanner(actions *flagSetComps) flags.FlagFunc {
 	handler := func(flag string, tag tag.MultiTag, val reflect.Value) error {
 		// First bind any completer implementation if found
 		if completer := typeCompleter(val); completer != nil {
 			(*actions)[flag] = comp.ActionCallback(completer)
+		}
+
+		// Check if the flag has some choices: if yes, build completions.
+		if choices := choiceCompletions(tag, val); choices != nil {
+			(*actions)[flag] = comp.ActionCallback(choices)
 		}
 
 		// Then, check for tags that will override the implementation.

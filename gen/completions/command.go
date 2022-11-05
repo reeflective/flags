@@ -20,8 +20,12 @@ func Generate(cmd *cobra.Command, data interface{}, comps *comp.Carapace) (*comp
 		comps = comp.Gen(cmd)
 	}
 
+	// Each command has, by default, a map of flag completions,
+	// which is used for flags that are not contained in a struct group.
+	defaultFlagComps := flagSetComps{}
+
 	// A command always accepts embedded subcommand struct fields, so scan them.
-	compScanner := scanCompletions(cmd, comps)
+	compScanner := completionScanner(cmd, comps, &defaultFlagComps)
 
 	// Scan the struct recursively, for both arg/option groups and subcommands
 	if err := scan.Type(data, compScanner); err != nil {
@@ -31,9 +35,9 @@ func Generate(cmd *cobra.Command, data interface{}, comps *comp.Carapace) (*comp
 	return comps, nil
 }
 
-// scanCompletions is in charge of building a recursive scanner, working on a given
+// completionScanner is in charge of building a recursive scanner, working on a given
 // struct field at a time, checking for arguments, subcommands and option groups.
-func scanCompletions(cmd *cobra.Command, comps *comp.Carapace) scan.Handler {
+func completionScanner(cmd *cobra.Command, comps *comp.Carapace, flags *flagSetComps) scan.Handler {
 	handler := func(val reflect.Value, sfield *reflect.StructField) (bool, error) {
 		mtag, none, err := tag.GetFieldTag(*sfield)
 		if none || err != nil {
@@ -54,7 +58,12 @@ func scanCompletions(cmd *cobra.Command, comps *comp.Carapace) scan.Handler {
 
 		// Else, try scanning the field as a group of commands/options,
 		// and only use the completion stuff we find on them.
-		return groupComps(comps, cmd, val, sfield)
+		if found, err := groupComps(comps, cmd, val, sfield); found || err != nil {
+			return found, err
+		}
+
+		// Else, try scanning the field as a simple option flag
+		return flagComps(comps, flags)(val, sfield)
 	}
 
 	return handler

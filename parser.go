@@ -109,17 +109,10 @@ func ParseField(value reflect.Value, field reflect.StructField, optFuncs ...OptF
 		return flagSet, true, nil
 	}
 
-	// Else, field contains a simple value.
-	if opt.validator != nil {
-		val = &validateValue{
-			Value: val,
-			validateFunc: func(val string) error {
-				return opt.validator(val, field, value.Interface())
-			},
-		}
-	}
+	// Set validators if any, user-defined or builtin
+	flag.Value = setValidations(flag, val, field, value, opt)
 
-	flag.Value = val
+	// TODO: This should be changed: parse `optional-value` and use it. Check if both things means different stuff though.
 	flag.DefValue = val.String()
 	flagSet = append(flagSet, flag)
 
