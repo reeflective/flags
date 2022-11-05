@@ -78,8 +78,11 @@ func (c *IgnoredOptions) Execute(args []string) error {
 
 // DefaultValueOptions is a command showing how to specify default/optional values for options.
 type DefaultOptions struct {
-	Extensions string `short:"e" long:"extensions" desc:"A flag with validated choices" choice:".json" choice:".go" choice:".yaml"`
-	Defaults   string `short:"d" long:"default" desc:"A flag with a default value, if not specified" optional-value:"my-default-value"`
+	// Extensions illustrate the two possible uses of the `choice` tag:
+	// - With a single value, but with multiple tag uses.
+	// - With multiple values, space-separated.
+	Extensions []string `short:"e" long:"extensions" desc:"A flag with validated choices" choice:".json .go" choice:".yaml"`
+	Defaults   string   `short:"d" long:"default" desc:"A flag with a default value, if not specified" optional-value:"my-value"`
 }
 
 // Execute is the command implementation, shows how options are parsed.

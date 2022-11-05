@@ -12,12 +12,6 @@ type GroupedOptionsBasic struct {
 	Check bool              `long:"check" short:"c" description:"a boolean checker, can be used in an option stacking, like -cp <path>"`
 }
 
-// DefaultValueOptions shows how to specify default/optional values for options.
-type DefaultValueOptions struct {
-	Extensions string `short:"e" long:"extensions" desc:"A flag with validated choices" choice:".json" choice:".go" choice:".yaml"`
-	Defaults   string `short:"d" long:"default" desc:"A flag with a default value, if not specified" optional-value:"my-default-value"`
-}
-
 // RequiredOptions shows how to specify requirements for options.
 type RequiredOptions struct{}
 
