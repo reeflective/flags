@@ -13,10 +13,14 @@ import (
 // Note that this command does not group its options in a group of itself
 // (eg, options grouped in a struct), but just declares them at the root level.
 type BasicOptions struct {
+	// First flag tags notation
 	Path  string            `short:"p" long:"path" description:"a path used by your command"`
-	Files []string          `short:"f" long:"files" desc:"A list of files, with repeated flags or comma-separated items"`
+	Files []string          `short:"f" long:"files" desc:"A list of files, with repeated flags or comma-separated items" complete:"Files"`
 	Elems map[string]string `short:"e" long:"elems" description:"A map[string]string flag, can be repeated or used with comma-separated items"`
 	Check bool              `long:"check" short:"c" description:"a boolean checker, can be used in an option stacking, like -cp <path>"`
+
+	// Second flag tag notation
+	Alternate string `flag:"alternate a" desc:"A flag declared with struct tag flag:\"a alternate\" instead of short:\"a\" / long:\"alternate\""`
 }
 
 // Execute is the command implementation, shows how options are parsed.
@@ -25,6 +29,7 @@ func (c *BasicOptions) Execute(args []string) error {
 	fmt.Printf("Files ([]string):            %v\n", c.Files)
 	fmt.Printf("Elems (map[string]string):   %v\n", c.Elems)
 	fmt.Printf("Check (bool):                %v\n", c.Check)
+	fmt.Printf("Alternate (string):            %v\n", c.Alternate)
 
 	return nil
 }

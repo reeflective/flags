@@ -11,8 +11,8 @@ import (
 //
 
 type rootCommand struct {
-	MultipleListsArgs  `command:"multiple-lists" description:"Declare multiple lists as positional arguments, and how words are dispatched"`
-	FirstListArgs      `command:"list-first" description:"Use several positionals, of which the first is a list, but not the last."`
+	MultipleListsArgs  `command:"multiple-lists" description:"Declare multiple lists as positional arguments, and how words are dispatched" group:"testing"`
+	FirstListArgs      `command:"list-first" description:"Use several positionals, of which the first is a list, but not the last." group:"testing"`
 	MultipleMinMaxArgs `command:"overlap-min-max" description:"Use multiple lists as positionals, with overlapping min/max requirements"`
 	TagCompletedArgs   `command:"tag-completed" description:"Specify completers with struct tags"`
 }

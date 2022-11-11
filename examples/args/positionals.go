@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/rsteube/carapace"
+	"github.com/rsteube/carapace/pkg/style"
 )
 
 // IP is another argument field, but which implements
@@ -10,10 +11,11 @@ type IP []string
 
 // Complete produces completions for the IP type.
 func (ip *IP) Complete(ctx carapace.Context) carapace.Action {
-	action := carapace.ActionValuesDescribed(
-		"23::23:234::34ef::343f:47ca", "A first ip address",
-		"::1", "a second address",
-	).Invoke(ctx).Filter(ctx.Args).ToA()
+	action := carapace.ActionStyledValuesDescribed(
+		"23:23:234:34ef:343f:47ca", "An IPv6 address", style.BrightGreen,
+		"::1", "a second address", style.BrightGreen,
+		"10.10.10.10", "An intruder", style.Blue,
+	).Group("IPv6 addresses").Invoke(ctx).Filter(ctx.Args).ToA()
 
 	return action
 }
@@ -23,11 +25,13 @@ type Host string
 
 // Complete generates completions for the Host type.
 func (p *Host) Complete(ctx carapace.Context) carapace.Action {
-	action := carapace.ActionValuesDescribed(
-		"192.168.1.1", "A first ip address",
-		"192.168.1.12", "a second address",
-		"10.203.23.45", "and a third one",
-	).Invoke(ctx).Filter(ctx.Args).ToA()
+	action := carapace.ActionStyledValuesDescribed(
+		"192.168.1.1", "A first ip address", style.BgBlue,
+		"192.168.3.12", "a second address", style.BrightGreen,
+		"10.203.23.45", "and a third one", style.BrightCyan,
+		"127.0.0.1", "and a third one", style.BrightCyan,
+		"219.293.91.10", "", style.Blue,
+	).Group("IPv4 addresses").Invoke(ctx).Filter(ctx.Args).ToA()
 
 	return action
 }
@@ -41,7 +45,7 @@ func (p *Proxy) Complete(ctx carapace.Context) carapace.Action {
 		"github.com", "A first ip address",
 		"google.com", "a second address",
 		"blue-team.com", "and a third one",
-	).Invoke(ctx).Filter(ctx.Args).ToA()
+	).Group("host domains").Invoke(ctx).Filter(ctx.Args).ToA()
 
 	return action
 }
