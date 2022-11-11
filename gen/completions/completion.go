@@ -87,21 +87,27 @@ func getCompletionAction(name, value string) comp.Action {
 	return action
 }
 
-// the appropriate number of completers (equivalents carapace.ActionCallback)
-// to be returned, for this field/requirements only.
-func typeCompleter(val reflect.Value) comp.CompletionCallback {
+// typeCompleterAlt checksw for completer implementations on the type, checks
+// if the implementations are on the type of its elements (if slice/map), and
+// returns the results.
+func typeCompleter(val reflect.Value) (comp.CompletionCallback, bool, bool) {
+	isRepeatable := false
+	itemsImplement := false
+
+	var completer comp.CompletionCallback
+
 	// Always check that the type itself does implement, even if
 	// it's a list of type X that implements the completer as well.
 	// If yes, we return this implementation, since it has priority.
 	if val.Type().Kind() == reflect.Slice {
-		i := val.Interface()
-		if completer, ok := i.(Completer); ok {
-			return completer.Complete
-		}
+		isRepeatable = true
 
-		if val.CanAddr() {
-			if completer, ok := val.Addr().Interface().(Completer); ok {
-				return completer.Complete
+		i := val.Interface()
+		if impl, ok := i.(Completer); ok {
+			completer = impl.Complete
+		} else if val.CanAddr() {
+			if impl, ok := val.Addr().Interface().(Completer); ok {
+				completer = impl.Complete
 			}
 		}
 
@@ -109,18 +115,23 @@ func typeCompleter(val reflect.Value) comp.CompletionCallback {
 		val = reflect.New(val.Type().Elem())
 	}
 
-	i := val.Interface()
-	if completer, ok := i.(Completer); ok {
-		return completer.Complete
-	}
-
-	if val.CanAddr() {
-		if completer, ok := val.Addr().Interface().(Completer); ok {
-			return completer.Complete
+	// If we did NOT find an implementation on the compound type,
+	// check for one on the items.
+	if completer == nil {
+		i := val.Interface()
+		if impl, ok := i.(Completer); ok && impl != nil {
+			itemsImplement = true
+			completer = impl.Complete
+		} else if val.CanAddr() {
+			isRepeatable = true
+			if impl, ok := val.Addr().Interface().(Completer); ok && impl != nil {
+				itemsImplement = true
+				completer = impl.Complete
+			}
 		}
 	}
 
-	return nil
+	return completer, isRepeatable, itemsImplement
 }
 
 // taggedCompletions builds a list of completion actions with struct tag specs.

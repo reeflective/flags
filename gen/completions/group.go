@@ -147,18 +147,36 @@ func flagComps(comps *comp.Carapace, flagComps *flagSetComps) scan.Handler {
 // flagCompsScanner builds a scanner that will register some completers for an option flag.
 func flagCompsScanner(actions *flagSetComps) flags.FlagFunc {
 	handler := func(flag string, tag tag.MultiTag, val reflect.Value) error {
-		// First bind any completer implementation if found
-		if completer := typeCompleter(val); completer != nil {
-			(*actions)[flag] = comp.ActionCallback(completer)
-		}
+		// First get any completer implementation, and identifies if
+		// type is an array, and if yes, where the completer is implemented.
+		completer, isRepeatable, itemsImplement := typeCompleter(val)
 
-		// Check if the flag has some choices: if yes, build completions.
+		// Check if the flag has some choices: if yes, we simply overwrite
+		// the completer implementation with a builtin one.
 		if choices := choiceCompletions(tag, val); choices != nil {
-			(*actions)[flag] = comp.ActionCallback(choices)
+			completer = choices
+			itemsImplement = true
 		}
 
-		// Then, check for tags that will override the implementation.
-		if completer, found := taggedCompletions(tag); found {
+		// Or we might find struct tags specifying some completions,
+		// in which case we also override the completer implementation
+		if tagged, found := taggedCompletions(tag); found {
+			completer = tagged
+			itemsImplement = true
+		}
+
+		// We are done if no completer is found whatsoever.
+		if completer == nil {
+			return nil
+		}
+
+		// Then, and irrespectively of where the completer comes from,
+		// we adapt it considering the kind of type we're dealing with.
+		if isRepeatable && itemsImplement {
+			(*actions)[flag] = comp.ActionMultiParts(",", func(c comp.Context) comp.Action {
+				return completer(c).Invoke(c).Filter(c.Parts).ToA()
+			})
+		} else {
 			(*actions)[flag] = comp.ActionCallback(completer)
 		}
 

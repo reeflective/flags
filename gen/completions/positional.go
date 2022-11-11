@@ -67,7 +67,7 @@ func getCompleters(args *positional.Args, comps *comp.Carapace) *compCache {
 
 	for _, arg := range args.Positionals() {
 		// Make parser function, get completer implementations, how many arguments, etc.
-		if completer := typeCompleter(arg.Value); completer != nil {
+		if completer, _, _ := typeCompleter(arg.Value); completer != nil {
 			cache.add(arg.Index, completer)
 
 			// Always overwrite the after-dash completion if this argument field is

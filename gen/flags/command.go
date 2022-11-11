@@ -126,6 +126,10 @@ func command(opts cliOpts, cmd *cobra.Command, grp *cobra.Group, tag tag.MultiTa
 	// we can have a more granular context.
 	subc := newCommand(name, tag, grp)
 
+	// Set the group to which the subcommand belongs
+	tagged, _ := tag.Get("group")
+	setGroup(cmd, subc, grp, tagged)
+
 	// Bind the various pre/run/post implementations of our command.
 	setRuns(subc, cmdType)
 
@@ -167,18 +171,6 @@ func newCommand(name string, mtag tag.MultiTag, parent *cobra.Group) *cobra.Comm
 	subc.Aliases = mtag.GetMany("alias")
 	_, subc.Hidden = mtag.Get("hidden")
 
-	// Grouping the command ----------
-
-	// - Either inherited from the group within which we are parsed.
-	if parent != nil && parent.Title != "" {
-		subc.GroupID = parent.ID
-	}
-
-	// - Either specifically mentionned on the command (thus has priority)
-	if group, isSet := mtag.Get("group"); isSet {
-		setGroupForCommand(subc, group)
-	}
-
 	// TODO: here inherit from struct marked group, with commands and options.
 
 	// TODO: namespace tags on commands ?
@@ -204,23 +196,26 @@ func setRuns(cmd *cobra.Command, impl flags.Commander) {
 	}
 }
 
-func setGroupForCommand(subc *cobra.Command, groupID string) {
+func setGroup(parent, subc *cobra.Command, parentGroup *cobra.Group, tagged string) {
 	var group *cobra.Group
 
-	var parent *cobra.Command
-
-	if subc.HasParent() {
+	// The group tag on the command has priority
+	if tagged != "" {
 		for _, grp := range parent.Groups() {
-			if grp.ID == groupID {
+			if grp.ID == tagged {
 				group = grp
 			}
 		}
+		if group == nil {
+			group = &cobra.Group{ID: tagged, Title: tagged}
+			parent.AddGroup(group)
+		}
+	} else if parentGroup != nil {
+		group = parentGroup
 	}
 
-	if group == nil {
-		group = &cobra.Group{ID: groupID}
-		parent.AddGroup(group)
+	// Use the group we settled on
+	if group != nil {
+		subc.GroupID = group.ID
 	}
-
-	subc.GroupID = group.ID
 }
