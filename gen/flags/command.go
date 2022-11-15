@@ -172,6 +172,14 @@ func setRuns(cmd *cobra.Command, impl flags.Commander) {
 		return
 	}
 
+	// If our command hasn't any positional argument handler,
+	// we must make one to automatically put any of them in Execute
+	cmd.Args = func(cmd *cobra.Command, args []string) error {
+		setRemainingArgs(cmd, args)
+
+		return nil
+	}
+
 	// The args passed to the command have already been parsed,
 	// this is why we mute the args []string function parameter.
 	cmd.RunE = func(c *cobra.Command, _ []string) error {

@@ -35,6 +35,10 @@ func (c *BasicOptions) Execute(args []string) error {
 	fmt.Printf("Alternate (string):          %v\n", c.Alternate)
 	fmt.Printf("Email (string):              %v\n", c.Email)
 
+	if len(args) > 0 {
+		fmt.Printf("Remaining args: %v\n", args)
+	}
+
 	return nil
 }
 

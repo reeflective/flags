@@ -214,18 +214,18 @@ func new{{MapValueName $value . | Title}}(m *map[{{.}}]{{$value.Type}}) *{{MapVa
 	}
 }
 
-func (v *{{MapValueName $value .}}) Set(s string) error {
-	values := strings.Split(s, ",")
+func (v *{{MapValueName $value .}}) Set(val string) error {
+	values := strings.Split(val, ",")
 
-	for _, value := range values {
-        ss := strings.Split(value, ":")
+	for _, s := range values {
+        ss := strings.Split(s, ":")
         if len(ss) < 2 {
             return errors.New("invalid map flag syntax, use -map=key1:val1")
         }
 
         {{ $kindVal := KindValue . }}
 
-        value = ss[0]
+        s = ss[0]
 
         {{if $kindVal.Parser }}\nn
         parsedKey, err := {{$kindVal.Parser}}
@@ -240,11 +240,11 @@ func (v *{{MapValueName $value .}}) Set(s string) error {
         {{end}}\nn
 
         {{ else }}\nn
-        key := value 
+        key := s 
         {{end}}\nn
 
 
-        value = ss[1]
+        s = ss[1]
      
         {{if $value.Parser }}\nn
         parsedVal, err := {{$value.Parser}}
@@ -259,7 +259,7 @@ func (v *{{MapValueName $value .}}) Set(s string) error {
         {{end}}\nn
 
         {{ else }}\nn
-        val := value 
+        val := s 
         {{end}}\nn
 
         (*v.value)[key] = val
