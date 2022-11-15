@@ -12,10 +12,10 @@ import (
 
 // flagScan builds a small struct field handler so that we can scan
 // it as an option and add it to our current command flags.
-func flagScan(cmd *cobra.Command) scan.Handler {
+func flagScan(cmd *cobra.Command, opts []flags.OptFunc) scan.Handler {
 	flagScanner := func(val reflect.Value, sfield *reflect.StructField) (bool, error) {
 		// Parse a single field, returning one or more generic Flags
-		flagSet, found, err := flags.ParseField(val, *sfield)
+		flagSet, found, err := flags.ParseField(val, *sfield, opts...)
 		if err != nil {
 			return found, err
 		}
@@ -34,7 +34,7 @@ func flagScan(cmd *cobra.Command) scan.Handler {
 }
 
 // flagsGroup finds if a field is marked as a subgroup of options, and if yes, scans it recursively.
-func flagsGroup(settings cliOpts, cmd *cobra.Command, val reflect.Value, sfield *reflect.StructField) (bool, error) {
+func flagsGroup(cmd *cobra.Command, val reflect.Value, sfield *reflect.StructField, opts []flags.OptFunc) (bool, error) {
 	mtag, skip, err := tag.GetFieldTag(*sfield)
 	if err != nil {
 		return true, fmt.Errorf("%w: %s", flags.ErrParse, err.Error())
@@ -80,7 +80,7 @@ func flagsGroup(settings cliOpts, cmd *cobra.Command, val reflect.Value, sfield 
 		// 	Title: groupName,
 		// })
 
-		err := addFlagSet(cmd, mtag, ptrval.Interface())
+		err := addFlagSet(cmd, mtag, ptrval.Interface(), opts)
 
 		return true, err
 	}
@@ -96,7 +96,7 @@ func flagsGroup(settings cliOpts, cmd *cobra.Command, val reflect.Value, sfield 
 		}
 
 		// Parse for commands
-		scannerCommand := scanRoot(settings, cmd, group)
+		scannerCommand := scanRoot(cmd, group, opts)
 		if err := scan.Type(ptrval.Interface(), scannerCommand); err != nil {
 			return true, fmt.Errorf("%w: %s", scan.ErrScan, err.Error())
 		}
@@ -109,25 +109,23 @@ func flagsGroup(settings cliOpts, cmd *cobra.Command, val reflect.Value, sfield 
 }
 
 // addFlagSet scans a struct (potentially nested) for flag sets to bind to the command.
-func addFlagSet(cmd *cobra.Command, mtag tag.MultiTag, data interface{}) error {
-	var flagOpts []flags.OptFunc
-
+func addFlagSet(cmd *cobra.Command, mtag tag.MultiTag, data interface{}, opts []flags.OptFunc) error {
 	// New change, in order to easily propagate parent namespaces
 	// in heavily/specially nested option groups at bind time.
 	delim, _ := mtag.Get("namespace-delimiter")
 
 	namespace, _ := mtag.Get("namespace")
 	if namespace != "" {
-		flagOpts = append(flagOpts, flags.Prefix(namespace+delim))
+		opts = append(opts, flags.Prefix(namespace+delim))
 	}
 
 	envNamespace, _ := mtag.Get("env-namespace")
 	if envNamespace != "" {
-		flagOpts = append(flagOpts, flags.EnvPrefix(envNamespace))
+		opts = append(opts, flags.EnvPrefix(envNamespace))
 	}
 
 	// Create a new set of flags in which we will put our options
-	flags, err := ParseFlags(data, flagOpts...)
+	flags, err := ParseFlags(data, opts...)
 	if err != nil {
 		return err
 	}

@@ -15,21 +15,18 @@ import (
 // The data interface parameter can be nil, or arbitrarily:
 // - A simple group of options to bind at the local, root level
 // - A struct containing substructs for postional parameters, and other with options.
-func Generate(data interface{}, optFuncs ...OptFunc) *cobra.Command {
+func Generate(data interface{}, opts ...flags.OptFunc) *cobra.Command {
 	// The command is empty, so that the returned command can be
 	// directly ran as a root application command, with calls like
 	// cmd.Execute(), or cobra.CheckErr(cmd.Execute())
 	cmd := &cobra.Command{
-		Use:         os.Args[0], // By default, the command is the name of the binary. TODO: change this
+		Use:         os.Args[0],
 		Annotations: map[string]string{},
 	}
 
-	// Default CLI application features' options
-	settings := defOpts().apply(optFuncs...)
-
 	// A command always accepts embedded
 	// subcommand struct fields, so scan them.
-	scanner := scanRoot(settings, cmd, nil)
+	scanner := scanRoot(cmd, nil, opts)
 
 	// Scan the struct recursively, for both
 	// arg/option groups and subcommands
@@ -37,10 +34,8 @@ func Generate(data interface{}, optFuncs ...OptFunc) *cobra.Command {
 		return nil
 	}
 
-	// NOTE: should handle remote exec here
-
 	// Sane defaults for working both in CLI and in closed-loop applications.
-	cmd.TraverseChildren = true
+	// cmd.TraverseChildren = true // Messes with errors
 
 	// Subcommands optional or not
 	if cmd.HasSubCommands() {
@@ -49,15 +44,6 @@ func Generate(data interface{}, optFuncs ...OptFunc) *cobra.Command {
 		}
 	} else if _, isCmd, impl := flags.IsCommand(reflect.ValueOf(data)); isCmd {
 		setRuns(cmd, impl)
-	} else {
-		// The args passed to the command have already been parsed,
-		// this is why we mute the args []string function parameter.
-		cmd.RunE = func(c *cobra.Command, _ []string) error {
-			retargs := getRemainingArgs(c)
-			cmd.SetArgs(retargs)
-
-			return nil
-		}
 	}
 
 	return cmd
@@ -67,7 +53,7 @@ func Generate(data interface{}, optFuncs ...OptFunc) *cobra.Command {
 // checking for arguments, subcommands and option groups. It also checks if additional handlers
 // should be applied on the given struct field, such as when our application can run itself as
 // a module.
-func scanRoot(settings cliOpts, cmd *cobra.Command, group *cobra.Group) scan.Handler {
+func scanRoot(cmd *cobra.Command, group *cobra.Group, opts []flags.OptFunc) scan.Handler {
 	handler := func(val reflect.Value, sfield *reflect.StructField) (bool, error) {
 		// Parse the tag or die tryin. We should find one, or we're not interested.
 		mtag, _, err := tag.GetFieldTag(*sfield)
@@ -82,23 +68,23 @@ func scanRoot(settings cliOpts, cmd *cobra.Command, group *cobra.Group) scan.Han
 
 		// If the field is marked as -one or more- positional arguments, we
 		// return either on a successful scan of them, or with an error doing so.
-		if found, err := positionals(cmd, mtag, val); found || err != nil {
+		if found, err := positionals(cmd, mtag, val, opts); found || err != nil {
 			return found, err
 		}
 
 		// Else, if the field is marked as a subcommand, we either return on
 		// a successful scan of the subcommand, or with an error doing so.
-		if found, err := command(settings, cmd, group, mtag, val); found || err != nil {
+		if found, err := command(cmd, group, mtag, val, opts); found || err != nil {
 			return found, err
 		}
 
 		// Else, if the field is a struct group of options
-		if found, err := flagsGroup(settings, cmd, val, sfield); found || err != nil {
+		if found, err := flagsGroup(cmd, val, sfield, opts); found || err != nil {
 			return found, err
 		}
 
 		// Else, try scanning the field as a simple option flag
-		return flagScan(cmd)(val, sfield)
+		return flagScan(cmd, opts)(val, sfield)
 	}
 
 	return handler
@@ -106,7 +92,7 @@ func scanRoot(settings cliOpts, cmd *cobra.Command, group *cobra.Group) scan.Han
 
 // command finds if a field is marked as a subcommand, and if yes, scans it. We have different cases:
 // - When our application can run its commands as modules, we must build appropriate handlers.
-func command(opts cliOpts, cmd *cobra.Command, grp *cobra.Group, tag tag.MultiTag, val reflect.Value) (bool, error) {
+func command(cmd *cobra.Command, grp *cobra.Group, tag tag.MultiTag, val reflect.Value, opts []flags.OptFunc) (bool, error) {
 	// Parse the command name on struct tag...
 	name, _ := tag.Get("command")
 	if len(name) == 0 {
@@ -134,7 +120,7 @@ func command(opts cliOpts, cmd *cobra.Command, grp *cobra.Group, tag tag.MultiTa
 	setRuns(subc, cmdType)
 
 	// Scan the struct recursively, for both arg/option groups and subcommands
-	scanner := scanRoot(opts, subc, grp)
+	scanner := scanRoot(subc, grp, opts)
 	if err := scan.Type(val.Interface(), scanner); err != nil {
 		return true, fmt.Errorf("%w: %s", scan.ErrScan, err.Error())
 	}

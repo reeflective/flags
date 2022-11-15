@@ -3,6 +3,7 @@ package flags
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/reeflective/flags"
 	"github.com/spf13/pflag"
@@ -27,6 +28,8 @@ func generateTo(src []*flags.Flag, dst flagSet) {
 
 		var annots []string
 
+		flag.NoOptDefVal = strings.Join(srcFlag.OptionalValue, " ")
+
 		if boolFlag, casted := srcFlag.Value.(flags.BoolFlag); casted && boolFlag.IsBoolFlag() {
 			// pflag uses -1 in this case,
 			// we will use the same behaviour as in flag library
@@ -45,6 +48,7 @@ func generateTo(src []*flags.Flag, dst flagSet) {
 				flag.Deprecated = "Deprecated"
 			}
 		}
+
 		// Register annotations to be used by clients and completers
 		flag.Annotations["flags"] = annots
 	}

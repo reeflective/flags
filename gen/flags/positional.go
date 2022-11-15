@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/reeflective/flags"
 	"github.com/reeflective/flags/internal/positional"
 	"github.com/reeflective/flags/internal/scan"
 	"github.com/reeflective/flags/internal/tag"
@@ -12,7 +13,7 @@ import (
 )
 
 // positionals finds a struct tagged as containing positionals arguments and scans them.
-func positionals(cmd *cobra.Command, stag tag.MultiTag, val reflect.Value) (bool, error) {
+func positionals(cmd *cobra.Command, stag tag.MultiTag, val reflect.Value, opts []flags.OptFunc) (bool, error) {
 	// We need the struct to be marked as such
 	if pargs, _ := stag.Get("positional-args"); len(pargs) == 0 {
 		return false, nil
