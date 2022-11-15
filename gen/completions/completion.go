@@ -58,8 +58,10 @@ const (
 	completeTagMaxParts = 2
 )
 
-func getCompletionAction(name, value string) comp.Action {
+func getCompletionAction(name, value, desc string) comp.Action {
 	var action comp.Action
+
+	var ctx comp.Context
 
 	switch name {
 	case "NoSpace":
@@ -67,16 +69,13 @@ func getCompletionAction(name, value string) comp.Action {
 	case "NoFiles":
 	case "FilterExt":
 		filterExts := strings.Split(value, ",")
-		action = comp.ActionFiles(filterExts...).NoSpace()
-		// return comp.ActionFiles(filterExts...)
+		action = comp.ActionFiles(filterExts...).Invoke(ctx).ToA()
 	case "FilterDirs":
-		// filterDirs := strings.Split(value, ",")
 		action = comp.ActionDirectories() // TODO change this
 	case "Files":
 		files := strings.Split(value, ",")
 		action = comp.ActionFiles(files...) // TODO: currently identical to FilterExt
 	case "Dirs":
-		// dirs := strings.Split(value, ",")
 		action = comp.ActionDirectories()
 
 	// Should normally not be used often
@@ -136,7 +135,13 @@ func typeCompleter(val reflect.Value) (comp.CompletionCallback, bool, bool) {
 
 // taggedCompletions builds a list of completion actions with struct tag specs.
 func taggedCompletions(tag tag.MultiTag) (comp.CompletionCallback, bool) {
-	compTag := tag.GetMany(completeTagName) // TODO constants
+	compTag := tag.GetMany(completeTagName)
+	description, _ := tag.Get("description")
+	desc, _ := tag.Get("desc")
+
+	if description == "" {
+		description = desc
+	}
 
 	if len(compTag) == 0 {
 		return nil, false
@@ -166,7 +171,7 @@ func taggedCompletions(tag tag.MultiTag) (comp.CompletionCallback, bool) {
 		}
 
 		// build the completion action
-		tagAction := getCompletionAction(name, value)
+		tagAction := getCompletionAction(name, value, description)
 		actions = append(actions, tagAction)
 	}
 
