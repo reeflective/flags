@@ -79,6 +79,32 @@ func (v *validateValue) String() string {
 }
 
 func (v *validateValue) Set(val string) error {
+	// In case of failure we always reset the value
+	old := v.Value.String()
+
+	// First parse the value onto its type, since
+	// some  validators will directly analyze the struct
+	// field rather than the string value.
+	if err := v.Value.Set(val); err != nil {
+		v.Value.Set(old)
+		return err
+	}
+
+	// Then validate
+	if v.validateFunc != nil {
+		err := v.validateFunc(val)
+		if err != nil {
+			v.Value.Set(old)
+			return err
+		}
+	}
+
+	// Or, initial convertions/parsing and validations
+	// have all been done successfully.
+	return v.Value.Set(val)
+}
+
+func (v *validateValue) SetOld(val string) error {
 	if v.validateFunc != nil {
 		err := v.validateFunc(val)
 		if err != nil {

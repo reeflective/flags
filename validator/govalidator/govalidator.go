@@ -44,6 +44,7 @@ func isValidTag(s string) bool {
 	if s == "" {
 		return false
 	}
+
 	for _, c := range s {
 		switch {
 		case strings.ContainsRune("!#$%&()*+-./:<=>?@[]^_{|}~ ", c):
@@ -56,85 +57,30 @@ func isValidTag(s string) bool {
 			}
 		}
 	}
+
 	return true
 }
 
 // parseTagIntoMap parses a struct tag `valid:"required~Some error message,length(2|3)"` into map[string]string{"required": "Some error message", "length(2|3)": ""}.
 func parseTagIntoMap(tag string) tagOptionsMap {
 	optionsMap := make(tagOptionsMap)
-	options := strings.SplitN(tag, ",", -1)
+
+	options := strings.Split(tag, ",")
+
 	for _, option := range options {
 		validationOptions := strings.Split(option, "~")
 		if !isValidTag(validationOptions[0]) {
 			continue
 		}
+
 		if len(validationOptions) == 2 {
 			optionsMap[validationOptions[0]] = validationOptions[1]
 		} else {
 			optionsMap[validationOptions[0]] = ""
 		}
 	}
+
 	return optionsMap
-}
-
-func validateFunc(val string, options tagOptionsMap) error {
-	// for each tag option check the map of validator functions
-	for validator, customErrorMessage := range options {
-		var negate bool
-		customMsgExists := len(customErrorMessage) > 0
-		// Check wether the tag looks like '!something' or 'something'
-		if validator[0] == '!' {
-			validator = string(validator[1:])
-			negate = true
-		}
-		// Check for param validators
-		for key, value := range govalidator.ParamTagRegexMap {
-			ps := value.FindStringSubmatch(validator)
-			if len(ps) > 0 {
-				if validatefunc, ok := govalidator.ParamTagMap[key]; ok {
-					if result := validatefunc(val, ps[1:]...); (!result && !negate) || (result && negate) {
-						var err error
-						if !negate {
-							if customMsgExists {
-								err = fmt.Errorf(customErrorMessage)
-							} else {
-								err = fmt.Errorf("`%s` does not validate as %s", val, validator)
-							}
-						} else {
-							if customMsgExists {
-								err = fmt.Errorf(customErrorMessage)
-							} else {
-								err = fmt.Errorf("`%s` does validate as %s", val, validator)
-							}
-						}
-						return err
-					}
-				}
-			}
-		}
-
-		if validatefunc, ok := govalidator.TagMap[validator]; ok {
-			if result := validatefunc(val); !result && !negate || result && negate {
-				var err error
-
-				if !negate {
-					if customMsgExists {
-						err = fmt.Errorf(customErrorMessage)
-					} else {
-						err = fmt.Errorf("`%s` does not validate as %s", val, validator)
-					}
-				} else {
-					if customMsgExists {
-						err = fmt.Errorf(customErrorMessage)
-					} else {
-						err = fmt.Errorf("`%s` does validate as %s", val, validator)
-					}
-				}
-				return err
-			}
-		}
-	}
-	return nil
 }
 
 // New returns ValidateFunc for govalidator library.
@@ -146,4 +92,96 @@ func New() func(val string, field reflect.StructField, obj interface{}) error {
 		options := parseTagIntoMap(field.Tag.Get(validTag))
 		return validateFunc(val, options)
 	}
+}
+
+func validateFunc(val string, options tagOptionsMap) error {
+	// for each tag option check the map of validator functions
+	for validator, customErrorMessage := range options {
+		var negate bool
+
+		customMsgExists := len(customErrorMessage) > 0
+
+		// Check wether the tag looks like '!something' or 'something'
+		if validator[0] == '!' {
+			validator = validator[1:]
+			negate = true
+		}
+
+		// Check for param validators
+		if err := findParamValidators(customMsgExists, negate, val, validator, customErrorMessage); err != nil {
+			return err
+		}
+
+		// Or return with the builtin govalidator tag map
+		if err := validateWithTagMap(customMsgExists, negate, val, validator, customErrorMessage); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func findParamValidators(customError, negate bool, val, validator, customMsg string) error {
+	for key, value := range govalidator.ParamTagRegexMap {
+		ps := value.FindStringSubmatch(validator)
+
+		if len(ps) == 0 {
+			continue
+		}
+
+		validatefunc, ok := govalidator.ParamTagMap[key]
+		if !ok {
+			continue
+		}
+
+		if result := validatefunc(val, ps[1:]...); (!result && !negate) || (result && negate) {
+			var err error
+
+			if !negate {
+				if customError {
+					err = fmt.Errorf(customMsg)
+				} else {
+					err = fmt.Errorf("`%s` does not validate as %s", val, validator)
+				}
+			} else {
+				if customError {
+					err = fmt.Errorf(customMsg)
+				} else {
+					err = fmt.Errorf("`%s` does validate as %s", val, validator)
+				}
+			}
+
+			return err
+		}
+	}
+	return nil
+}
+
+func validateWithTagMap(customMsgExists, negate bool, val, validator, customErrorMessage string) error {
+	validatefunc, ok := govalidator.TagMap[validator]
+	if !ok {
+		return nil
+	}
+
+	if result := validatefunc(val); !result && !negate || result && negate {
+		var err error
+
+		if !negate {
+			if customMsgExists {
+				err = fmt.Errorf(customErrorMessage)
+			} else {
+				err = fmt.Errorf("`%s` does not validate as %s", val, validator)
+			}
+		} else {
+			if customMsgExists {
+				err = fmt.Errorf(customErrorMessage)
+			} else {
+				err = fmt.Errorf("`%s` does validate as %s", val, validator)
+			}
+		}
+
+		return err
+	}
+
+	return nil
 }
