@@ -24,20 +24,16 @@ func Generate(data interface{}, opts ...flags.OptFunc) *cobra.Command {
 		Annotations: map[string]string{},
 	}
 
-	// A command always accepts embedded
-	// subcommand struct fields, so scan them.
+	// Make a scan handler that will run various scans on all
+	// the struct fields, with arbitrary levels of nesting.
 	scanner := scanRoot(cmd, nil, opts)
 
-	// Scan the struct recursively, for both
-	// arg/option groups and subcommands
+	// And scan the struct recursively, for arg/option groups and subcommands
 	if err := scan.Type(data, scanner); err != nil {
 		return nil
 	}
 
-	// Sane defaults for working both in CLI and in closed-loop applications.
-	// cmd.TraverseChildren = true // Messes with errors
-
-	// Subcommands optional or not
+	// Subcommands, optional or not
 	if cmd.HasSubCommands() {
 		cmd.RunE = func(cmd *cobra.Command, args []string) error {
 			return nil
@@ -119,7 +115,7 @@ func command(cmd *cobra.Command, grp *cobra.Group, tag tag.MultiTag, val reflect
 	// Bind the various pre/run/post implementations of our command.
 	setRuns(subc, cmdType)
 
-	// Scan the struct recursively, for both arg/option groups and subcommands
+	// Scan the struct recursively, for arg/option groups and subcommands
 	scanner := scanRoot(subc, grp, opts)
 	if err := scan.Type(val.Interface(), scanner); err != nil {
 		return true, fmt.Errorf("%w: %s", scan.ErrScan, err.Error())
@@ -200,6 +196,7 @@ func setGroup(parent, subc *cobra.Command, parentGroup *cobra.Group, tagged stri
 				group = grp
 			}
 		}
+
 		if group == nil {
 			group = &cobra.Group{ID: tagged, Title: tagged}
 			parent.AddGroup(group)

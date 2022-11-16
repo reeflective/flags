@@ -34,14 +34,15 @@ func WithWordConsumer(args *Args, consumer WordConsumer) *Args {
 // many places, so that we can parse/convert and make informed
 // decisions on how to handle those tasks.
 type Arg struct {
-	Index    int           // The position in the struct (n'th struct field used as a slot)
-	Name     string        // name of the argument, either tag name or struct field
-	Minimum  int           // minimum number of arguments we want.
-	Maximum  int           // Maximum number of args we want (-1: infinite)
-	StartMin int           // Index of first positional word for which we are used
-	StartMax int           // if previous positional slots are full, this replaces startAt
-	Tag      tag.MultiTag  // struct tag
-	Value    reflect.Value // A reference to the field value itself
+	Index     int           // The position in the struct (n'th struct field used as a slot)
+	Name      string        // name of the argument, either tag name or struct field
+	Minimum   int           // minimum number of arguments we want.
+	Maximum   int           // Maximum number of args we want (-1: infinite)
+	StartMin  int           // Index of first positional word for which we are used
+	StartMax  int           // if previous positional slots are full, this replaces startAt
+	Tag       tag.MultiTag  // struct tag
+	Value     reflect.Value // A reference to the field value itself
+	Validator func(val string) error
 }
 
 // Args contains an entire list of positional argument "slots" (struct fields)
@@ -196,6 +197,13 @@ func (args *Args) consumeWords(self *Args, arg *Arg) error {
 		// of arguments, we are cleared to consume one.
 		next := args.Pop()
 
+		// If the positional slot has a validator function,
+		// run it before trying to convert the value.
+		if arg.Validator != nil {
+			if err := arg.Validator(next); err != nil {
+				return err
+			}
+		}
 		// Parse the string value onto its native type, returning any errors.
 		// We also break this loop immediately if we are not parsing onto a list.
 		if err := convert.Value(next, arg.Value, arg.Tag); err != nil {

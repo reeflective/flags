@@ -8,9 +8,8 @@ import (
 	"github.com/reeflective/flags/internal/tag"
 )
 
-// ErrNotPointerToStruct indicates that a provided data container is not
-// a pointer to a struct. Only pointers to structs are valid data containers
-// for options.
+// ErrNotPointerToStruct indicates that a provided data container is not a pointer
+// to a struct. Only pointers to structs are valid data containers for options.
 var ErrNotPointerToStruct = errors.New("object must be a pointer to struct or interface")
 
 // ErrScan indicates an error in scanning struct fields.

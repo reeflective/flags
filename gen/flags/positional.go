@@ -19,11 +19,17 @@ func positionals(cmd *cobra.Command, stag tag.MultiTag, val reflect.Value, opts 
 		return false, nil
 	}
 
+	// If the generation options include a validator, use it on arguments
+	optFuncs := make([]scan.OptFunc, len(opts))
+	for i, optFunc := range opts {
+		optFuncs[i] = scan.OptFunc(optFunc)
+	}
+
 	// Scan all the fields on the struct and build the list of arguments
 	// with their own requirements, and references to their values.
 	// Return a type storing all the fields, references, and with the
 	// tools to manage, parse words and raise any errors related
-	positionals, err := positional.ScanArgs(val, stag)
+	positionals, err := positional.ScanArgs(val, stag, optFuncs...)
 	if err != nil || positionals == nil {
 		return true, fmt.Errorf("%w: %s", scan.ErrScan, err.Error())
 	}
