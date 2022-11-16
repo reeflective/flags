@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/reeflective/flags/internal/scan"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -456,35 +457,35 @@ func TestParseStruct_WithValidator(t *testing.T) {
 }
 
 func TestFlagDivider(t *testing.T) {
-	opt := opts{
-		flagDivider: "-",
+	opt := scan.Opts{
+		FlagDivider: "-",
 	}
 	FlagDivider("_")(&opt)
-	assert.Equal(t, "_", opt.flagDivider)
+	assert.Equal(t, "_", opt.FlagDivider)
 }
 
 func TestFlagTag(t *testing.T) {
-	opt := opts{
-		flagTag: "flags",
+	opt := scan.Opts{
+		FlagTag: "flags",
 	}
 	FlagTag("superflag")(&opt)
-	assert.Equal(t, "superflag", opt.flagTag)
+	assert.Equal(t, "superflag", opt.FlagTag)
 }
 
 func TestValidator(t *testing.T) {
-	opt := opts{
-		validator: nil,
+	opt := scan.Opts{
+		Validator: nil,
 	}
 	Validator(func(string, reflect.StructField, interface{}) error {
 		return nil
 	})(&opt)
-	assert.NotNil(t, opt.validator)
+	assert.NotNil(t, opt.Validator)
 }
 
 func TestFlatten(t *testing.T) {
-	opt := opts{
-		flatten: true,
+	opt := scan.Opts{
+		Flatten: true,
 	}
 	Flatten(false)(&opt)
-	assert.Equal(t, false, opt.flatten)
+	assert.Equal(t, false, opt.Flatten)
 }

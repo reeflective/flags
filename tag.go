@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/reeflective/flags/internal/scan"
 	"github.com/reeflective/flags/internal/tag"
 )
 
@@ -12,7 +13,7 @@ func parseFlagTag(field reflect.StructField, opt opts) (*Flag, *tag.MultiTag, er
 	flag := &Flag{}
 
 	ignoreFlagPrefix := false
-	flag.Name = camelToFlag(field.Name, opt.flagDivider)
+	flag.Name = camelToFlag(field.Name, opt.FlagDivider)
 
 	// Parse the struct tag
 	flagTags, skip, err := getFlagTags(field, opt)
@@ -45,8 +46,8 @@ func parseFlagTag(field reflect.StructField, opt opts) (*Flag, *tag.MultiTag, er
 	setFlagChoices(flag, flagTags.GetMany("choice"))
 	flag.OptionalValue = flagTags.GetMany("optional-value")
 
-	if opt.prefix != "" && !ignoreFlagPrefix {
-		flag.Name = opt.prefix + flag.Name
+	if opt.Prefix != "" && !ignoreFlagPrefix {
+		flag.Name = opt.Prefix + flag.Name
 	}
 
 	return flag, flagTags, nil
@@ -62,7 +63,7 @@ func getFlagTags(field reflect.StructField, opt opts) (*tag.MultiTag, bool, erro
 
 	// If the global options specify that we must build a flag
 	// out of each struct field, regardless of them being tagged.
-	if opt.parseAll {
+	if opt.ParseAll {
 		return &flagTags, false, nil
 	}
 
@@ -77,7 +78,7 @@ func getFlagTags(field reflect.StructField, opt opts) (*tag.MultiTag, bool, erro
 // parseBaseFlagAttributes checks which type of struct tags we found, parses them
 // accordingly (legacy, or not), taking into account any global config settings.
 func parseBaseFlagAttributes(flagTags *tag.MultiTag, flag *Flag, opt opts) (skip, ignorePrefix bool) {
-	sflagsTag, _ := flagTags.Get(opt.flagTag)
+	sflagsTag, _ := flagTags.Get(opt.FlagTag)
 	sflagValues := strings.Split(sflagsTag, ",")
 
 	if sflagsTag != "" && len(sflagValues) > 0 {
@@ -145,9 +146,9 @@ func parseGoFlagsTag(flagTags *tag.MultiTag, flag *Flag) {
 
 func parseEnvTag(flagName string, field reflect.StructField, opt opts) string {
 	ignoreEnvPrefix := false
-	envVar := flagToEnv(flagName, opt.flagDivider, opt.envDivider)
+	envVar := flagToEnv(flagName, opt.FlagDivider, opt.EnvDivider)
 
-	if envTags := strings.Split(field.Tag.Get(defaultEnvTag), ","); len(envTags) > 0 {
+	if envTags := strings.Split(field.Tag.Get(scan.DefaultEnvTag), ","); len(envTags) > 0 {
 		switch envName := envTags[0]; envName {
 		case "-":
 			// if tag is `env:"-"` then won't fill flag from environment
@@ -162,18 +163,18 @@ func parseEnvTag(flagName string, field reflect.StructField, opt opts) string {
 				ignoreEnvPrefix = true
 			} else {
 				envVar = envName
-				if opt.prefix != "" {
+				if opt.Prefix != "" {
 					envVar = flagToEnv(
-						opt.prefix,
-						opt.flagDivider,
-						opt.envDivider) + envVar
+						opt.Prefix,
+						opt.FlagDivider,
+						opt.EnvDivider) + envVar
 				}
 			}
 		}
 	}
 
-	if envVar != "" && opt.envPrefix != "" && !ignoreEnvPrefix {
-		envVar = opt.envPrefix + envVar
+	if envVar != "" && opt.EnvPrefix != "" && !ignoreEnvPrefix {
+		envVar = opt.EnvPrefix + envVar
 	}
 
 	return envVar
@@ -187,4 +188,14 @@ func setFlagChoices(flag *Flag, choices []string) {
 	}
 
 	flag.Choices = allChoices
+}
+
+func hasOption(options []string, option string) bool {
+	for _, opt := range options {
+		if opt == option {
+			return true
+		}
+	}
+
+	return false
 }

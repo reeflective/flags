@@ -5,66 +5,10 @@ import (
 	"reflect"
 	"unicode/utf8"
 
+	"github.com/reeflective/flags/internal/scan"
 	"github.com/reeflective/flags/internal/tag"
+	"github.com/reeflective/flags/internal/validation"
 )
-
-// ValidateFunc describes a validation func,
-// that takes string val for flag from command line,
-// field that's associated with this flag in structure cfg.
-// Should return error if validation fails.
-type ValidateFunc func(val string, field reflect.StructField, cfg interface{}) error
-
-// FlagFunc is a generic function that can be applied to each
-// value that will end up being a flags *Flag, so that users
-// can perform more arbitrary operations on each, such as checking
-// for completer implementations, bind to viper configurations, etc.
-type FlagFunc func(flag string, tag tag.MultiTag, val reflect.Value) error
-
-// OptFunc sets values in opts structure.
-type OptFunc func(opt *opts)
-
-//
-// Global Parsing Options ------------------------------------------------------------------ //
-//
-
-// DescTag sets custom description tag. It is "desc" by default.
-func DescTag(val string) OptFunc { return func(opt *opts) { opt.descTag = val } }
-
-// FlagTag sets custom flag tag. It is "flag" be default.
-func FlagTag(val string) OptFunc { return func(opt *opts) { opt.flagTag = val } }
-
-// Prefix sets prefix that will be applied for all flags (if they are not marked as ~).
-func Prefix(val string) OptFunc { return func(opt *opts) { opt.prefix = val } }
-
-// EnvPrefix sets prefix that will be applied for all environment variables (if they are not marked as ~).
-func EnvPrefix(val string) OptFunc { return func(opt *opts) { opt.envPrefix = val } }
-
-// FlagDivider sets custom divider for flags. It is dash by default. e.g. "flag-name".
-func FlagDivider(val string) OptFunc { return func(opt *opts) { opt.flagDivider = val } }
-
-// EnvDivider sets custom divider for environment variables.
-// It is underscore by default. e.g. "ENV_NAME".
-func EnvDivider(val string) OptFunc { return func(opt *opts) { opt.envDivider = val } }
-
-// Validator sets validator function for flags.
-// Check existed validators in flags/validator package.
-func Validator(val ValidateFunc) OptFunc { return func(opt *opts) { opt.validator = val } }
-
-// FlagHandler sets the handler function for flags, in order to perform arbitrary
-// operations on the value of the flag identified by the <flag> name parameter of FlagFunc.
-func FlagHandler(val FlagFunc) OptFunc { return func(opt *opts) { opt.flagFunc = val } }
-
-// Flatten set flatten option.
-// Set to false if you don't want anonymous structure fields to be flatten.
-func Flatten(val bool) OptFunc { return func(opt *opts) { opt.flatten = val } }
-
-// ParseAll orders the parser to generate a flag for all struct fields,
-// even if there isn't a struct tag attached to them.
-func ParseAll() OptFunc { return func(opt *opts) { opt.parseAll = true } }
-
-//
-// Parsing Functions --------------------------------------------------------------------- //
-//
 
 // ParseStruct parses structure and returns list of flags based on this structure.
 // This list of flags can be used by generators for flag, kingpin, cobra, pflag, urfave/cli.
@@ -95,10 +39,14 @@ func ParseStruct(cfg interface{}, optFuncs ...OptFunc) ([]*Flag, error) {
 // ParseField parses a single struct field as a list (often only made of only one) flags.
 // This function can be used when you want to scan only some fields for which you want a flag.
 func ParseField(value reflect.Value, field reflect.StructField, optFuncs ...OptFunc) ([]*Flag, bool, error) {
-	opt := defOpts().apply(optFuncs...)
+	var scanOpts []scan.OptFunc
+	for _, optFunc := range optFuncs {
+		scanOpts = append(scanOpts, scan.OptFunc(optFunc))
+	}
+	scanOptions := scan.DefOpts().Apply(scanOpts...)
 
 	// Check struct tags, parse the field value if needed, and return the whole.
-	flag, flagSet, val, tag, err := parse(value, field, opt)
+	flag, flagSet, val, tag, err := parse(value, field, optFuncs...)
 	if err != nil {
 		return flagSet, true, err
 	}
@@ -110,7 +58,12 @@ func ParseField(value reflect.Value, field reflect.StructField, optFuncs ...OptF
 	}
 
 	// Set validators if any, user-defined or builtin
-	flag.Value = setValidations(flag, val, field, value, opt)
+	if validator := validation.BuildValidator(value, field, flag.Choices, scanOptions); validator != nil {
+		val = &validateValue{
+			Value:        val,
+			validateFunc: validator,
+		}
+	}
 
 	// TODO: This should be changed: parse `optional-value` and use it. Check if both things means different stuff though.
 	flag.DefValue = val.String()
@@ -118,7 +71,7 @@ func ParseField(value reflect.Value, field reflect.StructField, optFuncs ...OptF
 
 	// If the user provided some custom flag
 	// value handlers/scanners, run on it.
-	if opt.flagFunc != nil {
+	if scanOptions.FlagFunc != nil {
 		var name string
 		if flag.Name != "" {
 			name = flag.Name
@@ -128,7 +81,7 @@ func ParseField(value reflect.Value, field reflect.StructField, optFuncs ...OptF
 
 		// As usual, we immediately panic if the handler raises an error,
 		// so that the program is not allowed to actually run the commands.
-		if err := opt.flagFunc(name, *tag, value); err != nil {
+		if err := scanOptions.FlagFunc(name, *tag, value); err != nil {
 			panic(newError(err, fmt.Sprintf("Custom handler for flag %s failed", name)))
 		}
 	}
@@ -136,7 +89,14 @@ func ParseField(value reflect.Value, field reflect.StructField, optFuncs ...OptF
 	return flagSet, true, nil
 }
 
-func parse(value reflect.Value, fld reflect.StructField, opt opts) (flag *Flag, set []*Flag, val Value, tag *tag.MultiTag, err error) {
+func parse(value reflect.Value, fld reflect.StructField, optFuncs ...OptFunc) (flag *Flag, set []*Flag, val Value, tag *tag.MultiTag, err error) {
+	var scanOpts []scan.OptFunc
+	for _, optFunc := range optFuncs {
+		scanOpts = append(scanOpts, scan.OptFunc(optFunc))
+	}
+	scanOptions := scan.DefOpts().Apply(scanOpts...)
+	opt := opts(scanOptions)
+
 	// skip unexported and non anonymous fields
 	if fld.PkgPath != "" && !fld.Anonymous {
 		return
@@ -149,15 +109,15 @@ func parse(value reflect.Value, fld reflect.StructField, opt opts) (flag *Flag, 
 	}
 
 	flag.EnvName = parseEnvTag(flag.Name, fld, opt)
-	prefix := flag.Name + opt.flagDivider
+	prefix := flag.Name + opt.FlagDivider
 
-	if fld.Anonymous && opt.flatten {
-		prefix = opt.prefix
+	if fld.Anonymous && opt.Flatten {
+		prefix = opt.Prefix
 	}
 
 	// We might have to scan for an arbitrarily nested structure of flags
 	set, val, err = parseVal(value,
-		copyOpts(opt),
+		OptFunc(scan.CopyOpts(scanOptions)),
 		Prefix(prefix),
 	)
 

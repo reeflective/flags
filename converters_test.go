@@ -3,6 +3,7 @@ package flags
 import (
 	"testing"
 
+	"github.com/reeflective/flags/internal/scan"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -20,7 +21,7 @@ func TestCamelToFlag(t *testing.T) {
 		{"IP", "ip"},
 	}
 	for _, d := range data {
-		assert.Equal(t, d.Exp, camelToFlag(d.Src, defaultFlagDivider))
+		assert.Equal(t, d.Exp, camelToFlag(d.Src, scan.DefaultFlagDivider))
 	}
 }
 
@@ -33,6 +34,6 @@ func TestFlagToEnv(t *testing.T) {
 		{"value", "VALUE"},
 	}
 	for _, d := range data {
-		assert.Equal(t, d.Exp, flagToEnv(d.Src, defaultFlagDivider, defaultEnvDivider))
+		assert.Equal(t, d.Exp, flagToEnv(d.Src, scan.DefaultFlagDivider, scan.DefaultEnvDivider))
 	}
 }
