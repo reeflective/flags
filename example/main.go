@@ -2,10 +2,12 @@ package main
 
 import (
 	// Subcommands.
+	"github.com/reeflective/flags"
 	"github.com/reeflective/flags/example/args"
 	"github.com/reeflective/flags/example/opts"
 	"github.com/reeflective/flags/gen/completions"
-	"github.com/reeflective/flags/gen/flags"
+	genflags "github.com/reeflective/flags/gen/flags"
+	"github.com/reeflective/flags/validator"
 )
 
 //
@@ -32,8 +34,13 @@ type rootCommand struct {
 }
 
 func main() {
-	rootData := &rootCommand{}
-	rootCmd := flags.Generate(rootData)
+	rootData := &rootCommand{} // The root of an entire command tree in a struct.
+	var opts []flags.OptFunc   // Any parsing/execution behavior options to be used
+
+	// Validations
+	opts = append(opts, flags.Validator(validator.New()))
+
+	rootCmd := genflags.Generate(rootData, opts...)
 	rootCmd.SilenceUsage = true
 	rootCmd.Short = "A CLI application showing various ways to declare positional/flags/commands with structs and fields."
 

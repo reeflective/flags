@@ -18,7 +18,7 @@ type MultipleListsArgs struct {
 		// Notice, here, that there is no individual min/max requirement for
 		// this slot, in additional to no global requirement on the struct itself.
 		// Thus, this positional slot can be empty.
-		Vuln IP `description:"Vulnerable IP addresses to check"`
+		Vuln IP `description:"Vulnerable IP addresses to check" validate:"ipv4"`
 
 		// Other is a positional slot requiring at least one element, and at most two.
 		// Consequently:

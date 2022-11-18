@@ -17,6 +17,7 @@ func BuildValidator(value reflect.Value, field reflect.StructField, choices []st
 		return nil
 	}
 
+	// The validation is performed on each individual item of a (potential) array
 	var validation func(val string) error
 
 	switch {
