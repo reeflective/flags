@@ -30,6 +30,9 @@ var (
 	// ErrShortNameTooLong indicates that a short flag name was specified,
 	// longer than one character.
 	ErrShortNameTooLong = errors.New("short names can only be 1 character long")
+
+	// ErrFlagHandler indicates that the custom handler for a flag has failed.
+	ErrFlagHandler = errors.New("custom handler for flag failed")
 )
 
 // simple wrapper for errors.

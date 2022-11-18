@@ -30,7 +30,8 @@ func Generate(data interface{}, opts ...flags.OptFunc) *cobra.Command {
 
 	// And scan the struct recursively, for arg/option groups and subcommands
 	if err := scan.Type(data, scanner); err != nil {
-		return nil
+		fmt.Fprintln(os.Stderr, "Error:", err.Error())
+		os.Exit(1)
 	}
 
 	// Subcommands, optional or not
@@ -98,7 +99,7 @@ func command(cmd *cobra.Command, grp *cobra.Group, tag tag.MultiTag, val reflect
 	// ... and check the field implements at least the Commander interface
 	val, implements, cmdType := flags.IsCommand(val)
 	if !implements && len(name) != 0 && cmdType == nil {
-		return false, ErrNotCommander
+		return false, flags.ErrNotCommander
 	} else if !implements && len(name) == 0 {
 		return false, nil // Skip to next field
 	}

@@ -82,10 +82,9 @@ func ParseField(value reflect.Value, field reflect.StructField, optFuncs ...OptF
 			name = flag.Short
 		}
 
-		// As usual, we immediately panic if the handler raises an error,
-		// so that the program is not allowed to actually run the commands.
+		// Any failure to apply a flag handler is reported and will lead to exit
 		if err := scanOpts.FlagFunc(name, *tag, value); err != nil {
-			panic(newError(err, fmt.Sprintf("Custom handler for flag %s failed", name)))
+			return flagSet, true, fmt.Errorf("%w on flag %s: %s", ErrFlagHandler, name, err.Error())
 		}
 	}
 
