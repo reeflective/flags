@@ -39,14 +39,16 @@ func ParseStruct(cfg interface{}, optFuncs ...OptFunc) ([]*Flag, error) {
 // ParseField parses a single struct field as a list (often only made of only one) flags.
 // This function can be used when you want to scan only some fields for which you want a flag.
 func ParseField(value reflect.Value, field reflect.StructField, optFuncs ...OptFunc) ([]*Flag, bool, error) {
-	var scanOpts []scan.OptFunc
-	for _, optFunc := range optFuncs {
-		scanOpts = append(scanOpts, scan.OptFunc(optFunc))
-	}
-	scanOptions := scan.DefOpts().Apply(scanOpts...)
-
 	// Check struct tags, parse the field value if needed, and return the whole.
-	flag, flagSet, val, tag, err := parse(value, field, optFuncs...)
+	flag, tag, scanOpts, err := parseInfo(field, optFuncs...)
+	if err != nil {
+		return nil, true, err
+	}
+
+	opts := OptFunc(scan.CopyOpts(scanOpts))
+
+	// We might have to scan for an arbitrarily nested structure of flags
+	flagSet, val, err := parseVal(value, opts)
 	if err != nil {
 		return flagSet, true, err
 	}
@@ -58,7 +60,7 @@ func ParseField(value reflect.Value, field reflect.StructField, optFuncs ...OptF
 	}
 
 	// Set validators if any, user-defined or builtin
-	if validator := validation.BuildValidator(value, field, flag.Choices, scanOptions); validator != nil {
+	if validator := validation.BuildValidator(value, field, flag.Choices, scanOpts); validator != nil {
 		val = &validateValue{
 			Value:        val,
 			validateFunc: validator,
@@ -67,13 +69,12 @@ func ParseField(value reflect.Value, field reflect.StructField, optFuncs ...OptF
 
 	flag.Value = val
 
-	// TODO: This should be changed: parse `optional-value` and use it. Check if both things means different stuff though.
-	flag.DefValue = val.String()
+	flag.DefValue = tag.GetMany("default")
 	flagSet = append(flagSet, flag)
 
 	// If the user provided some custom flag
 	// value handlers/scanners, run on it.
-	if scanOptions.FlagFunc != nil {
+	if scanOpts.FlagFunc != nil {
 		var name string
 		if flag.Name != "" {
 			name = flag.Name
@@ -83,7 +84,7 @@ func ParseField(value reflect.Value, field reflect.StructField, optFuncs ...OptF
 
 		// As usual, we immediately panic if the handler raises an error,
 		// so that the program is not allowed to actually run the commands.
-		if err := scanOptions.FlagFunc(name, *tag, value); err != nil {
+		if err := scanOpts.FlagFunc(name, *tag, value); err != nil {
 			panic(newError(err, fmt.Sprintf("Custom handler for flag %s failed", name)))
 		}
 	}
@@ -91,7 +92,8 @@ func ParseField(value reflect.Value, field reflect.StructField, optFuncs ...OptF
 	return flagSet, true, nil
 }
 
-func parse(value reflect.Value, fld reflect.StructField, optFuncs ...OptFunc) (flag *Flag, set []*Flag, val Value, tag *tag.MultiTag, err error) {
+// parseInfo parses the struct field tag, adapts for any scan options that would have been modified by tags.
+func parseInfo(fld reflect.StructField, optFuncs ...OptFunc) (*Flag, *tag.MultiTag, scan.Opts, error) {
 	var scanOpts []scan.OptFunc
 	for _, optFunc := range optFuncs {
 		scanOpts = append(scanOpts, scan.OptFunc(optFunc))
@@ -101,15 +103,16 @@ func parse(value reflect.Value, fld reflect.StructField, optFuncs ...OptFunc) (f
 
 	// skip unexported and non anonymous fields
 	if fld.PkgPath != "" && !fld.Anonymous {
-		return
+		return nil, nil, scanOptions, nil
 	}
 
 	// We should have a flag and a tag, legacy or not, and with valid values.
-	flag, tag, err = parseFlagTag(fld, opt)
+	flag, tag, err := parseFlagTag(fld, opt)
 	if flag == nil || err != nil {
-		return
+		return flag, tag, scanOptions, err
 	}
 
+	// Various prefixing checks and steps
 	flag.EnvName = parseEnvTag(flag.Name, fld, opt)
 	prefix := flag.Name + opt.FlagDivider
 
@@ -117,13 +120,13 @@ func parse(value reflect.Value, fld reflect.StructField, optFuncs ...OptFunc) (f
 		prefix = opt.Prefix
 	}
 
-	// We might have to scan for an arbitrarily nested structure of flags
-	set, val, err = parseVal(value,
-		OptFunc(scan.CopyOpts(scanOptions)),
-		Prefix(prefix),
-	)
+	scanOpts = append(scanOpts, scan.OptFunc(Prefix(prefix)))
 
-	return flag, set, val, tag, err
+	// Return an update list of scan options,
+	// which might have been influenced by the tags.
+	scanOptions = scanOptions.Apply(scanOpts...)
+
+	return flag, tag, scanOptions, err
 }
 
 func parseVal(value reflect.Value, optFuncs ...OptFunc) ([]*Flag, Value, error) {

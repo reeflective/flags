@@ -1,6 +1,7 @@
 package flags
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
 
@@ -58,7 +59,7 @@ func parseFlagTag(field reflect.StructField, opt opts) (*Flag, *tag.MultiTag, er
 func getFlagTags(field reflect.StructField, opt opts) (*tag.MultiTag, bool, error) {
 	flagTags, none, err := tag.GetFieldTag(field)
 	if err != nil {
-		return nil, true, err
+		return nil, true, fmt.Errorf("%w: %s", ErrTag, err.Error())
 	}
 
 	// If the global options specify that we must build a flag
