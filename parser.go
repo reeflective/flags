@@ -65,6 +65,8 @@ func ParseField(value reflect.Value, field reflect.StructField, optFuncs ...OptF
 		}
 	}
 
+	flag.Value = val
+
 	// TODO: This should be changed: parse `optional-value` and use it. Check if both things means different stuff though.
 	flag.DefValue = val.String()
 	flagSet = append(flagSet, flag)
