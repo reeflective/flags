@@ -154,10 +154,6 @@ func newCommand(name string, mtag tag.MultiTag, parent *cobra.Group) *cobra.Comm
 	subc.Aliases = mtag.GetMany("alias")
 	_, subc.Hidden = mtag.Get("hidden")
 
-	// TODO: here inherit from struct marked group, with commands and options.
-
-	// TODO: namespace tags on commands ?
-
 	return subc
 }
 

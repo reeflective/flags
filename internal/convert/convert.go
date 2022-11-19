@@ -27,37 +27,20 @@ var (
 // a string value onto a native type has failed.
 var ErrConvertion = errors.New("conversion error")
 
-// TODO: Remove those 3 interfaces, and also from the convert functions below:
-// we mostly use this code for positional arguments now, since sflags already
-// has its code for option flags. However:
-// - This package might be an opportunity to refactor a bit the convert code
-//   and hide it behind the internal directory.
-// - There might be an opportunity to use the various interfaces used by sflags
-//   for positional arguments as well.
-
-// Marshaler is the interface implemented by types that can marshal themselves
-// to a string representation of the flag.
-type Marshaler interface {
+// marshaler is the interface implemented by types that can marshal themselves
+// to a string representation of the flag. Retroported from jessevdk/go-flags.
+type marshaler interface {
 	// MarshalFlag marshals a flag value to its string representation.
 	MarshalFlag() (string, error)
 }
 
-// Unmarshaler is the interface implemented by types that can unmarshal a flag
+// unmarshaler is the interface implemented by types that can unmarshal a flag
 // argument to themselves. The provided value is directly passed from the
-// command line.
-type Unmarshaler interface {
+// command line. Retroported from jessevdk/go-flags.
+type unmarshaler interface {
 	// UnmarshalFlag unmarshals a string value representation to the flag
 	// value (which therefore needs to be a pointer receiver).
 	UnmarshalFlag(value string) error
-}
-
-// ValueValidator is the interface implemented by types that can validate a
-// flag argument themselves. The provided value is directly passed from the
-// command line.
-type ValueValidator interface {
-	// IsValidValue returns an error if the provided string value is valid for
-	// the flag.
-	IsValidValue(value string) error
 }
 
 // --------------------------------------------------------------------------------------------------- //
@@ -116,7 +99,6 @@ func Value(val string, retval reflect.Value, options tag.MultiTag) error {
 
 		return Value(val, reflect.Indirect(retval), options)
 	case reflect.Interface:
-		// NOTE: Isn't there a problem here ? What if nil ?
 		if !retval.IsNil() {
 			return Value(val, retval.Elem(), options)
 		}
@@ -175,7 +157,7 @@ func convertToString(val reflect.Value, options tag.MultiTag) (string, error) {
 func convertMarshal(val reflect.Value) (bool, string, error) {
 	// Check first for the Marshaler interface
 	if val.IsValid() && val.Type().NumMethod() > 0 && val.CanInterface() {
-		if marshaler, ok := val.Interface().(Marshaler); ok {
+		if marshaler, ok := val.Interface().(marshaler); ok {
 			ret, err := marshaler.MarshalFlag()
 
 			return true, ret, fmt.Errorf("marshal error: %w", err)
@@ -187,8 +169,8 @@ func convertMarshal(val reflect.Value) (bool, string, error) {
 
 func convertUnmarshal(val string, retval reflect.Value) (bool, error) {
 	// Use any unmarshalling implementation found on the concrete type.
-	if unmarshaler, found := typeIsUnmarshaller(retval); found && unmarshaler != nil {
-		return convertWithUnmarshaler(val, retval, unmarshaler)
+	if unm, found := typeIsUnmarshaller(retval); found && unm != nil {
+		return convertWithUnmarshaler(val, retval, unm)
 	}
 
 	// Or recursively call ourselves with embedded types
@@ -203,10 +185,10 @@ func convertUnmarshal(val string, retval reflect.Value) (bool, error) {
 	return false, nil
 }
 
-func convertWithUnmarshaler(val string, retval reflect.Value, unmarshaler Unmarshaler) (bool, error) {
+func convertWithUnmarshaler(val string, retval reflect.Value, unm unmarshaler) (bool, error) {
 	// If we have an existing value, just use it
 	if !retval.IsNil() {
-		if err := unmarshaler.UnmarshalFlag(val); err != nil {
+		if err := unm.UnmarshalFlag(val); err != nil {
 			return true, fmt.Errorf("unmarshal error: %w", err)
 		}
 
@@ -216,13 +198,13 @@ func convertWithUnmarshaler(val string, retval reflect.Value, unmarshaler Unmars
 	// Else we need to re-assign from the new value
 	retval.Set(reflect.New(retval.Type().Elem()))
 
-	unmarshaler, found := retval.Interface().(Unmarshaler)
+	unm, found := retval.Interface().(unmarshaler)
 	if !found {
 		return false, fmt.Errorf("convert marshal: %w", errUnmarshaler)
 	}
 
 	// And finally perform the custom unmarshaling
-	if err := unmarshaler.UnmarshalFlag(val); err != nil {
+	if err := unm.UnmarshalFlag(val); err != nil {
 		return true, fmt.Errorf("unmarshal error: %w", err)
 	}
 
@@ -428,13 +410,13 @@ func convertMapStr(val reflect.Value, options tag.MultiTag) (string, error) {
 // 3) Other helpers ------------------------------------------------------------------------ //
 //
 
-func typeIsUnmarshaller(retval reflect.Value) (Unmarshaler, bool) {
+func typeIsUnmarshaller(retval reflect.Value) (unmarshaler, bool) {
 	if retval.Type().NumMethod() == 0 || retval.CanInterface() {
 		return nil, false
 	}
 
-	if unmarshaler, isImplemented := retval.Interface().(Unmarshaler); isImplemented {
-		return unmarshaler, true
+	if unm, isImplemented := retval.Interface().(unmarshaler); isImplemented {
+		return unm, true
 	}
 
 	return nil, false

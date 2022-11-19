@@ -69,12 +69,6 @@ func getCompleters(args *positional.Args, comps *comp.Carapace) *compCache {
 		// Make parser function, get completer implementations, how many arguments, etc.
 		if completer, _, _ := typeCompleter(arg.Value); completer != nil {
 			cache.add(arg.Index, completer)
-
-			// Always overwrite the after-dash completion if this argument field is
-			// being indicated as such through its struct tag.
-			if isDashPositionalAny(arg.Tag) {
-				comps.DashAnyCompletion(comp.ActionCallback(completer))
-			}
 		}
 
 		// But struct tags have precedence, so here should take place
@@ -169,14 +163,6 @@ func completeOrIgnore(arg *positional.Arg, comps *compCache, actuallyParsed int)
 	}
 
 	return nil
-}
-
-func isDashPositionalAny(tag tag.MultiTag) bool {
-	isDashAny, _ := tag.Get("complete")
-
-	// TODO: here extract all complete directives
-
-	return isDashAny != ""
 }
 
 // a list used to store completion callbacks produced by our

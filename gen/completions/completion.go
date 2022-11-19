@@ -74,7 +74,7 @@ func getCompletionAction(name, value, desc string) comp.Action {
 		action = comp.ActionDirectories() // TODO change this
 	case "Files":
 		files := strings.Split(value, ",")
-		action = comp.ActionFiles(files...) // TODO: currently identical to FilterExt
+		action = comp.ActionFiles(files...)
 	case "Dirs":
 		action = comp.ActionDirectories()
 

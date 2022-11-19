@@ -129,13 +129,10 @@ func parseflagsTag(flagsTag string, flag *Flag) (skip, ignorePrefix bool) {
 // parseGoFlagsTag parses only the tags used by jessevdk/go-flags.
 func parseGoFlagsTag(flagTags *tag.MultiTag, flag *Flag) {
 	if short, found := flagTags.Get("short"); found && short != "" {
-		// Else if we have at least a short name, try get long as well
 		shortR, err := getShortName(short)
 		if err == nil {
 			flag.Short = string(shortR)
 		}
-		// NOTE: Only overwrite the default field name if we found a long,
-		// otherwise cobra/pflag will panic with two identical long names.
 		if long, found := flagTags.Get("long"); found && long != "" {
 			flag.Name, _ = flagTags.Get("long")
 		}
