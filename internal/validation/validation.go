@@ -11,6 +11,15 @@ import (
 // ErrInvalidChoice indicates that the provided flag argument is not among the valid choices.
 var ErrInvalidChoice = errors.New("invalid choice")
 
+// ValueValidator is the interface implemented by types that can validate a
+// flag argument themselves. The provided value is directly passed from the
+// command line. This interface has been retroported from jessevdk/go-flags.
+type ValueValidator interface {
+	// IsValidValue returns an error if the provided string value is valid for
+	// the flag.
+	IsValidValue(value string) error
+}
+
 // Bind builds a validation function including all validation routines (builtin or user-defined) available.
 func Bind(value reflect.Value, field reflect.StructField, choices []string, opt scan.Opts) func(val string) error {
 	if opt.Validator == nil && len(choices) == 0 {
@@ -31,6 +40,13 @@ func Bind(value reflect.Value, field reflect.StructField, choices []string, opt 
 			// If choice is valid or arbitrary, run custom validator.
 			if opt.Validator != nil {
 				if err := opt.Validator(val, field, value.Interface()); err != nil {
+					return err
+				}
+			}
+
+			// Retroporting from jessevdk/go-flags
+			if validator, implemented := value.Interface().(ValueValidator); implemented {
+				if err := validator.IsValidValue(val); err != nil {
 					return err
 				}
 			}

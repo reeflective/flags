@@ -52,7 +52,6 @@ func New() func(val string, field reflect.StructField, cfg interface{}) error {
 	// We wrap this singleton is a correct ValidateFunc
 	validation := func(val string, field reflect.StructField, obj interface{}) error {
 		validationTag := field.Tag.Get(validTag)
-		fmt.Println(val)
 		if err := valid.Var(val, validationTag); err != nil {
 			return &invalidVarError{field.Name, val, err}
 		}
