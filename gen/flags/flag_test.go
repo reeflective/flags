@@ -234,7 +234,7 @@ func TestParseNoDefaultValues(t *testing.T) {
 func TestParseBadConfig(t *testing.T) {
 	t.Parallel()
 
-	pointerErr := fmt.Errorf("%w: %s", flags.ErrParse, ErrNotPointerToStruct.Error())
+	pointerErr := fmt.Errorf("%w: %s", flags.ErrParse, flags.ErrNotPointerToStruct.Error())
 	test := &testConfig{
 		cfg:     "bad config",
 		expErr1: pointerErr,

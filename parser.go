@@ -233,7 +233,7 @@ func parseMap(value reflect.Value) Value {
 	return val
 }
 
-// Tells us if a struct field tagged as a flag does not implement the Value interface
+// Tells us if a struct field tagged as a flag does not implement the Value interface.
 func markedFlagNotImplementing(tag tag.MultiTag, val Value) bool {
 	_, flagOld := tag.Get("flag")
 	_, short := tag.Get("short")
