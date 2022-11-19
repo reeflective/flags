@@ -33,6 +33,10 @@ var (
 
 	// ErrFlagHandler indicates that the custom handler for a flag has failed.
 	ErrFlagHandler = errors.New("custom handler for flag failed")
+
+	// ErrNotValue indicates that a struct field type does not implement the
+	// Value interface. This only happens when the said type is a user-defined one.
+	ErrNotValue = errors.New("invalid field marked as flag")
 )
 
 // simple wrapper for errors.

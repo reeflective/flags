@@ -11,8 +11,8 @@ import (
 // ErrInvalidChoice indicates that the provided flag argument is not among the valid choices.
 var ErrInvalidChoice = errors.New("invalid choice")
 
-// BuildValidator builds a validation function including all validation routines (builtin or user-defined) available.
-func BuildValidator(value reflect.Value, field reflect.StructField, choices []string, opt scan.Opts) func(val string) error {
+// Bind builds a validation function including all validation routines (builtin or user-defined) available.
+func Bind(value reflect.Value, field reflect.StructField, choices []string, opt scan.Opts) func(val string) error {
 	if opt.Validator == nil && len(choices) == 0 {
 		return nil
 	}

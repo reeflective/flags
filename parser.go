@@ -44,6 +44,9 @@ func ParseField(value reflect.Value, field reflect.StructField, optFuncs ...OptF
 	if err != nil {
 		return nil, true, err
 	}
+	if flag == nil {
+		return nil, false, nil
+	}
 
 	opts := OptFunc(scan.CopyOpts(scanOpts))
 
@@ -53,6 +56,14 @@ func ParseField(value reflect.Value, field reflect.StructField, optFuncs ...OptF
 		return flagSet, true, err
 	}
 
+	// The flag value, at this point, should always implement the flag Value interface,
+	// otherwise it is not considered a valid flag
+	if markedFlagNotImplementing(*tag, val) {
+		errImpl := fmt.Errorf("%w: field %s (tagged flag '%s') does not implement Value interface",
+			ErrNotValue, field.Name, flag.Name)
+		return flagSet, true, errImpl
+	}
+
 	// If our value is nil, we don't have to perform further validations on it,
 	// and we only add flags if we have parsed some on our struct field value.
 	if val == nil {
@@ -60,7 +71,7 @@ func ParseField(value reflect.Value, field reflect.StructField, optFuncs ...OptF
 	}
 
 	// Set validators if any, user-defined or builtin
-	if validator := validation.BuildValidator(value, field, flag.Choices, scanOpts); validator != nil {
+	if validator := validation.Bind(value, field, flag.Choices, scanOpts); validator != nil {
 		val = &validateValue{
 			Value:        val,
 			validateFunc: validator,
@@ -220,6 +231,19 @@ func parseMap(value reflect.Value) Value {
 	val := parseGeneratedMap(valueInterface)
 
 	return val
+}
+
+// Tells us if a struct field tagged as a flag does not implement the Value interface
+func markedFlagNotImplementing(tag tag.MultiTag, val Value) bool {
+	_, flagOld := tag.Get("flag")
+	_, short := tag.Get("short")
+	_, long := tag.Get("long")
+
+	if (flagOld || short || long) && val == nil {
+		return true
+	}
+
+	return false
 }
 
 func anyOf(kinds []reflect.Kind, needle reflect.Kind) bool {
