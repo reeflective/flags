@@ -17,29 +17,26 @@ func Bind(value reflect.Value, field reflect.StructField, choices []string, opt 
 		return nil
 	}
 
-	// The validation is performed on each individual item of a (potential) array
-	var validation func(val string) error
+	validation := func(argValue string) error {
+		allValues := strings.Split(argValue, ",")
 
-	switch {
-	case opt.Validator == nil && len(choices) > 0:
-		// If we have only choices and no user-defined validations
-		validation = func(val string) error {
-			return validateChoice(val, choices)
-		}
-	case opt.Validator != nil && len(choices) == 0:
-		// If we have only a user-defined validation
-		validation = func(val string) error {
-			return opt.Validator(val, field, value.Interface())
-		}
-	case opt.Validator != nil && len(choices) > 0:
-		// Or if we have both
-		validation = func(val string) error {
-			if err := validateChoice(val, choices); err != nil {
-				return err
+		// The validation is performed on each individual item of a (potential) array
+		for _, val := range allValues {
+			if len(choices) > 0 {
+				if err := validateChoice(val, choices); err != nil {
+					return err
+				}
 			}
 
-			return opt.Validator(val, field, value.Interface())
+			// If choice is valid or arbitrary, run custom validator.
+			if opt.Validator != nil {
+				if err := opt.Validator(val, field, value.Interface()); err != nil {
+					return err
+				}
+			}
 		}
+
+		return nil
 	}
 
 	return validation

@@ -39,9 +39,9 @@ func (m *Machines) Complete(ctx carapace.Context) carapace.Action {
 	}
 }
 
-// func (p *Machines) String() string {
-// 	return string(*p)
-// }
+func (p *Machines) String() string {
+	return string(*p)
+}
 
 func (p *Machines) Set(value string) error {
 	*p = (Machines)(value)

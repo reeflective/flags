@@ -21,8 +21,8 @@ type BasicOptions struct {
 	Machines Machines          `long:"machines" short:"m" description:"A type that implements user@host (multipart) completion"`
 
 	// Second flag tag notation
-	Alternate string `flag:"alternate a" desc:"A flag declared with struct tag flag:\"a alternate\" instead of short:\"a\" / long:\"alternate\""`
-	Email     string `flag:"email E" desc:"An email address, validated with go-playground/validator" validate:"email"`
+	Alternate string   `flag:"alternate a" desc:"A flag declared with struct tag flag:\"a alternate\" instead of short:\"a\" / long:\"alternate\""`
+	Email     []string `flag:"email E" desc:"An email address, validated with go-playground/validator" validate:"email"`
 }
 
 // Execute is the command implementation, shows how options are parsed.
