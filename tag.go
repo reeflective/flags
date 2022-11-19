@@ -10,14 +10,14 @@ import (
 )
 
 // parseFlagTag now also handles some of the tags used in jessevdk/go-flags.
-func parseFlagTag(field reflect.StructField, opt opts) (*Flag, *tag.MultiTag, error) {
+func parseFlagTag(field reflect.StructField, options opts) (*Flag, *tag.MultiTag, error) {
 	flag := &Flag{}
 
-	ignoreFlagPrefix := false
-	flag.Name = camelToFlag(field.Name, opt.FlagDivider)
+	ignorePrefix := false
+	flag.Name = camelToFlag(field.Name, options.FlagDivider)
 
 	// Parse the struct tag
-	flagTags, skip, err := getFlagTags(field, opt)
+	flagTags, skip, err := getFlagTags(field, options)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -27,8 +27,58 @@ func parseFlagTag(field reflect.StructField, opt opts) (*Flag, *tag.MultiTag, er
 	}
 
 	// Parse all base struct tag flags attributes and populate the flag object.
-	if skip, ignoreFlagPrefix = parseBaseFlagAttributes(flagTags, flag, opt); skip {
+	if skip, ignorePrefix = parseBaseAttributes(flagTags, flag, options); skip {
 		return nil, flagTags, nil
+	}
+
+	flag.DefValue = flagTags.GetMany("default")
+	setFlagChoices(flag, flagTags.GetMany("choice"))
+	flag.OptionalValue = flagTags.GetMany("optional-value")
+
+	if options.Prefix != "" && !ignorePrefix {
+		flag.Name = options.Prefix + flag.Name
+	}
+
+	return flag, flagTags, nil
+}
+
+// getFlagTags tries to parse any struct tag we need, and tells the caller if
+// we should actually build a flag object out of the struct field, or skip it.
+func getFlagTags(field reflect.StructField, options opts) (*tag.MultiTag, bool, error) {
+	flagTags, none, err := tag.GetFieldTag(field)
+	if err != nil {
+		return nil, true, fmt.Errorf("%w: %s", ErrTag, err.Error())
+	}
+
+	// If the global options specify that we must build a flag
+	// out of each struct field, regardless of them being tagged.
+	if options.ParseAll {
+		return &flagTags, false, nil
+	}
+
+	// Else we skip this field only if there's not tag on it
+	if none {
+		return &flagTags, true, nil
+	}
+
+	return &flagTags, false, nil
+}
+
+// parseBaseAttributes checks which type of struct tags we found, parses them
+// accordingly (legacy, or not), taking into account any global config settings.
+func parseBaseAttributes(flagTags *tag.MultiTag, flag *Flag, options opts) (skip, ignorePrefix bool) {
+	sflagsTag, _ := flagTags.Get(options.FlagTag)
+	sflagValues := strings.Split(sflagsTag, ",")
+
+	if sflagsTag != "" && len(sflagValues) > 0 {
+		// Either we have found the legacy flags tag value.
+		skip, ignorePrefix = parseflagsTag(sflagsTag, flag)
+		if skip {
+			return true, false
+		}
+	} else {
+		// Or we try for the go-flags tags.
+		parseGoFlagsTag(flagTags, flag)
 	}
 
 	// Descriptions
@@ -41,56 +91,6 @@ func parseFlagTag(field reflect.StructField, opt opts) (*Flag, *tag.MultiTag, er
 	// Requirements
 	if required, _ := flagTags.Get("required"); !isStringFalsy(required) {
 		flag.Required = true
-	}
-
-	// flag.DefValue = flagTags.GetMany("default")
-	setFlagChoices(flag, flagTags.GetMany("choice"))
-	flag.OptionalValue = flagTags.GetMany("optional-value")
-
-	if opt.Prefix != "" && !ignoreFlagPrefix {
-		flag.Name = opt.Prefix + flag.Name
-	}
-
-	return flag, flagTags, nil
-}
-
-// getFlagTags tries to parse any struct tag we need, and tells the caller if
-// we should actually build a flag object out of the struct field, or skip it.
-func getFlagTags(field reflect.StructField, opt opts) (*tag.MultiTag, bool, error) {
-	flagTags, none, err := tag.GetFieldTag(field)
-	if err != nil {
-		return nil, true, fmt.Errorf("%w: %s", ErrTag, err.Error())
-	}
-
-	// If the global options specify that we must build a flag
-	// out of each struct field, regardless of them being tagged.
-	if opt.ParseAll {
-		return &flagTags, false, nil
-	}
-
-	// Else we skip this field only if there's not tag on it
-	if none {
-		return &flagTags, true, nil
-	}
-
-	return &flagTags, false, nil
-}
-
-// parseBaseFlagAttributes checks which type of struct tags we found, parses them
-// accordingly (legacy, or not), taking into account any global config settings.
-func parseBaseFlagAttributes(flagTags *tag.MultiTag, flag *Flag, opt opts) (skip, ignorePrefix bool) {
-	sflagsTag, _ := flagTags.Get(opt.FlagTag)
-	sflagValues := strings.Split(sflagsTag, ",")
-
-	if sflagsTag != "" && len(sflagValues) > 0 {
-		// Either we have found the legacy flags tag value.
-		skip, ignorePrefix = parseflagsTag(sflagsTag, flag)
-		if skip {
-			return true, false
-		}
-	} else {
-		// Or we try for the go-flags tags.
-		parseGoFlagsTag(flagTags, flag)
 	}
 
 	return false, ignorePrefix
@@ -145,9 +145,9 @@ func parseGoFlagsTag(flagTags *tag.MultiTag, flag *Flag) {
 	}
 }
 
-func parseEnvTag(flagName string, field reflect.StructField, opt opts) string {
+func parseEnvTag(flagName string, field reflect.StructField, options opts) string {
 	ignoreEnvPrefix := false
-	envVar := flagToEnv(flagName, opt.FlagDivider, opt.EnvDivider)
+	envVar := flagToEnv(flagName, options.FlagDivider, options.EnvDivider)
 
 	if envTags := strings.Split(field.Tag.Get(scan.DefaultEnvTag), ","); len(envTags) > 0 {
 		switch envName := envTags[0]; envName {
@@ -164,18 +164,18 @@ func parseEnvTag(flagName string, field reflect.StructField, opt opts) string {
 				ignoreEnvPrefix = true
 			} else {
 				envVar = envName
-				if opt.Prefix != "" {
+				if options.Prefix != "" {
 					envVar = flagToEnv(
-						opt.Prefix,
-						opt.FlagDivider,
-						opt.EnvDivider) + envVar
+						options.Prefix,
+						options.FlagDivider,
+						options.EnvDivider) + envVar
 				}
 			}
 		}
 	}
 
-	if envVar != "" && opt.EnvPrefix != "" && !ignoreEnvPrefix {
-		envVar = opt.EnvPrefix + envVar
+	if envVar != "" && options.EnvPrefix != "" && !ignoreEnvPrefix {
+		envVar = options.EnvPrefix + envVar
 	}
 
 	return envVar

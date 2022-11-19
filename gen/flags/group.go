@@ -34,18 +34,15 @@ func flagScan(cmd *cobra.Command, opts []flags.OptFunc) scan.Handler {
 }
 
 // flagsGroup finds if a field is marked as a subgroup of options, and if yes, scans it recursively.
-func flagsGroup(cmd *cobra.Command, val reflect.Value, sfield *reflect.StructField, opts []flags.OptFunc) (bool, error) {
-	mtag, skip, err := tag.GetFieldTag(*sfield)
+func flagsGroup(cmd *cobra.Command, val reflect.Value, field *reflect.StructField, opts []flags.OptFunc) (bool, error) {
+	mtag, skip, err := tag.GetFieldTag(*field)
 	if err != nil {
 		return true, fmt.Errorf("%w: %s", flags.ErrParse, err.Error())
 	} else if skip {
 		return false, nil
 	}
 
-	// var groupName string
-
 	legacyGroup, legacyIsSet := mtag.Get("group")
-	// optionsGroup, optionsIsSet := mtag.Get("options")
 	commandGroup, commandsIsSet := mtag.Get("commands")
 	// description, _ := mtag.Get("description")
 
@@ -68,6 +65,8 @@ func flagsGroup(cmd *cobra.Command, val reflect.Value, sfield *reflect.StructFie
 
 	// then settle on the name of the group, and the type of
 	// scan we must launch on it thereof.
+	// var groupName string
+
 	// if legacyIsSet {
 	// 	groupName = legacyGroup
 	// } else if optionsIsSet {
@@ -76,10 +75,6 @@ func flagsGroup(cmd *cobra.Command, val reflect.Value, sfield *reflect.StructFie
 
 	// A group of options ("group" is the legacy name)
 	if legacyIsSet && legacyGroup != "" {
-		// cmd.AddGroup(&cobra.Group{
-		// 	Title: groupName,
-		// })
-
 		err := addFlagSet(cmd, mtag, ptrval.Interface(), opts)
 
 		return true, err

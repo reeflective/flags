@@ -44,14 +44,15 @@ func ParseField(value reflect.Value, field reflect.StructField, optFuncs ...OptF
 	if err != nil {
 		return nil, true, err
 	}
+
 	if flag == nil {
 		return nil, false, nil
 	}
 
-	opts := OptFunc(scan.CopyOpts(scanOpts))
+	options := OptFunc(scan.CopyOpts(scanOpts))
 
 	// We might have to scan for an arbitrarily nested structure of flags
-	flagSet, val, err := parseVal(value, opts)
+	flagSet, val, err := parseVal(value, options)
 	if err != nil {
 		return flagSet, true, err
 	}
@@ -61,6 +62,7 @@ func ParseField(value reflect.Value, field reflect.StructField, optFuncs ...OptF
 	if markedFlagNotImplementing(*tag, val) {
 		errImpl := fmt.Errorf("%w: field %s (tagged flag '%s') does not implement Value interface",
 			ErrNotValue, field.Name, flag.Name)
+
 		return flagSet, true, errImpl
 	}
 
@@ -79,8 +81,6 @@ func ParseField(value reflect.Value, field reflect.StructField, optFuncs ...OptF
 	}
 
 	flag.Value = val
-
-	flag.DefValue = tag.GetMany("default")
 	flagSet = append(flagSet, flag)
 
 	// If the user provided some custom flag
@@ -109,7 +109,7 @@ func parseInfo(fld reflect.StructField, optFuncs ...OptFunc) (*Flag, *tag.MultiT
 		scanOpts = append(scanOpts, scan.OptFunc(optFunc))
 	}
 	scanOptions := scan.DefOpts().Apply(scanOpts...)
-	opt := opts(scanOptions)
+	options := opts(scanOptions)
 
 	// skip unexported and non anonymous fields
 	if fld.PkgPath != "" && !fld.Anonymous {
@@ -117,17 +117,17 @@ func parseInfo(fld reflect.StructField, optFuncs ...OptFunc) (*Flag, *tag.MultiT
 	}
 
 	// We should have a flag and a tag, legacy or not, and with valid values.
-	flag, tag, err := parseFlagTag(fld, opt)
+	flag, tag, err := parseFlagTag(fld, options)
 	if flag == nil || err != nil {
 		return flag, tag, scanOptions, err
 	}
 
 	// Various prefixing checks and steps
-	flag.EnvName = parseEnvTag(flag.Name, fld, opt)
-	prefix := flag.Name + opt.FlagDivider
+	flag.EnvName = parseEnvTag(flag.Name, fld, options)
+	prefix := flag.Name + options.FlagDivider
 
-	if fld.Anonymous && opt.Flatten {
-		prefix = opt.Prefix
+	if fld.Anonymous && options.Flatten {
+		prefix = options.Prefix
 	}
 
 	scanOpts = append(scanOpts, scan.OptFunc(Prefix(prefix)))
