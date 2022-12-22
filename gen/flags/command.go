@@ -11,19 +11,56 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var onFinalize func()
+
+// WithReset registers a function to cobra finalizers: when invoked, this function
+// will create a new instance of the command-tree struct passed to Generate(), will
+// rescan it and bind new commands with their blank/default state.
+// This should normally only be used if you are using commands within a closed
+// loop Go program/shell, where commands will be invoked more than once.
+//
+// The associated function is returned, so that programs can reuse it at other times.
+func WithReset() func() {
+	cobra.OnFinalize(onFinalize)
+	return onFinalize
+}
+
 // Generate returns a root cobra Command to be used directly as an entry-point.
 // The data interface parameter can be nil, or arbitrarily:
 // - A simple group of options to bind at the local, root level
 // - A struct containing substructs for postional parameters, and other with options.
 func Generate(data interface{}, opts ...flags.OptFunc) *cobra.Command {
-	// The command is empty, so that the returned command can be
-	// directly ran as a root application command, with calls like
-	// cmd.Execute(), or cobra.CheckErr(cmd.Execute())
 	cmd := &cobra.Command{
 		Use:         os.Args[0],
 		Annotations: map[string]string{},
 	}
 
+	// Scan the struct and bind all commands to this root.
+	generate(cmd, data, opts...)
+
+	// Make a handler to be used when this command
+	// tree is used in a closed-loop Go program/shell.
+	onFinalize = func() {
+		cmd.ResetCommands()
+
+		// Instantiate a new command struct
+		val := reflect.ValueOf(data)
+		if val.Kind() == reflect.Ptr {
+			val = reflect.Indirect(val)
+		}
+
+		data := reflect.New(val.Type()).Interface()
+
+		// And scan again to rebind all commands
+		// to their blank/default state.
+		generate(cmd, data, opts...)
+	}
+
+	return cmd
+}
+
+// generate wraps all main steps' invocations, to be reused in various cases.
+func generate(cmd *cobra.Command, data interface{}, opts ...flags.OptFunc) {
 	// Make a scan handler that will run various scans on all
 	// the struct fields, with arbitrary levels of nesting.
 	scanner := scanRoot(cmd, nil, opts)
@@ -42,8 +79,6 @@ func Generate(data interface{}, opts ...flags.OptFunc) *cobra.Command {
 	} else if _, isCmd, impl := flags.IsCommand(reflect.ValueOf(data)); isCmd {
 		setRuns(cmd, impl)
 	}
-
-	return cmd
 }
 
 // scan is in charge of building a recursive scanner, working on a given struct field at a time,
