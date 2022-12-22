@@ -5,17 +5,56 @@ import (
 	"reflect"
 
 	"github.com/reeflective/flags"
+	genflags "github.com/reeflective/flags/gen/flags"
 	"github.com/reeflective/flags/internal/scan"
 	"github.com/reeflective/flags/internal/tag"
 	comp "github.com/rsteube/carapace"
 	"github.com/spf13/cobra"
 )
 
+var onFinalize func()
+
+// WithReset has a similar role to flags.WithReset(), but for completions:
+// when invoked, this function will create a new instance of the command-tree
+// struct passed to Generate(), will rescan it and bind new completers with
+// their blank/default state.
+// In the carapace library, this function is called after each completer invocation.
+func WithReset() func() {
+	return onFinalize
+}
+
 // Gen uses a carapace completion builder to register various completions
 // to its underlying cobra command, parsing again the native struct for type
 // and struct tags' information.
 // Returns the carapace, so you can work with completions should you like.
 func Generate(cmd *cobra.Command, data interface{}, comps *comp.Carapace) (*comp.Carapace, error) {
+	// Generate the completions a first time.
+	completions, err := generate(cmd.Root(), data, comps)
+	if err != nil {
+		return completions, err
+	}
+
+	// And make a handler to be ran after each completion routine,
+	// so that commands/flags are reset to their blank/default state.
+	onFinalize = func() {
+		// Reset the command tree and produce a blank one.
+		resetCommands := genflags.WithReset()
+		resetCommands()
+
+		// Instantiate a new command struct
+		val := reflect.ValueOf(data).Elem()
+		data = val.Addr().Interface()
+
+		if _, err := generate(cmd.Root(), data, comps); err != nil {
+			return
+		}
+	}
+
+	return completions, nil
+}
+
+// generate wraps all main steps' invocations, to be reused in various cases.
+func generate(cmd *cobra.Command, data interface{}, comps *comp.Carapace) (*comp.Carapace, error) {
 	if comps == nil {
 		comps = comp.Gen(cmd)
 	}
@@ -99,7 +138,7 @@ func command(cmd *cobra.Command, tag tag.MultiTag, val reflect.Value) (bool, err
 	// Simply generate a new carapace around this command,
 	// so that we can register different positional arguments
 	// without overwriting those of our root command.
-	if _, err := Generate(subc, commander, nil); err != nil {
+	if _, err := generate(subc, commander, nil); err != nil {
 		return true, err
 	}
 
