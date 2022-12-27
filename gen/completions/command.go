@@ -37,7 +37,6 @@ func Generate(cmd *cobra.Command, data interface{}, comps *comp.Carapace) (*comp
 	// And make a handler to be ran after each completion routine,
 	// so that commands/flags are reset to their blank/default state.
 	onFinalize = func() {
-		// Reset the command tree and produce a blank one.
 		resetCommands := genflags.WithReset()
 		resetCommands()
 

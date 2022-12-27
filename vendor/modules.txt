@@ -1,0 +1,87 @@
+# github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d
+## explicit; go 1.13
+github.com/asaskevich/govalidator
+# github.com/davecgh/go-spew v1.1.1
+## explicit
+github.com/davecgh/go-spew/spew
+# github.com/go-playground/locales v0.14.0
+## explicit; go 1.13
+github.com/go-playground/locales
+github.com/go-playground/locales/currency
+# github.com/go-playground/universal-translator v0.18.0
+## explicit; go 1.13
+github.com/go-playground/universal-translator
+# github.com/go-playground/validator/v10 v10.11.1
+## explicit; go 1.13
+github.com/go-playground/validator/v10
+# github.com/inconshreveable/mousetrap v1.0.1
+## explicit; go 1.18
+github.com/inconshreveable/mousetrap
+# github.com/leodido/go-urn v1.2.1
+## explicit; go 1.13
+github.com/leodido/go-urn
+# github.com/pmezard/go-difflib v1.0.0
+## explicit
+github.com/pmezard/go-difflib/difflib
+# github.com/rsteube/carapace v0.29.1
+## explicit; go 1.15
+github.com/rsteube/carapace
+github.com/rsteube/carapace/internal/cache
+github.com/rsteube/carapace/internal/common
+github.com/rsteube/carapace/internal/config
+github.com/rsteube/carapace/internal/pflagfork
+github.com/rsteube/carapace/internal/shell
+github.com/rsteube/carapace/internal/shell/bash
+github.com/rsteube/carapace/internal/shell/bash_ble
+github.com/rsteube/carapace/internal/shell/elvish
+github.com/rsteube/carapace/internal/shell/export
+github.com/rsteube/carapace/internal/shell/fish
+github.com/rsteube/carapace/internal/shell/ion
+github.com/rsteube/carapace/internal/shell/nushell
+github.com/rsteube/carapace/internal/shell/oil
+github.com/rsteube/carapace/internal/shell/powershell
+github.com/rsteube/carapace/internal/shell/spec
+github.com/rsteube/carapace/internal/shell/tcsh
+github.com/rsteube/carapace/internal/shell/xonsh
+github.com/rsteube/carapace/internal/shell/zsh
+github.com/rsteube/carapace/internal/uid
+github.com/rsteube/carapace/pkg/cache
+github.com/rsteube/carapace/pkg/ps
+github.com/rsteube/carapace/pkg/style
+github.com/rsteube/carapace/third_party/github.com/acarl005/stripansi
+github.com/rsteube/carapace/third_party/github.com/drone/envsubst
+github.com/rsteube/carapace/third_party/github.com/drone/envsubst/parse
+github.com/rsteube/carapace/third_party/github.com/drone/envsubst/path
+github.com/rsteube/carapace/third_party/github.com/elves/elvish/pkg/cli/lscolors
+github.com/rsteube/carapace/third_party/github.com/elves/elvish/pkg/ui
+github.com/rsteube/carapace/third_party/github.com/mitchellh/go-ps
+github.com/rsteube/carapace/third_party/golang.org/x/sys/execabs
+# github.com/rsteube/carapace-bin v0.19.0
+## explicit; go 1.19
+github.com/rsteube/carapace-bin/pkg/actions/net
+github.com/rsteube/carapace-bin/pkg/actions/number
+# github.com/spf13/cobra v1.6.1
+## explicit; go 1.15
+github.com/spf13/cobra
+# github.com/spf13/pflag v1.0.5
+## explicit; go 1.12
+github.com/spf13/pflag
+# github.com/stretchr/testify v1.8.0
+## explicit; go 1.13
+github.com/stretchr/testify/assert
+github.com/stretchr/testify/require
+# golang.org/x/crypto v0.3.0
+## explicit; go 1.17
+golang.org/x/crypto/sha3
+# golang.org/x/sys v0.2.0
+## explicit; go 1.17
+golang.org/x/sys/cpu
+# golang.org/x/text v0.4.0
+## explicit; go 1.17
+golang.org/x/text/internal/language
+golang.org/x/text/internal/language/compact
+golang.org/x/text/internal/tag
+golang.org/x/text/language
+# gopkg.in/yaml.v3 v3.0.1
+## explicit
+gopkg.in/yaml.v3
