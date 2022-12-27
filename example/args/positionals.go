@@ -13,9 +13,9 @@ type IP []string
 func (ip *IP) Complete(ctx carapace.Context) carapace.Action {
 	action := carapace.ActionStyledValuesDescribed(
 		"23:23:234:34ef:343f:47ca", "An IPv6 address", style.BrightGreen,
-		"::1", "a second address", style.BrightGreen,
+		"::1", "a test address", style.BrightGreen,
 		"10.10.10.10", "An intruder", style.Blue,
-	).Group("IPv6 addresses").Invoke(ctx).Filter(ctx.Args).ToA()
+	).Tag("IPv6 addresses").Invoke(ctx).Filter(ctx.Args).ToA()
 
 	return action
 }
@@ -31,7 +31,7 @@ func (p *Host) Complete(ctx carapace.Context) carapace.Action {
 		"10.203.23.45", "and a third one", style.BrightCyan,
 		"127.0.0.1", "and a third one", style.BrightCyan,
 		"219.293.91.10", "", style.Blue,
-	).Group("IPv4 addresses").Invoke(ctx).Filter(ctx.Args).ToA()
+	).Tag("IPv4 addresses").Invoke(ctx).Filter(ctx.Args).ToA()
 
 	return action
 }
@@ -45,7 +45,7 @@ func (p *Proxy) Complete(ctx carapace.Context) carapace.Action {
 		"github.com", "A first ip address",
 		"google.com", "a second address",
 		"blue-team.com", "and a third one",
-	).Group("host domains").Invoke(ctx).Filter(ctx.Args).ToA()
+	).Tag("host domains").Invoke(ctx).Filter(ctx.Args).ToA()
 
 	return action
 }
