@@ -117,8 +117,9 @@ func TestParseStruct(t *testing.T) {
 		expErr     error
 	}{
 		{
-			name: "SimpleCfg test",
-			cfg:  simpleCfg,
+			name:     "SimpleCfg test",
+			cfg:      simpleCfg,
+			optFuncs: []OptFunc{ParseAll()},
 			expFlagSet: []*Flag{
 				{
 					Name:     "name",
@@ -165,7 +166,7 @@ func TestParseStruct(t *testing.T) {
 		{
 			name:     "SimpleCfg test with custom env_prefix and divider",
 			cfg:      simpleCfg,
-			optFuncs: []OptFunc{EnvPrefix("PP|"), EnvDivider("|")},
+			optFuncs: []OptFunc{EnvPrefix("PP|"), EnvDivider("|"), ParseAll()},
 			expFlagSet: []*Flag{
 				{
 					Name:     "name",
@@ -211,8 +212,9 @@ func TestParseStruct(t *testing.T) {
 			expErr: nil,
 		},
 		{
-			name: "DifferentTypesCfg",
-			cfg:  diffTypesCfg,
+			name:     "DifferentTypesCfg",
+			cfg:      diffTypesCfg,
+			optFuncs: []OptFunc{ParseAll()},
 			expFlagSet: []*Flag{
 				{
 					Name:     "string-value",
@@ -283,8 +285,9 @@ func TestParseStruct(t *testing.T) {
 			},
 		},
 		{
-			name: "NestedCfg",
-			cfg:  nestedCfg,
+			name:     "NestedCfg",
+			cfg:      nestedCfg,
+			optFuncs: []OptFunc{ParseAll()},
 			expFlagSet: []*Flag{
 				{
 					Name:     "sub-name",
@@ -329,6 +332,7 @@ func TestParseStruct(t *testing.T) {
 					Name:    "name",
 					EnvName: "NAME",
 					Value:   newStringValue(&descCfg.Name),
+					Usage:   "name description",
 				},
 				{
 					Name:    "name2",
@@ -339,8 +343,9 @@ func TestParseStruct(t *testing.T) {
 			},
 		},
 		{
-			name: "Anonymoust cfg with disabled flatten",
-			cfg:  anonymousCfg,
+			name:     "Anonymoust cfg with disabled flatten",
+			cfg:      anonymousCfg,
+			optFuncs: []OptFunc{ParseAll()},
 			expFlagSet: []*Flag{
 				{
 					Name:    "name1",
@@ -358,7 +363,7 @@ func TestParseStruct(t *testing.T) {
 		{
 			name:     "Anonymoust cfg with enabled flatten",
 			cfg:      anonymousCfg,
-			optFuncs: []OptFunc{Flatten(false)},
+			optFuncs: []OptFunc{Flatten(false), ParseAll()},
 			expFlagSet: []*Flag{
 				{
 					Name:    "name1",
@@ -396,6 +401,7 @@ func TestParseStruct(t *testing.T) {
 	}
 	for _, test := range tt {
 		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
 			flagSet, err := ParseStruct(test.cfg, test.optFuncs...)
 			if test.expErr == nil {
 				require.NoError(t, err)
@@ -408,6 +414,7 @@ func TestParseStruct(t *testing.T) {
 }
 
 func TestParseStruct_NilValue(t *testing.T) {
+	t.Parallel()
 	name2Value := "name2_value"
 	cfg := struct {
 		Name1  *string
@@ -420,7 +427,7 @@ func TestParseStruct_NilValue(t *testing.T) {
 	assert.Nil(t, cfg.Regexp)
 	assert.NotNil(t, cfg.Name2)
 
-	flags, err := ParseStruct(&cfg)
+	flags, err := ParseStruct(&cfg, ParseAll())
 	require.NoError(t, err)
 	require.Equal(t, 3, len(flags))
 	assert.NotNil(t, cfg.Name1)
@@ -438,6 +445,7 @@ func TestParseStruct_NilValue(t *testing.T) {
 }
 
 func TestParseStruct_WithValidator(t *testing.T) {
+	t.Parallel()
 	var cfg simple
 
 	testErr := errors.New("validator test error")
@@ -446,7 +454,7 @@ func TestParseStruct_WithValidator(t *testing.T) {
 		return testErr
 	})
 
-	flags, err := ParseStruct(&cfg, validator)
+	flags, err := ParseStruct(&cfg, validator, ParseAll())
 	require.NoError(t, err)
 	require.Equal(t, 1, len(flags))
 	assert.NotNil(t, cfg.Name)
@@ -457,6 +465,7 @@ func TestParseStruct_WithValidator(t *testing.T) {
 }
 
 func TestFlagDivider(t *testing.T) {
+	t.Parallel()
 	opt := scan.Opts{
 		FlagDivider: "-",
 	}
@@ -465,6 +474,7 @@ func TestFlagDivider(t *testing.T) {
 }
 
 func TestFlagTag(t *testing.T) {
+	t.Parallel()
 	opt := scan.Opts{
 		FlagTag: "flags",
 	}
@@ -473,6 +483,7 @@ func TestFlagTag(t *testing.T) {
 }
 
 func TestValidator(t *testing.T) {
+	t.Parallel()
 	opt := scan.Opts{
 		Validator: nil,
 	}
@@ -483,6 +494,7 @@ func TestValidator(t *testing.T) {
 }
 
 func TestFlatten(t *testing.T) {
+	t.Parallel()
 	opt := scan.Opts{
 		Flatten: true,
 	}
