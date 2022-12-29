@@ -5,7 +5,8 @@
   </a>
   <br> <h1> Flags </h1>
 
-  <p>  Generate cobra commands from structs. Retro-compatible with go-flags, with much more </p>
+  <p>  Generate cobra commands from structs. </p>
+  <p>  Retro-compatible with go-flags, advanced related CLI functionality, for free. </p>
 </div>
 
 
@@ -44,40 +45,36 @@
 
 ## Summary
 
-The flags library allows to declare CLI commands, flags and positional arguments from structs and field tags.
+The flags library allows to declare cobra CLI commands, flags and positional arguments from structs and field tags.
 It originally aimed to enhance [go-flags](https://github.com/jessevdk/go-flags), but ended up shifting its approach in order to leverage the widely 
-used and battle-tested cobra CLI library. In addition, it provides other generators leveraging the [carapace](https://github.com/rsteube/carapace)
-completion engine, thus allowing for very powerful yet simple completion/usage generation for the commands,
-flags and flag or positional arguments.
+used and battle-tested [cobra](https://github.com/spf13/cobra) CLI library. In addition, it provides other generators leveraging the [carapace](https://github.com/rsteube/carapace)
+completion engine, thus allowing for very powerful yet simple completion and as-you-type usage generation for 
+the commands, flags and positional arguments.
 
 In short, the main purpose of this library is to let users focus on writing programs. It requires very little 
 time and focus spent on declaring CLI interface specs (commands, flags, groups of flags/commands) and associated 
 functionality (completions and validations), and then generates powerful and ready to use CLI programs.
 
------
-
 ## Features 
 
-### Commands, flags and positionals
+### Commands, flags and positional arguments
 - Easily declare commands, flags, and positional arguments through struct tags.
 - Various ways to structure the command trees in groups (tagged, or encapsulated in structs).
 - Almost entirely retrocompatible with [go-flags](https://github.com/jessevdk/go-flags), with a ported and enlarged test suite.
-- Advanced and versatile positional arguments declaration.
+- Advanced and versatile positional arguments declaration, with automatic binding to `cobra.Args`.
 - Large array of native types supported as flags or positional arguments.
 
 ### Related functionality
 - Easily declare validations on command flags or positional arguments, with [go-validator](https://github.com/go-playground/validator) tags.
 - Generate advanced completions with the [carapace](https://github.com/rsteube/carapace) completion engine in a single call.
-- Implement completers on any positional/flag type, or declare builtin carapace completers via struct tags. 
+- Implement completers on positional/flag types, or declare builtin completers via struct tags. 
 - Generated completions include commands/flags groups, descriptions, usage strings.
 - Live validation of command-line input with completers running flags' validations.
 - All of these features, cross-platform and cross-shell, almost for free.
 
------
 
 ## Documentation
 
------
 
 ## Credits
 
