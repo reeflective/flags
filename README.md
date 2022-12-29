@@ -5,13 +5,14 @@
   </a>
   <br> <h1> Flags </h1>
 
+  <p>  Generate cobra commands from structs. Retro-compatible with go-flags, with much more </p>
 </div>
 
 
 <!-- Badges -->
 <p align="center">
   <a href="https://github.com/reeflective/flags/actions/workflows/go.yml">
-    <img src="https://github.com/reeflective/flags/actions/workflows/go.yml/badge.svg?branch=master"
+    <img src="https://github.com/reeflective/flags/actions/workflows/go.yml/badge.svg?branch=main"
       alt="Github Actions (workflows)" />
   </a>
 
@@ -31,7 +32,7 @@
   </a>
 
   <a href="https://codecov.io/gh/reeflective/flags">
-    <img src="https://codecov.io/gh/reeflective/flags/branch/master/graph/badge.svg"
+    <img src="https://codecov.io/gh/reeflective/flags/branch/main/graph/badge.svg"
       alt="codecov" />
   </a>
 
@@ -43,9 +44,34 @@
 
 ## Summary
 
+The flags library allows to declare CLI commands, flags and positional arguments from structs and field tags.
+It originally aimed to enhance [go-flags](https://github.com/jessevdk/go-flags), but ended up shifting its approach in order to leverage the widely 
+used and battle-tested cobra CLI library. In addition, it provides other generators leveraging the [carapace](https://github.com/rsteube/carapace)
+completion engine, thus allowing for very powerful yet simple completion/usage generation for the commands,
+flags and flag or positional arguments.
+
+In short, the main purpose of this library is to let users focus on writing programs. It requires very little 
+time and focus spent on declaring CLI interface specs (commands, flags, groups of flags/commands) and associated 
+functionality (completions and validations), and then generates powerful and ready to use CLI programs.
+
 -----
 
-## Install
+## Features 
+
+### Commands, flags and positionals
+- Easily declare commands, flags, and positional arguments through struct tags.
+- Various ways to structure the command trees in groups (tagged, or encapsulated in structs).
+- Almost entirely retrocompatible with [go-flags](https://github.com/jessevdk/go-flags), with a ported and enlarged test suite.
+- Advanced and versatile positional arguments declaration.
+- Large array of native types supported as flags or positional arguments.
+
+### Related functionality
+- Easily declare validations on command flags or positional arguments, with [go-validator](https://github.com/go-playground/validator) tags.
+- Generate advanced completions with the [carapace](https://github.com/rsteube/carapace) completion engine in a single call.
+- Implement completers on any positional/flag type, or declare builtin carapace completers via struct tags. 
+- Generated completions include commands/flags groups, descriptions, usage strings.
+- Live validation of command-line input with completers running flags' validations.
+- All of these features, cross-platform and cross-shell, almost for free.
 
 -----
 
