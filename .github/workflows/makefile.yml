@@ -7,21 +7,53 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
+  unix:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
 
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v3
 
-    - name: configure
-      run: ./configure
+    - name: Set up Go and tools
+      uses: actions/setup-go@v3
+      with:
+        go-version: 1.19
 
-    - name: Install dependencies
-      run: make
+    - run: make tools
 
-    - name: Run check
-      run: make check
+    # Generate/check/format code
+    - name: Generate and check
+      run: make prepare
+    
+    - name: Build
+      run: go build -v ./...
 
-    - name: Run distcheck
-      run: make distcheck
+    # Test and generate coverage
+    - name: Test and coverage
+      run: make coverage
+
+    - name: Upload coverage
+      uses: codecov/codecov-action@v3
+
+  windows:
+    runs-on: windows-latest 
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go and tools
+      uses: actions/setup-go@v3
+      with:
+        go-version: 1.19
+
+    - run: make tools
+
+    # Generate/check/format code
+    - name: Generate and check
+      run: make prepare
+
+    - name: Build
+      run: go build -v ./...
