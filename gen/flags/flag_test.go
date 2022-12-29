@@ -3,7 +3,7 @@ package flags
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net"
 	"os"
 	"testing"
@@ -91,7 +91,7 @@ func run(t *testing.T, test *testConfig) {
 	}
 
 	flagSet.Init("pflagTest", pflag.ContinueOnError)
-	flagSet.SetOutput(ioutil.Discard)
+	flagSet.SetOutput(io.Discard)
 
 	err = flagSet.Parse(test.args)
 	if test.expErr2 != nil {

@@ -515,25 +515,29 @@ func fatalIfError(err error) {
 
 // removeNon removes \nn\n from string.
 func removeNon(src string) string {
-	return strings.Replace(src, "\\nn\n", "", -1)
+	return strings.ReplaceAll(src, "\\nn\n", "")
 }
 
 func main() {
-	r, err := os.Open("values.json")
+	data, err := os.Open("values.json")
 	fatalIfError(err)
-	defer r.Close()
+
+	defer data.Close()
 
 	values := []value{}
-	err = json.NewDecoder(r).Decode(&values)
+	err = json.NewDecoder(data).Decode(&values)
 	fatalIfError(err)
 
 	valueName := func(v *value) string {
 		if v.Name != "" {
 			return strings.Title(v.Name)
 		}
+
 		return strings.Title(v.Type)
 	}
+
 	imports := []string{}
+
 	for _, value := range values {
 		imports = append(imports, value.Import...)
 	}
@@ -545,6 +549,7 @@ func main() {
 			if v.Format != "" {
 				return v.Format
 			}
+
 			return "fmt.Sprintf(\"%v\", *v.value)"
 		},
 		"ValueName": func(v *value) string {
@@ -552,10 +557,12 @@ func main() {
 				return v.Type // that's package type
 			}
 			name := valueName(v)
+
 			return camelToLower(name) + "Value"
 		},
 		"SliceValueName": func(v *value) string {
 			name := valueName(v)
+
 			return camelToLower(name) + "SliceValue"
 		},
 		"MapValueName": func(v *value, kind string) string {
@@ -584,33 +591,37 @@ func main() {
 			if v.Plural != "" {
 				return v.Plural
 			}
+
 			return valueName(v) + "Slice"
 		},
 		"Type": func(v *value) string {
 			name := valueName(v)
+
 			return camelToLower(name)
 		},
 		"InterfereType": func(v *value) string {
 			if v.Type[0:1] == "*" {
 				return v.Type[1:]
 			}
+
 			return v.Type
 		},
 		"SliceType": func(v *value) string {
 			name := valueName(v)
+
 			return camelToLower(name)
 		},
 	})
 
 	{
-		t, err := baseT.Parse(removeNon(tmpl))
+		test, err := baseT.Parse(removeNon(tmpl))
 		fatalIfError(err)
 
 		w, err := os.Create("values_generated.go")
 		fatalIfError(err)
 		defer w.Close()
 
-		err = t.Execute(w, struct {
+		err = test.Execute(w, struct {
 			Values       []value
 			Imports      []string
 			MapKeysTypes []string
@@ -625,14 +636,14 @@ func main() {
 	}
 
 	{
-		t, err := baseT.Parse(removeNon(testTmpl))
+		test, err := baseT.Parse(removeNon(testTmpl))
 		fatalIfError(err)
 
 		w, err := os.Create("values_generated_test.go")
 		fatalIfError(err)
 		defer w.Close()
 
-		err = t.Execute(w, struct {
+		err = test.Execute(w, struct {
 			Values       []value
 			Imports      []string
 			MapKeysTypes []string
@@ -669,6 +680,7 @@ func gofmt(path string) {
 func camelToLower(s string) string {
 	splitted := split(s)
 	splitted[0] = strings.ToLower(splitted[0])
+
 	return strings.Join(splitted, "")
 }
 
@@ -718,27 +730,32 @@ func split(src string) (entries []string) {
 	if !utf8.ValidString(src) {
 		return []string{src}
 	}
+
 	entries = []string{}
 	var runes [][]rune
+
 	lastClass := 0
 	class := 0
+
 	// split into fields based on class of unicode character
-	for _, r := range src {
-		switch true {
-		case unicode.IsLower(r):
+	for _, char := range src {
+		switch {
+		case unicode.IsLower(char):
 			class = 1
-		case unicode.IsUpper(r):
+		case unicode.IsUpper(char):
 			class = 2
-		case unicode.IsDigit(r):
+		case unicode.IsDigit(char):
 			class = 3
 		default:
 			class = 4
 		}
+
 		if class == lastClass {
-			runes[len(runes)-1] = append(runes[len(runes)-1], r)
+			runes[len(runes)-1] = append(runes[len(runes)-1], char)
 		} else {
-			runes = append(runes, []rune{r})
+			runes = append(runes, []rune{char})
 		}
+
 		lastClass = class
 	}
 	// handle upper case -> lower case sequences, e.g.
@@ -755,7 +772,8 @@ func split(src string) (entries []string) {
 			entries = append(entries, string(s))
 		}
 	}
-	return
+
+	return entries
 }
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -765,5 +783,6 @@ func randStr(n int) string {
 	for i := range b {
 		b[i] = letterBytes[rand.Intn(len(letterBytes))]
 	}
+
 	return string(b)
 }
