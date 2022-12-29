@@ -12,8 +12,8 @@
 
 <!-- Badges -->
 <p align="center">
-  <a href="https://github.com/reeflective/flags/actions/workflows/go.yml">
-    <img src="https://github.com/reeflective/flags/actions/workflows/go.yml/badge.svg?branch=main"
+  <a href="https://github.com/reeflective/flags/actions/workflows/makefile.yml">
+    <img src="https://github.com/reeflective/flags/actions/workflows/makefile.yml/badge.svg?branch=main"
       alt="Github Actions (workflows)" />
   </a>
 

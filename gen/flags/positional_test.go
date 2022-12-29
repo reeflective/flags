@@ -33,6 +33,7 @@ func TestAllOptional(t *testing.T) {
 	}{}
 
 	cmd := newCommandWithArgs(&opts, []string{"10", "arg_test.go", "a", "b"})
+	cmd.Args(cmd, []string{"10", "arg_test.go", "a", "b"})
 	err := cmd.Execute()
 
 	pt := assert.New(t)
@@ -59,7 +60,8 @@ func TestAllRequired(t *testing.T) {
 	}{}
 
 	cmd := newCommandWithArgs(&opts, []string{"10"})
-	err := cmd.Execute()
+	err := cmd.Args(cmd, []string{"10"})
+	// err := cmd.Execute()
 
 	pt := assert.New(t)
 	pt.ErrorContains(err, "`Filename` was not provided")
@@ -79,7 +81,8 @@ func TestRequiredRestUndefinedFail(t *testing.T) {
 	}{}
 
 	cmd := newCommandWithArgs(&opts, []string{})
-	err := cmd.Execute()
+	err := cmd.Args(cmd, []string{})
+	// err := cmd.Execute()
 
 	pt := assert.New(t)
 	pt.ErrorContains(err,
@@ -100,7 +103,8 @@ func TestRequiredRestUndefinedPass(t *testing.T) {
 	}{}
 
 	cmd := newCommandWithArgs(&opts, []string{"rest1"})
-	err := cmd.Execute()
+	err := cmd.Args(cmd, []string{"rest1"})
+	// err := cmd.Execute()
 
 	pt := assert.New(t)
 	pt.Nilf(err, "Unexpected error: %v", err)
@@ -123,7 +127,8 @@ func TestRequiredRestQuantityFail(t *testing.T) {
 	}{}
 
 	cmd := newCommandWithArgs(&opts, []string{"rest1"})
-	err := cmd.Execute()
+	err := cmd.Args(cmd, []string{"rest1"})
+	// err := cmd.Execute()
 
 	pt := assert.New(t)
 	pt.ErrorContains(err,
@@ -144,7 +149,8 @@ func TestRequiredRestQuantityPass(t *testing.T) {
 	}{}
 
 	cmd := newCommandWithArgs(&opts, []string{"rest1", "rest2", "rest3"})
-	err := cmd.Execute()
+	err := cmd.Args(cmd, []string{"rest1", "rest2", "rest3"})
+	// err := cmd.Execute()
 
 	pt := assert.New(t)
 	pt.Nilf(err, "Unexpected error: %v", err)
@@ -168,7 +174,8 @@ func TestRequiredRestRangeFail(t *testing.T) {
 	}{}
 
 	cmd := newCommandWithArgs(&opts, []string{"rest1", "rest2", "rest3"})
-	err := cmd.Execute()
+	err := cmd.Args(cmd, []string{"rest1", "rest2", "rest3"})
+	// err := cmd.Execute()
 
 	pt := assert.New(t)
 	pt.ErrorContains(err,
@@ -194,7 +201,8 @@ func TestRequiredRestRangeEmptyFail(t *testing.T) {
 	}{}
 
 	cmd := newCommandWithArgs(&opts, []string{"some", "thing"})
-	err := cmd.Execute()
+	err := cmd.Args(cmd, []string{"some", "thing"})
+	// err := cmd.Execute()
 
 	pt := assert.New(t)
 	pt.ErrorContains(err, "`Rest (zero arguments)` was not provided")
@@ -222,7 +230,8 @@ func TestOptionalNonRestRangeMinimumPass(t *testing.T) {
 	}{}
 
 	cmd := newCommandWithArgs(&opts, []string{"second", "third"})
-	err := cmd.Execute()
+	err := cmd.Args(cmd, []string{"second", "third"})
+	// err := cmd.Execute()
 
 	pt := assert.New(t)
 	pt.Nilf(err, "Unexpected error: %v", err)
@@ -252,7 +261,8 @@ func TestRequiredNonRestRangeExcessPass(t *testing.T) {
 
 	args := []string{"nonrest1", "nonrest2", "second", "third", "lambda"}
 	cmd := newCommandWithArgs(&opts, args)
-	err := cmd.Execute()
+	err := cmd.Args(cmd, args)
+	// err := cmd.Execute()
 
 	pt := assert.New(t)
 	pt.Nilf(err, "Unexpected error: %v", err)
@@ -280,7 +290,8 @@ func TestRequiredNonRestRangeFail(t *testing.T) {
 
 	args := []string{"nonrest1", "nonrest2", "second"}
 	cmd := newCommandWithArgs(&opts, args)
-	err := cmd.Execute()
+	err := cmd.Args(cmd, args)
+	// err := cmd.Execute()
 
 	pt := assert.New(t)
 	pt.ErrorContains(err, "`Third` was not provided")
@@ -305,7 +316,8 @@ func TestMixedSlicesMaxIsMinDefault(t *testing.T) {
 
 	args := []string{"first1", "first2", "second1", "second2", "third"}
 	cmd := newCommandWithArgs(&opts, args)
-	err := cmd.Execute()
+	err := cmd.Args(cmd, args)
+	// err := cmd.Execute()
 
 	pt := assert.New(t)
 	pt.Nilf(err, "Unexpected error: %v", err)
@@ -333,7 +345,8 @@ func TestMixedSlicesMinimumNonRestPass(t *testing.T) {
 
 	args := []string{"first1", "first2", "second1", "third"}
 	cmd := newCommandWithArgs(&opts, args)
-	err := cmd.Execute()
+	err := cmd.Args(cmd, args)
+	// err := cmd.Execute()
 
 	pt := assert.New(t)
 	pt.Nilf(err, "Unexpected error: %v", err)
@@ -361,7 +374,8 @@ func TestMixedSlicesMinimumNonRestFail(t *testing.T) {
 
 	args := []string{"first1", "first2", "second1"}
 	cmd := newCommandWithArgs(&opts, args)
-	err := cmd.Execute()
+	err := cmd.Args(cmd, args)
+	// err := cmd.Execute()
 
 	pt := assert.New(t)
 	pt.ErrorContains(err, "`Third` was not provided")
@@ -393,7 +407,8 @@ func TestMixedSlicesLastHasPriority(t *testing.T) {
 
 	args := []string{"first1", "first2", "second1", "third1", "third2", "single"}
 	cmd := newCommandWithArgs(&opts, args)
-	err := cmd.Execute()
+	err := cmd.Args(cmd, args)
+	// err := cmd.Execute()
 
 	pt := assert.New(t)
 	pt.Nilf(err, "Unexpected error: %v", err)
