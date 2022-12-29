@@ -315,6 +315,7 @@ import (
 {{range .Values}}
 
 func Test{{.|Name}}Value_Zero(t *testing.T) {
+    t.Parallel()
 	nilValue := new({{.|ValueName}})
 	assert.Equal(t, "", nilValue.String())
 	assert.Nil(t, nilValue.Get())
@@ -326,8 +327,10 @@ func Test{{.|Name}}Value_Zero(t *testing.T) {
 
 {{ if .Tests }}{{ $value := . }}
 func Test{{.|Name}}Value(t *testing.T) {
+    t.Parallel()
 	{{range .Tests}}\nn
 		t.Run("{{.}}", func(t *testing.T){
+        t.Parallel()
 		{{ if ne ($value|InterfereType) ($value.Type) }}\nn
 		a := new({{$value|InterfereType}})
 		v := new{{$value|Name}}Value(&a)
@@ -357,6 +360,7 @@ func Test{{.|Name}}Value(t *testing.T) {
 
 {{ if not .NoSlice }}
 func Test{{.|Name}}SliceValue_Zero(t *testing.T) {
+    t.Parallel()
 	nilValue := new({{.|SliceValueName}})
 	assert.Equal(t, "[]", nilValue.String())
 	assert.Nil(t, nilValue.Get())
@@ -370,6 +374,7 @@ func Test{{.|Name}}SliceValue_Zero(t *testing.T) {
 {{ $value := . }}
 {{range $mapKeyTypes}}
 func Test{{MapValueName $value . | Title}}_Zero(t *testing.T) {
+    t.Parallel()
 	var nilValue {{MapValueName $value .}}
 	assert.Equal(t, "", nilValue.String())
 	assert.Nil(t, nilValue.Get())
@@ -383,8 +388,10 @@ func Test{{MapValueName $value . | Title}}_Zero(t *testing.T) {
 
 {{ if .SliceTests }}{{ $value := . }}
 func Test{{.|Name}}SliceValue(t *testing.T) {
+    t.Parallel()
 	{{range .SliceTests}}{{ $test := . }}\nn
 	t.Run("{{.}}", func(t *testing.T){
+        t.Parallel()
 		var err error
 		a := new([]{{$value.Type}})
 		v := new{{$value|Name}}SliceValue(a)
@@ -409,8 +416,10 @@ func Test{{.|Name}}SliceValue(t *testing.T) {
 {{ $value := . }}
 {{range $mapKeyTypes}}{{ $keyType := . }}
 func Test{{MapValueName $value $keyType | Title}}(t *testing.T) {
+    t.Parallel()
 	{{range $value.MapTests}}{{ $test := . }}\nn
 	t.Run("{{.}}", func(t *testing.T) {
+        t.Parallel()
 		var err error
 		a := make(map[{{$keyType}}]{{$value.Type}})
 		v := new{{MapValueName $value $keyType | Title}}(&a)
@@ -446,6 +455,7 @@ func Test{{MapValueName $value $keyType | Title}}(t *testing.T) {
 {{end}}
 
 func TestParseGeneratedMap_NilDefault(t *testing.T) {
+    t.Parallel()
 	a := new(bool)
 	v := parseGeneratedMap(a)
 	assert.Nil(t, v)
@@ -550,7 +560,7 @@ func main() {
 				return v.Format
 			}
 
-			return "fmt.Sprintf(\"%v\", *v.value)"
+			return `fmt.Sprintf("%v", *v.value)`
 		},
 		"ValueName": func(v *value) string {
 			if v.Name == v.Type {
