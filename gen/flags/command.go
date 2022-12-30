@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"strings"
 
 	"github.com/reeflective/flags"
 	"github.com/reeflective/flags/internal/scan"
@@ -74,9 +75,7 @@ func generate(cmd *cobra.Command, data interface{}, opts ...flags.OptFunc) {
 
 	// Subcommands, optional or not
 	if cmd.HasSubCommands() {
-		cmd.RunE = func(cmd *cobra.Command, args []string) error {
-			return nil
-		}
+		cmd.RunE = unknownSubcommandAction
 	} else if _, isCmd, impl := flags.IsCommand(reflect.ValueOf(data)); isCmd {
 		setRuns(cmd, impl)
 	}
@@ -242,4 +241,19 @@ func setGroup(parent, subc *cobra.Command, parentGroup *cobra.Group, tagged stri
 	if group != nil {
 		subc.GroupID = group.ID
 	}
+}
+
+func unknownSubcommandAction(cmd *cobra.Command, args []string) error {
+	if len(args) == 0 {
+		return cmd.Help()
+	}
+	err := fmt.Sprintf("unknown subcommand %q for %q", args[0], cmd.Name())
+	if suggestions := cmd.SuggestionsFor(args[0]); len(suggestions) > 0 {
+		err += "\n\nDid you mean this?\n"
+		for _, s := range suggestions {
+			err += fmt.Sprintf("\t%v\n", s)
+		}
+		err = strings.TrimSuffix(err, "\n")
+	}
+	return fmt.Errorf(err)
 }
