@@ -24,7 +24,7 @@ jobs:
 
     # Generate/check/format code
     - name: Generate and check
-      run: make prepare
+      run: go generate
     
     - name: Build
       run: go build -v ./...
