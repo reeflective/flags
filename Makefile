@@ -60,10 +60,11 @@ generate:
 	@echo "$(OK_COLOR)Go generate$(NO_COLOR)"
 	@go generate
 
-tools:
-	@echo "$(OK_COLOR)Install tools$(NO_COLOR)"
-	go get -u github.com/warmans/golocc
-	go get -u github.com/divan/depscheck
-	GO111MODULE=off go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
-	cd ${GOPATH}/src/github.com/golangci/golangci-lint/cmd/golangci-lint \
-   && go install -ldflags "-X 'main.version=$(git describe --tags)' -X 'main.commit=$(git rev-parse --short HEAD)' -X 'main.date=$(date)'"
+# Tools don't install some stuff. Dependency checks are done with other workflows.
+# tools:
+# 	@echo "$(OK_COLOR)Install tools$(NO_COLOR)"
+# 	go get -u github.com/warmans/golocc
+# 	go get -u github.com/divan/depscheck
+# 	GO111MODULE=off go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
+# 	cd ${GOPATH}/src/github.com/golangci/golangci-lint/cmd/golangci-lint \
+#    && go install -ldflags "-X 'main.version=$(git describe --tags)' -X 'main.commit=$(git rev-parse --short HEAD)' -X 'main.date=$(date)'"
