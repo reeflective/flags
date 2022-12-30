@@ -31,8 +31,9 @@ func WithReset() func() {
 // - A struct containing substructs for postional parameters, and other with options.
 func Generate(data interface{}, opts ...flags.OptFunc) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:         os.Args[0],
-		Annotations: map[string]string{},
+		Use:              os.Args[0],
+		Annotations:      map[string]string{},
+		TraverseChildren: true,
 	}
 
 	// Scan the struct and bind all commands to this root.

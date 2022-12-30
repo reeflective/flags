@@ -141,7 +141,7 @@ func TestCommandFlagOrderFail(t *testing.T) {
 	pt := assert.New(t)
 	pt.NotNil(cmd)
 	pt.NotNil(err, "Command should have raised an unknown flag error")
-	pt.ErrorContains(err, "unknown shorthand flag: 'g' in -g")
+	pt.ErrorContains(err, "unknown shorthand flag: \"g\" in -g")
 }
 
 // TestCommandFlagOrder checks that flags bound to some commands
@@ -210,8 +210,7 @@ func TestCommandFlagPersistentFail(t *testing.T) {
 	pt := assert.New(t)
 	pt.NotNil(cmd)
 	pt.NotNil(err, "Command should have raised an unknown flag error")
-	pt.ErrorContains(err, "unknown shorthand flag: 'p' in -p")
-	// We didn't successfully traversed to cmd, since we have an error
+	pt.ErrorContains(err, "unknown shorthand flag: \"p\" in -p")
 	pt.Equal(cmd.Name(), root.Name())
 }
 
