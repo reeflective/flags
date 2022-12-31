@@ -39,6 +39,9 @@
 //
 //
 // B) Flags ----------------------------------------------------------------------
+//
+// a) github.com/jessevdk/go-flags tag specifications (some have been removed):
+//
 // flag:             Short and/or long names for the flag, space-separated.
 //                   (ex: `flag:"-v --verbose`).
 // short:            The short name of the option (single character)
@@ -71,14 +74,20 @@
 // env-delim:        The 'env' default value from environment is split into
 //                   multiple values with the given delimiter string, use with
 //                   slices and maps (optional)
-// value-name:       The name of the argument value (to be shown in the help)
-//                   (optional)
 // choice:           Limits the values for an option to a set of values.
 //                   You can either specify multiple values in a single tag
 //                   if they are space-separated, and/or with multiple tags.
 //                   (e.g. `long:"animal" choice:"cat bird" choice:"dog"`)
 // hidden:           If non-empty, the option is not visible in the help or man page.
 //
+// b) github.com/octago/sflags tag specification:
+//
+// `flag:"-"`           Field is ignored by this package.
+// `flag:"myName"`      Field appears in flags as "myName".
+// `flag:"~myName"`     If this field is from nested struct, prefix from parent struct will be ingored.
+// `flag:"myName a"`    You can set short name for flags by providing it's value after a space.
+// `flag:",hidden"`     This field will be removed from generated help text.
+// `flag:",deprecated"` This field will be marked as deprecated in generated help text
 //
 // C) Positionals ----------------------------------------------------------------
 //
