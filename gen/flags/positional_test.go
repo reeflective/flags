@@ -1,6 +1,7 @@
 package flags
 
 import (
+	"errors"
 	"strings"
 	"testing"
 
@@ -424,6 +425,69 @@ func TestMixedSlicesLastHasPriority(t *testing.T) {
 // TODO: write test and code for it, still missing.
 func TestTwoInfiniteSlicesExplicitFail(t *testing.T) {
 	t.Parallel()
+}
+
+//
+// Double dash positionals (more complex cases) --------------------------------------- //
+//
+
+type doubleDashCommand struct {
+	Value bool `short:"v"`
+
+	Positional struct {
+		FirstList  []string `required:"2-3"`
+		SecondList []string `required:"1-2"`
+		Third      string
+	} `positional-args:"yes" required:"yes"`
+}
+
+// Execute - The double dash command errors out when it does
+// not receive some unparsed positional arguments.
+func (d *doubleDashCommand) Execute(args []string) error {
+	if len(args) == 0 {
+		return errors.New("Did not receive retargs")
+	}
+
+	return nil
+}
+
+// TestPositionalDoubleDashSuccess checks that a command being fed the correct
+// number of required arguments will correctly parse them into their slots, and
+// that all remaining arguments after the double dash will be used as retargs.
+func TestPositionalDoubleDashSuccess(t *testing.T) {
+	t.Parallel()
+
+	opts := struct {
+		Double doubleDashCommand `command:"double-dash"`
+	}{}
+
+	args := []string{"double-dash", "first1", "first2", "second1", "third1", "--", "third2", "single"}
+	cmd := newCommandWithArgs(&opts, args)
+	_, err := cmd.ExecuteC()
+
+	pt := assert.New(t)
+	pt.Equal([]string{"first1", "first2"}, opts.Double.Positional.FirstList)
+	pt.Equal([]string{"second1"}, opts.Double.Positional.SecondList)
+	pt.Equal("third1", opts.Double.Positional.Third)
+	pt.Nilf(err, "The command returned a retargs error: %v", err)
+}
+
+// TestPositionalDoubleDashFail checks that a command being fed a sufficient
+// number of positional arguments but with the double dash positioned such
+// that required slots cannot be fulfilled, will indeed fail.
+func TestPositionalDoubleDashFail(t *testing.T) {
+	t.Parallel()
+
+	opts := struct {
+		Double doubleDashCommand `command:"double-dash"`
+	}{}
+
+	args := []string{"double-dash", "first1", "first2", "--", "second1", "third1", "third2", "single"}
+	cmd := newCommandWithArgs(&opts, args)
+	_, err := cmd.ExecuteC()
+
+	pt := assert.New(t)
+	pt.ErrorContains(err, "`SecondList (at least 1 argument)` and `Third` were not provided")
 }
 
 //
