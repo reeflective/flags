@@ -85,7 +85,7 @@ func getCompleters(args *positional.Args, comps *comp.Carapace) *compCache {
 // argument, so that it can consume one/more of the positional words and add
 // completions to the cache if needed.
 func consumeWith(comps *compCache) positional.WordConsumer {
-	handler := func(args *positional.Args, arg *positional.Arg) error {
+	handler := func(args *positional.Args, arg *positional.Arg, _ int) error {
 		// First, pop all the words we KNOW we're not
 		// interested in, which is the number of minimum
 		// required words BEFORE us.

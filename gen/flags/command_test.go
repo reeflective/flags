@@ -28,7 +28,6 @@ import (
 // implements flags.Commander anyway, since we can make use of it
 // or not at will.
 type root struct {
-	// Fist examples
 	V bool `short:"v"`
 
 	// Subcommands
@@ -265,6 +264,18 @@ func TestCommandFlagOverrideChild(t *testing.T) {
 // Command Execution & Runners ----------------------------------------------------- //
 //
 
+type optionalCommandsRoot struct {
+	C1 struct {
+		SC1 testCommand `command:"sc1"`
+		SC2 testCommand `command:"sc2"`
+	} `command:"c1" subcommands-optional:"yes"`
+
+	C2 struct {
+		SC1 testCommand `command:"sc1"`
+		SC2 testCommand `command:"sc2"`
+	} `command:"c2"`
+}
+
 // TestCommandAdd checks that a command type is correctly scanned and translated
 // into a cobra command. We don't need to test for this recursively, since we let
 // cobra itself deal with how it would "merge" them when .AddCommand().
@@ -297,14 +308,45 @@ func TestCommandAdd(t *testing.T) {
 	test.True(rootData.C1.G)
 }
 
-// TestSubcommandsOptional checks that commands that are marked optional will
-// behave accordingly.
+// TestSubcommandsOptional checks that commands that are marked optional
+// will not throw an error if not being provided a subcommand invocation.
 func TestSubcommandsOptional(t *testing.T) {
-	t.Log("TODO: TestSubcommandsOptional not written")
+	t.Parallel()
+
+	rootData := optionalCommandsRoot{}
+	root := newCommandWithArgs(&rootData, []string{"c1"})
+
+	test := assert.New(t)
+	test.NotNil(root.RunE)
+
+	err := root.Execute()
+	test.Nil(err)
+}
+
+// TestSubcommandsRequiredUsage checks that a command having required
+// subcommands (hence not being marked "subcommands-optional"), will
+/// return the correct errors (or no errors), depending on the words.
+func TestSubcommandsRequiredUsage(t *testing.T) {
+	t.Parallel()
+
+	rootData := optionalCommandsRoot{}
+	root := newCommandWithArgs(&rootData, []string{"c2"})
+
+	test := assert.New(t)
+	test.NotNil(root.RunE)
+
+	// No error since help usage printed does not return an error.
+	err := root.Execute()
+	test.Nil(err)
+
+	// And error since invoked command does not exist
+	root.SetArgs([]string{"c2", "invalid"})
+	err = root.Execute()
+	test.NotNil(err)
 }
 
 // TestCommandPassAfterNonOptionWithPositional checks that commands that are marked
 // pass after non-option, will correctly behave when being submitted a line.
 func TestCommandPassAfterNonOptionWithPositional(t *testing.T) {
-	t.Log("TODO: TestCommandPassAfterNonOptionWithPositional not written")
+	t.Log("TODO: TestCommandPassAfterNonOptionWithPositional not written: must implement the functionality also.")
 }
