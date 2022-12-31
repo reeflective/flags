@@ -36,6 +36,10 @@ func (c *MultipleListsArgs) Execute(args []string) error {
 	fmt.Printf("Vuln (IP):        %v\n", c.Args.Vuln)
 	fmt.Printf("Other ([]Host):   %v\n", c.Args.Other)
 
+	if len(args) > 0 {
+		fmt.Printf("Remaining args: %v\n", args)
+	}
+
 	return nil
 }
 
@@ -82,6 +86,10 @@ func (c *MultipleMinMaxArgs) Execute(args []string) error {
 	fmt.Printf("Hosts ([]Host):      %v\n", c.Args.Hosts)
 	fmt.Printf("Proxies ([]Proxy):   %v\n", c.Args.Proxies)
 	fmt.Printf("Addresses (IP):      %v\n", c.Args.Addresses)
+
+	if len(args) > 0 {
+		fmt.Printf("Remaining args: %v\n", args)
+	}
 
 	return nil
 }
