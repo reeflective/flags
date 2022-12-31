@@ -79,9 +79,6 @@
 //                   (e.g. `long:"animal" choice:"cat bird" choice:"dog"`)
 // hidden:           If non-empty, the option is not visible in the help or man page.
 //
-// base: a base (radix) used to convert strings to integer values, the
-//       default base is 10 (i.e. decimal) (optional)
-//
 //
 // C) Positionals ----------------------------------------------------------------
 //
@@ -155,6 +152,8 @@
 //                gets prepended to every option's env key and
 //                subgroup's env-namespace of this group, separated by
 //                the parser's env-namespace delimiter (optional) (flags only)
+// persistent:    If non-empty, all flags belonging to this group will be
+//                persistent across subcommands.
 //
 //
 // D) Completions (flags or positionals) -------------------------------------------

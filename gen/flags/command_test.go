@@ -145,9 +145,6 @@ func TestCommandFlagOrderFail(t *testing.T) {
 
 // TestCommandFlagOrder checks that flags bound to some commands
 // along with specific tags will correctly parse a command line.
-//
-// TODO: Here this is a problem, since we don't automatically set flags
-// to be persistent in the commands. Should we do that to keep compat ?
 func TestCommandFlagOrderSuccess(t *testing.T) {
 	t.Parallel()
 
