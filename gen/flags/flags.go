@@ -37,6 +37,7 @@
 // group:                If the group name is not nil, this command will be
 //                       grouped under this heading in the help usage.
 //
+//
 // B) Flags ----------------------------------------------------------------------
 // flag:             Short and/or long names for the flag, space-separated.
 //                   (ex: `flag:"-v --verbose`).
@@ -80,6 +81,7 @@
 //
 // base: a base (radix) used to convert strings to integer values, the
 //       default base is 10 (i.e. decimal) (optional)
+//
 //
 // C) Positionals ----------------------------------------------------------------
 //
@@ -154,6 +156,7 @@
 //                subgroup's env-namespace of this group, separated by
 //                the parser's env-namespace delimiter (optional) (flags only)
 //
+//
 // D) Completions (flags or positionals) -------------------------------------------
 //
 // a) Tagged completions
@@ -189,5 +192,21 @@
 // a []YourType, where `YourType` individually implements the completer, flags will
 // wrap it into a compliant list completer. As well, if it detects the list/map itself
 // declares the completer, it will use it as is.
+//
+//
+// E) Validations ------------------------------------------------------------------
+//
+// All positionals and flags struct fields can also declare validations compliant with
+// "github.com/go-playground/validator/v10" tag specifications, and provided that the
+// following parsing option is given to the `Generate()` call:
+//
+// flags.Validator(validator.New())
+//
+// The tag should be named `validate`. Examples:
+// EmailField `flag:"-e --email" validate:"ipv4"`   // A command flag field
+// Interfaces `required:"1" validate:"email"`       // A positional field
+//
+// Check the documentation for adding other custom validations directly through the
+// go-validator engine.
 //
 package flags
