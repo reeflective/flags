@@ -15,7 +15,7 @@ func TestCompletions(t *testing.T) {
 	argsCmd := struct {
 		Args struct {
 			Files      []string `description:"A list of hosts with minimum and maximum requirements" complete:"Files"`
-			JsonConfig string   `description:"A single, required remaining argument" required:"1" complete:"FilterExt,json`
+			JsonConfig string   `description:"A single, required remaining argument" required:"1" complete:"FilterExt,json"`
 		} `positional-args:"yes" required:"yes"`
 	}{}
 

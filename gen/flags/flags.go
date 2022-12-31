@@ -155,4 +155,39 @@
 //                the parser's env-namespace delimiter (optional) (flags only)
 //
 // D) Completions (flags or positionals) -------------------------------------------
+//
+// a) Tagged completions
+//
+// complete: This is the only tag required to provide completions for a given positional
+//           argument or flag struct field. The following directives and formattings are
+//           are accepted (all directives can also be written as lowercase):
+//
+// `FilterExt` only complete files that are part of the given extensions.
+// ex: `complete:"FilterExt,json,go,yaml"` will only propose JSON/Go/YAML files.
+//
+// `FilterDirs` only complete files within a given set of directories.
+// ex: `complete:"FilterDirs,/home/user,/usr"` will complete from those root directories.
+//
+// `Files` completes all files found in the current filesystem context.
+// ex: `complete:"Files"`
+//
+// `Dirs` completes all directories in the current filesystem context.
+// ex: `complete:"dirs"` (lowercase is still valid)
+//
+// b) Additional completions
+//
+// Completers can also be implement by positional/flags field types, with:
+// `func (m *myType) Complete(ctx carapace.Context) carapace.ActionCallback`
+//
+// The `ctx` argument can be altogether ignored for most completions: it
+// provides low-level access to the completion context for those who need,
+// but the engine itself is already very performant at handling prefixing/formatting.
+// Please check the carapace documentation for writing completers.
+//
+// Also, note that the flags library is quite efficient at identifying the kind of
+// the positional/flag field (whether it's a map/slice or not), and if it detects
+// a []YourType, where `YourType` individually implements the completer, flags will
+// wrap it into a compliant list completer. As well, if it detects the list/map itself
+// declares the completer, it will use it as is.
+//
 package flags

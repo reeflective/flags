@@ -63,23 +63,23 @@ func getCompletionAction(name, value, desc string) comp.Action {
 
 	var ctx comp.Context
 
-	switch name {
-	case "NoSpace":
+	switch strings.ToLower(name) {
+	case "nospace":
 		return action.NoSpace()
-	case "NoFiles":
-	case "FilterExt":
+	case "nofiles":
+	case "filterext":
 		filterExts := strings.Split(value, ",")
 		action = comp.ActionFiles(filterExts...).Invoke(ctx).ToA()
-	case "FilterDirs":
+	case "filterdirs":
 		action = comp.ActionDirectories() // TODO change this
-	case "Files":
+	case "files":
 		files := strings.Split(value, ",")
 		action = comp.ActionFiles(files...)
-	case "Dirs":
+	case "dirs":
 		action = comp.ActionDirectories()
 
 	// Should normally not be used often
-	case "Default":
+	case "default":
 		return action
 	}
 
