@@ -74,6 +74,7 @@ func flagsGroup(cmd *cobra.Command, val reflect.Value, field *reflect.StructFiel
 		if !isStringFalsy(commandGroup) {
 			group = &cobra.Group{
 				Title: commandGroup,
+				ID:    commandGroup,
 			}
 			cmd.AddGroup(group)
 		}

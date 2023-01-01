@@ -96,11 +96,6 @@ func scanRoot(cmd *cobra.Command, group *cobra.Group, opts []flags.OptFunc) scan
 			return true, fmt.Errorf("%w: %s", tag.ErrTag, err.Error())
 		}
 
-		// First, having a tag means this field should have our attention for
-		// something, whether it be an option, a positional, something to include
-		// as a module option, and so on. If we have to run some handlers no matter
-		// what the outcome is, we defer them first.
-
 		// If the field is marked as -one or more- positional arguments, we
 		// return either on a successful scan of them, or with an error doing so.
 		if found, err := positionals(cmd, mtag, val, opts); found || err != nil {

@@ -148,11 +148,10 @@
 // D) Groups (of flags or commands) ----------------------------------------------
 //
 // group:         When specified on a struct field, makes the struct
-//                field a separate group with the given name (optional).
-//                If the struct contains commands, the group name is used
-//                to group commands together in the help usage.
-//                If the struct only contains options, the options are
-//                parsed into a pflag.Flagset.
+//                field a separate flags group with the given name (optional).
+// commands:      When specified on a struct field containing commands,
+//                the value of the tag is used as a name to group commands
+//                together in the help usage.
 // namespace:     When specified on a group struct field, the namespace
 //                gets prepended to every option's long name and
 //                subgroup's namespace of this group, separated by
