@@ -8,10 +8,6 @@ import (
 	"github.com/reeflective/flags/validator"
 )
 
-const (
-	shortUsage = "A CLI application showing various ways to declare positional/flags/commands with structs and fields."
-)
-
 func main() {
 	// Our root command structure encapsulates
 	// the entire command tree for our application.
@@ -38,7 +34,12 @@ func main() {
 	// There is virtually no restriction to the modifications one
 	// can do on them, except that their RunE() is already bound.
 	rootCmd.SilenceUsage = true
-	rootCmd.Short = shortUsage
+	rootCmd.Short = commands.ShortUsage
+	rootCmd.Long = commands.ShortUsage + "\n" + commands.LongUsage
+
+	// We might also have longer help strings contained in our
+	// various commands' packages, which we also bind now.
+	commands.AddCommandsLongHelp(rootCmd)
 
 	// The completion generator is another example of specialized
 	// scan handler: it will generate completers if it finds tags

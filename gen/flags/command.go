@@ -75,10 +75,7 @@ func generate(cmd *cobra.Command, data interface{}, opts ...flags.OptFunc) {
 
 	// Subcommands, optional or not
 	if cmd.HasSubCommands() {
-		cmd.RunE = func(cmd *cobra.Command, args []string) error {
-			return nil
-		}
-		// cmd.RunE = unknownSubcommandAction
+		cmd.RunE = unknownSubcommandAction
 	} else if _, isCmd, impl := flags.IsCommand(reflect.ValueOf(data)); isCmd {
 		setRuns(cmd, impl)
 	}

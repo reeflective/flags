@@ -5,8 +5,8 @@
   </a>
   <br> <h1> Flags </h1>
 
-  <p>  Generate cobra commands from structs. </p>
-  <p>  Retro-compatible with go-flags, advanced related CLI functionality, for free. </p>
+  <p>  Generate cobra commands from structs </p>
+  <p>  Mostly retro-compatible with go-flags, advanced related CLI functionality, for free. </p>
 </div>
 
 
