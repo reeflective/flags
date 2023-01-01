@@ -6,7 +6,8 @@
   <br> <h1> Flags </h1>
 
   <p>  Generate cobra commands from structs </p>
-  <p>  Mostly retro-compatible with go-flags, advanced related CLI functionality, for free. </p>
+  <p>  jessevdk/go-flags and octago/sflags compliant tags. </p>
+  <p>  Enhanced with advanced related CLI functionality, at minimum cost. </p>
 </div>
 
 
@@ -75,12 +76,33 @@ functionality (completions and validations), and then generates powerful and rea
 
 ## Documentation
 
+- A good way to introduce you to this library is to [install and use the example application binary](https://github.com/reeflective/flags/tree/main/example).
+  This example application will give you a taste of the behavior and supported features.
+- The generation package [flags](https://github.com/reeflective/flags/gen/flags) has a godoc file comprising all the valid tags for each component 
+  (commands/groups/flags/positionals), along with some notes and advices. This is so that you can
+  quickly get access to those from your editor when writing commands and functionality.
+- Along with the above, the following is the table of contents of the [wiki documentation](https://github.com/reeflective/flags/wiki):
+
+### Development
+* [Introduction and principles](https://github.com/reeflective/flags/wiki/Introduction)
+* [Declaring and using commands](https://github.com/reeflective/flags/wiki/Commands)
+* [Flags](https://github.com/reeflective/flags/wiki/Flags)
+* [Positional arguments](https://github.com/reeflective/flags/wiki/Positionals)
+* [Completions](https://github.com/reeflective/flags/wiki/Completions)
+* [Validations](https://github.com/reeflective/flags/wiki/Validations)
+* [Side features](https://github.com/reeflective/flags/wiki/Side-Features)
+
+### Coming from other libraries
+* [Changes from octago/sflags](https://github.com/reeflective/flags/wiki/Sflags)
+* [Changes from jessevdk/go-flags](https://github.com/reeflective/flags/wiki/Go-Flags)
+
 
 ## Credits
 
 - This library is _heavily_ based on [octago/sflags](https://github.com/octago/sflags) code (it is actually forked from it since most of its code was needed).
-  The flags generation is almost entirely his, and this library would not be as nearly as powerful without it. It is also
-  the inspiration for the trajectory this project has taken, which originally would just enhance go-flags.
+  The flags generation is almost entirely his, and this library would not be as nearly as powerful without it. He should also
+  be credited for 99% of this library's 99% coverage rate. It is also the inspiration for the trajectory this project has taken, 
+  which originally would just enhance go-flags.
 - The [go-flags](https://github.com/jessevdk/go-flags) is probably the most widely used reflection-based CLI library. While it will be hard to find a lot of 
   similarities with this project's codebase, the internal logic for scanning arbitrary structures draws almost all of its
   inspiration out of this project.
