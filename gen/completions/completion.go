@@ -2,6 +2,7 @@ package completions
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"strings"
 
@@ -69,14 +70,14 @@ func getCompletionAction(name, value, desc string) comp.Action {
 	case "nofiles":
 	case "filterext":
 		filterExts := strings.Split(value, ",")
-		action = comp.ActionFiles(filterExts...).Invoke(ctx).ToA()
+		action = comp.ActionFiles(filterExts...).Tag("filtered files").Invoke(ctx).ToA()
 	case "filterdirs":
-		action = comp.ActionDirectories() // TODO change this
+		action = comp.ActionDirectories().Tag("filtered directories") // TODO change this
 	case "files":
 		files := strings.Split(value, ",")
-		action = comp.ActionFiles(files...)
+		action = comp.ActionFiles(files...).Tag("files")
 	case "dirs":
-		action = comp.ActionDirectories()
+		action = comp.ActionDirectories().Tag("directories")
 
 	// Should normally not be used often
 	case "default":
@@ -178,6 +179,25 @@ func taggedCompletions(tag tag.MultiTag) (comp.CompletionCallback, bool) {
 	// To be called when completion is needed, merging everything.
 	callback := func(ctx comp.Context) comp.Action {
 		return comp.Batch(actions...).ToA()
+	}
+
+	return callback, true
+}
+
+func hintCompletions(tag tag.MultiTag) (comp.CompletionCallback, bool) {
+	description, _ := tag.Get("description")
+	desc, _ := tag.Get("desc")
+
+	if description == "" {
+		description = desc
+	}
+
+	if description == "" {
+		return nil, false
+	}
+
+	callback := func(comp.Context) comp.Action {
+		return comp.Action{}.Usage(desc)
 	}
 
 	return callback, true

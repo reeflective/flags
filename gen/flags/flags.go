@@ -89,6 +89,7 @@
 // `flag:",hidden"`     This field will be removed from generated help text.
 // `flag:",deprecated"` This field will be marked as deprecated in generated help text
 //
+//
 // C) Positionals ----------------------------------------------------------------
 //
 // The following tags can/must be specified on the struct containing positional args:
@@ -199,6 +200,8 @@
 // a []YourType, where `YourType` individually implements the completer, flags will
 // wrap it into a compliant list completer. As well, if it detects the list/map itself
 // declares the completer, it will use it as is.
+//
+// Please check https://rsteube.github.io/carapace/carapace.html for library usage information.
 //
 //
 // E) Validations ------------------------------------------------------------------

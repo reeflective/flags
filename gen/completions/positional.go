@@ -66,6 +66,12 @@ func getCompleters(args *positional.Args, comps *comp.Carapace) *compCache {
 	cache := newCompletionCache()
 
 	for _, arg := range args.Positionals() {
+		// By default, use the argument description as hint, in case there is
+		// no completion directive or implementation.
+		if completer, _ := hintCompletions(arg.Tag); completer != nil {
+			cache.add(arg.Index, completer)
+		}
+
 		// Make parser function, get completer implementations, how many arguments, etc.
 		if completer, _, _ := typeCompleter(arg.Value); completer != nil {
 			cache.add(arg.Index, completer)
