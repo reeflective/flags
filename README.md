@@ -44,6 +44,7 @@
   </a>
 </p>
 
+
 ## Summary
 
 The flags library allows to declare cobra CLI commands, flags and positional arguments from structs and field tags.
@@ -55,6 +56,7 @@ the commands, flags and positional arguments.
 In short, the main purpose of this library is to let users focus on writing programs. It requires very little 
 time and focus spent on declaring CLI interface specs (commands, flags, groups of flags/commands) and associated 
 functionality (completions and validations), and then generates powerful and ready to use CLI programs.
+
 
 ## Features 
 
@@ -81,13 +83,15 @@ functionality (completions and validations), and then generates powerful and rea
 - The generation package [flags](https://github.com/reeflective/flags/tree/main/gen/flags) has a [godoc file](https://github.com/reeflective/flags/tree/main/gen/flags/flags.go) comprising all the valid tags for each component 
   (commands/groups/flags/positionals), along with some notes and advices. This is so that you can
   quickly get access to those from your editor when writing commands and functionality.
+- Global parsing options (for global behavior, validators, etc) also have a different godoc file
+  in the root package of this library, [here](https://github.com/reeflective/flags/flags.go)
 - Along with the above, the following is the table of contents of the [wiki documentation](https://github.com/reeflective/flags/wiki):
 
 ### Development
 * [Introduction and principles](https://github.com/reeflective/flags/wiki/Introduction)
 * [Declaring and using commands](https://github.com/reeflective/flags/wiki/Commands)
-* [Flags](https://github.com/reeflective/flags/wiki/Flags)
 * [Positional arguments](https://github.com/reeflective/flags/wiki/Positionals)
+* [Flags](https://github.com/reeflective/flags/wiki/Flags)
 * [Completions](https://github.com/reeflective/flags/wiki/Completions)
 * [Validations](https://github.com/reeflective/flags/wiki/Validations)
 * [Side features](https://github.com/reeflective/flags/wiki/Side-Features)
@@ -95,6 +99,20 @@ functionality (completions and validations), and then generates powerful and rea
 ### Coming from other libraries
 * [Changes from octago/sflags](https://github.com/reeflective/flags/wiki/Sflags)
 * [Changes from jessevdk/go-flags](https://github.com/reeflective/flags/wiki/Go-Flags)
+
+
+## Status
+
+This library is currently in a pre-release candidate state, for several reasons:
+- It has not been widely tested, and some features/enhancements remain to be done.
+- There might be bugs, or behavior inconsistencies that I might have missed.
+- The codebase is not huge, but significant nonetheless. I aimed to write it 
+  as structured and cleanly as possible.
+
+Please open a PR if you wish to bring enhancements to it. For newer features, please
+consider if there is a large number of people who might benefit from it, or if it has
+a chance of impairing on future development. If everything is fine, please propose !
+Other contributions, as well as bug fixes and reviews are also welcome.
 
 
 ## Credits
