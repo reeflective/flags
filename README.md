@@ -80,11 +80,11 @@ functionality (completions and validations), and then generates powerful and rea
 
 - A good way to introduce you to this library is to [install and use the example application binary](https://github.com/reeflective/flags/tree/main/example).
   This example application will give you a taste of the behavior and supported features.
-- The generation package [flags](https://github.com/reeflective/flags/tree/main/gen/flags) has a [godoc file](https://github.com/reeflective/flags/tree/main/gen/flags/flags.go) comprising all the valid tags for each component 
+- The generation package [flags](https://github.com/reeflective/flags/tree/main/gen/flags) has a [godoc file](https://github.com/reeflective/flags/tree/main/gen/flags/flags.go) with all the valid tags for each component 
   (commands/groups/flags/positionals), along with some notes and advices. This is so that you can
   quickly get access to those from your editor when writing commands and functionality.
-- Global parsing options (for global behavior, validators, etc) also have a different godoc file
-  in the root package of this library, [here](https://github.com/reeflective/flags/flags.go)
+- Another [godoc file](https://github.com/reeflective/flags/flags.go) provides quick access to global parsing options (for global behavior, 
+  validators, etc) located in the root package of this library. Both godoc files will be merged.
 - Along with the above, the following is the table of contents of the [wiki documentation](https://github.com/reeflective/flags/wiki):
 
 ### Development
@@ -109,9 +109,9 @@ This library is currently in a pre-release candidate state, for several reasons:
 - The codebase is not huge, but significant nonetheless. I aimed to write it 
   as structured and cleanly as possible.
 
-Please open a PR if you wish to bring enhancements to it. For newer features, please
-consider if there is a large number of people who might benefit from it, or if it has
-a chance of impairing on future development. If everything is fine, please propose !
+Please open a PR or an issue if you wish to bring enhancements to it. For newer features, 
+please consider if there is a large number of people who might benefit from it, or if it 
+has a chance of impairing on future development. If everything is fine, please propose !
 Other contributions, as well as bug fixes and reviews are also welcome.
 
 
