@@ -10,7 +10,7 @@
 // example of how you want to import this package and use its options:
 //
 // package main
-// 
+//
 // import (
 //    "github.com/reeflective/flags/example/commands"
 //
@@ -23,12 +23,12 @@
 //
 // func main() {
 //     var opts []flags.OptFunc
-//    
+//
 //     opts = append(opts, flags.Validator(validator.New()))
-//    
+//
 //     rootData := &commands.Root{}
 //     rootCmd := genflags.Generate(rootData, opts...)
-//    
+//
 //     comps, _ := completions.Generate(rootCmd, rootData, nil)
 // }
 //
@@ -38,31 +38,31 @@
 // Most of the options below are inherited from github.com/octago/sflags, with some added.
 //
 // DescTag sets custom description tag. It is "desc" by default.
-// func DescTag(val string) 
+// func DescTag(val string)
 //
 // FlagTag sets custom flag tag. It is "flag" be default.
-// func FlagTag(val string) 
+// func FlagTag(val string)
 //
 // Prefix sets prefix that will be applied for all flags (if they are not marked as ~).
-// func Prefix(val string) 
+// func Prefix(val string)
 //
 // EnvPrefix sets prefix that will be applied for all environment variables (if they are not marked as ~).
 // func EnvPrefix(val string)
 //
 // FlagDivider sets custom divider for flags. It is dash by default. e.g. "flag-name".
-// func FlagDivider(val string) 
+// func FlagDivider(val string)
 //
 // EnvDivider sets custom divider for environment variables.
 // It is underscore by default. e.g. "ENV_NAME".
-// func EnvDivider(val string) 
+// func EnvDivider(val string)
 //
 // Flatten set flatten option.
 // Set to false if you don't want anonymous structure fields to be flatten.
-// func Flatten(val bool) 
+// func Flatten(val bool)
 //
-// ParseAll orders the parser to generate a flag for all struct fields, even if there isn't a struct 
-// tag attached to them. This is because by default the library does not considers untagged field anymore. 
-// func ParseAll() 
+// ParseAll orders the parser to generate a flag for all struct fields, even if there isn't a struct
+// tag attached to them. This is because by default the library does not considers untagged field anymore.
+// func ParseAll()
 //
 //
 // 3) Special parsing options/functions---------------------------------------------------
@@ -93,4 +93,4 @@
 //
 // func FlagHandler(val FlagFunc)
 //
-package flags 
+package flags
