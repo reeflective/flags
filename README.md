@@ -78,7 +78,7 @@ functionality (completions and validations), and then generates powerful and rea
 
 - A good way to introduce you to this library is to [install and use the example application binary](https://github.com/reeflective/flags/tree/main/example).
   This example application will give you a taste of the behavior and supported features.
-- The generation package [flags](https://github.com/reeflective/flags/gen/flags) has a godoc file comprising all the valid tags for each component 
+- The generation package [flags](https://github.com/reeflective/flags/tree/main/gen/flags) has a [godoc file](https://github.com/reeflective/flags/tree/main/gen/flags/flags.go) comprising all the valid tags for each component 
   (commands/groups/flags/positionals), along with some notes and advices. This is so that you can
   quickly get access to those from your editor when writing commands and functionality.
 - Along with the above, the following is the table of contents of the [wiki documentation](https://github.com/reeflective/flags/wiki):

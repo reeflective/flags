@@ -2,7 +2,6 @@ package completions
 
 import (
 	"errors"
-	"fmt"
 	"reflect"
 	"strings"
 
