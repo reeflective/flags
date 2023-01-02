@@ -13,9 +13,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// ErrShortNameTooLong indicates that a short flag name was specified,
+// errShortNameTooLong indicates that a short flag name was specified,
 // longer than one character.
-var ErrShortNameTooLong = errors.New("short names can only be 1 character long")
+var errShortNameTooLong = errors.New("short names can only be 1 character long")
 
 // flagSetComps is an alias for storing per-flag completions.
 type flagSetComps map[string]comp.Action
