@@ -83,7 +83,7 @@ functionality (completions and validations), and then generates powerful and rea
 - The generation package [flags](https://github.com/reeflective/flags/tree/main/gen/flags) has a [godoc file](https://github.com/reeflective/flags/tree/main/gen/flags/flags.go) with all the valid tags for each component 
   (commands/groups/flags/positionals), along with some notes and advices. This is so that you can
   quickly get access to those from your editor when writing commands and functionality.
-- Another [godoc file](https://github.com/reeflective/flags/flags.go) provides quick access to global parsing options (for global behavior, 
+- Another [godoc file](https://github.com/reeflective/flags/tree/main/flags.go) provides quick access to global parsing options (for global behavior, 
   validators, etc) located in the root package of this library. Both godoc files will be merged.
 - Along with the above, the following is the table of contents of the [wiki documentation](https://github.com/reeflective/flags/wiki):
 
