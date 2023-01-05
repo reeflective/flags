@@ -11,7 +11,6 @@ import (
 	"github.com/rsteube/carapace/internal/pflagfork"
 	"github.com/rsteube/carapace/pkg/style"
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 )
 
 func actionPath(fileSuffixes []string, dirOnly bool) Action {
@@ -50,14 +49,14 @@ func actionPath(fileSuffixes []string, dirOnly bool) Action {
 			}
 
 			if resolvedFile.IsDir() {
-				vals = append(vals, displayFolder+file.Name()+"/", style.ForPath(filepath.Clean(actualFolder+"/"+file.Name()+"/")))
+				vals = append(vals, displayFolder+file.Name()+"/", style.ForPath(filepath.Clean(actualFolder+"/"+file.Name()+"/"), c))
 			} else if !dirOnly {
 				if len(fileSuffixes) == 0 {
 					fileSuffixes = []string{""}
 				}
 				for _, suffix := range fileSuffixes {
 					if strings.HasSuffix(file.Name(), suffix) {
-						vals = append(vals, displayFolder+file.Name(), style.ForPath(filepath.Clean(actualFolder+"/"+file.Name())))
+						vals = append(vals, displayFolder+file.Name(), style.ForPath(filepath.Clean(actualFolder+"/"+file.Name()), c))
 						break
 					}
 				}
@@ -67,25 +66,27 @@ func actionPath(fileSuffixes []string, dirOnly bool) Action {
 			return ActionStyledValues(vals...).Invoke(Context{}).Prefix("./").ToA()
 		}
 		return ActionStyledValues(vals...)
-	}).Tag("files")
+	})
 }
 
 func actionFlags(cmd *cobra.Command) Action {
 	return ActionCallback(func(c Context) Action {
+		flagSet := pflagfork.FlagSet{FlagSet: cmd.Flags()}
 		re := regexp.MustCompile("^-(?P<shorthand>[^-=]+)")
-		isShorthandSeries := re.MatchString(c.CallbackValue) && pflagfork.FlagSet(cmd.Flags()).IsPosix()
+		isShorthandSeries := re.MatchString(c.CallbackValue) && flagSet.IsPosix()
 
 		vals := make([]string, 0)
-		cmd.Flags().VisitAll(func(f *pflag.Flag) {
+		flagSet.VisitAll(func(f *pflagfork.Flag) {
 			if f.Deprecated != "" {
 				return // skip deprecated flags
 			}
 
-			if f.Changed &&
-				!strings.Contains(f.Value.Type(), "Slice") &&
-				!strings.Contains(f.Value.Type(), "Array") &&
-				f.Value.Type() != "count" {
+			if f.Changed && !f.IsRepeatable() {
 				return // don't repeat flag
+			}
+
+			if flagSet.IsMutuallyExclusive(f.Flag) {
+				return // skip flag of group already set
 			}
 
 			if isShorthandSeries {
@@ -98,7 +99,7 @@ func actionFlags(cmd *cobra.Command) Action {
 					vals = append(vals, f.Shorthand, f.Usage)
 				}
 			} else {
-				if flagstyle := pflagfork.Flag(f).Style(); flagstyle != pflagfork.ShorthandOnly {
+				if flagstyle := f.Style(); flagstyle != pflagfork.ShorthandOnly {
 					if flagstyle == pflagfork.NameAsShorthand {
 						vals = append(vals, "-"+f.Name, f.Usage)
 					} else {
