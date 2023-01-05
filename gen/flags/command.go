@@ -254,7 +254,6 @@ func setRuns(cmd *cobra.Command, data interface{}) {
 	}
 
 	// Runners
-	//
 	if commander, ok := data.(flags.Commander); ok && commander != nil {
 		cmd.RunE = func(c *cobra.Command, _ []string) error {
 			retargs := getRemainingArgs(c)
