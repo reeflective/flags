@@ -231,24 +231,24 @@ func setRuns(cmd *cobra.Command, data interface{}) {
 
 	// If our command hasn't any positional argument handler,
 	// we must make one to automatically put any of them in Execute
-	cmd.Args = func(cmd *cobra.Command, args []string) error {
-		setRemainingArgs(cmd, args)
+	if cmd.Args == nil {
+		cmd.Args = func(cmd *cobra.Command, args []string) error {
+			setRemainingArgs(cmd, args)
 
-		return nil
+			return nil
+		}
 	}
 
 	// Pre-runners
 	if runner, ok := data.(flags.PreRunner); ok && runner != nil {
 		cmd.PreRun = func(c *cobra.Command, _ []string) {
 			retargs := getRemainingArgs(c)
-			cmd.SetArgs(retargs)
 			runner.PreRun(retargs)
 		}
 	}
 	if runner, ok := data.(flags.PreRunnerE); ok && runner != nil {
 		cmd.PreRunE = func(c *cobra.Command, _ []string) error {
 			retargs := getRemainingArgs(c)
-			cmd.SetArgs(retargs)
 			return runner.PreRunE(retargs)
 		}
 	}
@@ -263,7 +263,6 @@ func setRuns(cmd *cobra.Command, data interface{}) {
 	} else if runner, ok := data.(flags.RunnerE); ok && runner != nil {
 		cmd.RunE = func(c *cobra.Command, _ []string) error {
 			retargs := getRemainingArgs(c)
-			cmd.SetArgs(retargs)
 			return runner.RunE(retargs)
 		}
 	}
@@ -271,7 +270,6 @@ func setRuns(cmd *cobra.Command, data interface{}) {
 	if runner, ok := data.(flags.Runner); ok && runner != nil {
 		cmd.Run = func(c *cobra.Command, _ []string) {
 			retargs := getRemainingArgs(c)
-			cmd.SetArgs(retargs)
 			runner.Run(retargs)
 		}
 	}
@@ -280,14 +278,12 @@ func setRuns(cmd *cobra.Command, data interface{}) {
 	if runner, ok := data.(flags.PostRunner); ok && runner != nil {
 		cmd.PreRun = func(c *cobra.Command, _ []string) {
 			retargs := getRemainingArgs(c)
-			cmd.SetArgs(retargs)
 			runner.PostRun(retargs)
 		}
 	}
 	if runner, ok := data.(flags.PostRunnerE); ok && runner != nil {
 		cmd.PreRunE = func(c *cobra.Command, _ []string) error {
 			retargs := getRemainingArgs(c)
-			cmd.SetArgs(retargs)
 			return runner.PostRunE(retargs)
 		}
 	}

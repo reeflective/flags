@@ -2,6 +2,8 @@ package flags
 
 import (
 	"errors"
+	// "os"
+	// "os/exec".
 	"strings"
 	"testing"
 
@@ -62,10 +64,9 @@ func TestAllRequired(t *testing.T) {
 
 	cmd := newCommandWithArgs(&opts, []string{"10"})
 	err := cmd.Args(cmd, []string{"10"})
-	// err := cmd.Execute()
 
 	pt := assert.New(t)
-	pt.ErrorContains(err, "`Filename` was not provided")
+	pt.ErrorContains(err, "required argument: `Filename` and `Rest (at least 1 argument)` were not provided")
 }
 
 // TestRequiredRestUndefinedFail checks that fields marked with a non-numeric
@@ -83,7 +84,6 @@ func TestRequiredRestUndefinedFail(t *testing.T) {
 
 	cmd := newCommandWithArgs(&opts, []string{})
 	err := cmd.Args(cmd, []string{})
-	// err := cmd.Execute()
 
 	pt := assert.New(t)
 	pt.ErrorContains(err,
@@ -105,7 +105,6 @@ func TestRequiredRestUndefinedPass(t *testing.T) {
 
 	cmd := newCommandWithArgs(&opts, []string{"rest1"})
 	err := cmd.Args(cmd, []string{"rest1"})
-	// err := cmd.Execute()
 
 	pt := assert.New(t)
 	pt.Nilf(err, "Unexpected error: %v", err)
@@ -129,7 +128,6 @@ func TestRequiredRestQuantityFail(t *testing.T) {
 
 	cmd := newCommandWithArgs(&opts, []string{"rest1"})
 	err := cmd.Args(cmd, []string{"rest1"})
-	// err := cmd.Execute()
 
 	pt := assert.New(t)
 	pt.ErrorContains(err,
@@ -151,7 +149,6 @@ func TestRequiredRestQuantityPass(t *testing.T) {
 
 	cmd := newCommandWithArgs(&opts, []string{"rest1", "rest2", "rest3"})
 	err := cmd.Args(cmd, []string{"rest1", "rest2", "rest3"})
-	// err := cmd.Execute()
 
 	pt := assert.New(t)
 	pt.Nilf(err, "Unexpected error: %v", err)
@@ -176,7 +173,6 @@ func TestRequiredRestRangeFail(t *testing.T) {
 
 	cmd := newCommandWithArgs(&opts, []string{"rest1", "rest2", "rest3"})
 	err := cmd.Args(cmd, []string{"rest1", "rest2", "rest3"})
-	// err := cmd.Execute()
 
 	pt := assert.New(t)
 	pt.ErrorContains(err,
@@ -203,7 +199,6 @@ func TestRequiredRestRangeEmptyFail(t *testing.T) {
 
 	cmd := newCommandWithArgs(&opts, []string{"some", "thing"})
 	err := cmd.Args(cmd, []string{"some", "thing"})
-	// err := cmd.Execute()
 
 	pt := assert.New(t)
 	pt.ErrorContains(err, "`Rest (zero arguments)` was not provided")
@@ -214,9 +209,7 @@ func TestRequiredRestRangeEmptyFail(t *testing.T) {
 //
 
 // TestOptionalNonRestRangeMinimumPass checks that a slice of positionals
-// that is not the last positional struct field, will accept:
-// - None if the words can just fulfill the requirements of next fields.
-// - Only up to its specified maximum number.
+// that is not the last positional struct field will parse only one argument.
 func TestOptionalNonRestRangeMinimumPass(t *testing.T) {
 	t.Parallel()
 
@@ -224,19 +217,18 @@ func TestOptionalNonRestRangeMinimumPass(t *testing.T) {
 		Value bool `short:"v"`
 
 		Positional struct {
-			NonRest []string // Optional
+			NonRest []string
 			Second  string
 			Third   string
 		} `positional-args:"yes" required:"yes"`
 	}{}
 
-	cmd := newCommandWithArgs(&opts, []string{"second", "third"})
-	err := cmd.Args(cmd, []string{"second", "third"})
-	// err := cmd.Execute()
+	cmd := newCommandWithArgs(&opts, []string{"first", "second", "third"})
+	err := cmd.Args(cmd, []string{"first", "second", "third"})
 
 	pt := assert.New(t)
 	pt.Nilf(err, "Unexpected error: %v", err)
-	pt.Equal([]string(nil), opts.Positional.NonRest)
+	pt.Equal([]string{"first"}, opts.Positional.NonRest)
 	pt.Equal("second", opts.Positional.Second)
 	pt.Equal("third", opts.Positional.Third)
 }
@@ -263,7 +255,6 @@ func TestRequiredNonRestRangeExcessPass(t *testing.T) {
 	args := []string{"nonrest1", "nonrest2", "second", "third", "lambda"}
 	cmd := newCommandWithArgs(&opts, args)
 	err := cmd.Args(cmd, args)
-	// err := cmd.Execute()
 
 	pt := assert.New(t)
 	pt.Nilf(err, "Unexpected error: %v", err)
@@ -292,7 +283,6 @@ func TestRequiredNonRestRangeFail(t *testing.T) {
 	args := []string{"nonrest1", "nonrest2", "second"}
 	cmd := newCommandWithArgs(&opts, args)
 	err := cmd.Args(cmd, args)
-	// err := cmd.Execute()
 
 	pt := assert.New(t)
 	pt.ErrorContains(err, "`Third` was not provided")
@@ -318,7 +308,6 @@ func TestMixedSlicesMaxIsMinDefault(t *testing.T) {
 	args := []string{"first1", "first2", "second1", "second2", "third"}
 	cmd := newCommandWithArgs(&opts, args)
 	err := cmd.Args(cmd, args)
-	// err := cmd.Execute()
 
 	pt := assert.New(t)
 	pt.Nilf(err, "Unexpected error: %v", err)
@@ -347,7 +336,6 @@ func TestMixedSlicesMinimumNonRestPass(t *testing.T) {
 	args := []string{"first1", "first2", "second1", "third"}
 	cmd := newCommandWithArgs(&opts, args)
 	err := cmd.Args(cmd, args)
-	// err := cmd.Execute()
 
 	pt := assert.New(t)
 	pt.Nilf(err, "Unexpected error: %v", err)
@@ -376,7 +364,6 @@ func TestMixedSlicesMinimumNonRestFail(t *testing.T) {
 	args := []string{"first1", "first2", "second1"}
 	cmd := newCommandWithArgs(&opts, args)
 	err := cmd.Args(cmd, args)
-	// err := cmd.Execute()
 
 	pt := assert.New(t)
 	pt.ErrorContains(err, "`Third` was not provided")
@@ -409,7 +396,6 @@ func TestMixedSlicesLastHasPriority(t *testing.T) {
 	args := []string{"first1", "first2", "second1", "third1", "third2", "single"}
 	cmd := newCommandWithArgs(&opts, args)
 	err := cmd.Args(cmd, args)
-	// err := cmd.Execute()
 
 	pt := assert.New(t)
 	pt.Nilf(err, "Unexpected error: %v", err)
@@ -422,10 +408,37 @@ func TestMixedSlicesLastHasPriority(t *testing.T) {
 // TestTwoInfiniteSlicesExplicitFail checks that if a struct containing
 // at least two slices that are explicitly marked infinite (no maximum),
 // will return an error next to the cobra command being returned.
-// TODO: write test and code for it, still missing.
-func TestTwoInfiniteSlicesExplicitFail(t *testing.T) {
-	t.Parallel()
-}
+// func TestTwoInfiniteSlicesExplicitFail(t *testing.T) {
+// 	t.Parallel()
+//
+// 	if os.Getenv("TestTwoInfiniteSlicesExplicitFail") == "1" {
+// 		opts := struct {
+// 			Value bool `short:"v"`
+//
+// 			Positional struct {
+// 				FirstList  []string
+// 				SecondList []string
+// 				ThirdList  []string `required:"1-2"`
+// 				Third      string
+// 			} `positional-args:"yes" required:"yes"`
+// 		}{}
+//
+// 		newCommandWithArgs(&opts, []string{}) // This will fail
+// 		return
+// 	}
+//
+// 	cmd := exec.Command(os.Args[0], "-test.run=TestTwoInfiniteSlicesExplicitFail")
+// 	cmd.Env = append(os.Environ(), "TestTwoInfiniteSlicesExplicitFail=1")
+//
+// 	err := cmd.Run()
+// 	if e, ok := err.(*exec.ExitError); ok && e.Success() {
+// 		t.Fatalf("process ran with err %v, want exit status 1", err)
+// 		return
+// 	}
+//
+// 	pt := assert.New(t)
+// 	pt.NotNilf(err, "Unexpected error: %v", err)
+// }
 
 //
 // Double dash positionals (more complex cases) --------------------------------------- //
