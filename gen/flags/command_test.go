@@ -341,9 +341,3 @@ func TestSubcommandsRequiredUsage(t *testing.T) {
 	err = root.Execute()
 	test.NotNil(err)
 }
-
-// TestCommandPassAfterNonOptionWithPositional checks that commands that are marked
-// pass after non-option, will correctly behave when being submitted a line.
-func TestCommandPassAfterNonOptionWithPositional(t *testing.T) {
-	t.Log("TODO: TestCommandPassAfterNonOptionWithPositional not written: must implement the functionality also.")
-}
