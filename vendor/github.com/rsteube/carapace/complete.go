@@ -32,7 +32,7 @@ func complete(cmd *cobra.Command, args []string) (string, error) {
 		return ActionMessage(err.Error()).Invoke(Context{CallbackValue: current}).value(shell, current), nil
 	}
 
-	context := newContext(append(targetArgs, current))
+	context := NewContext(append(targetArgs, current))
 
 	// TODO needs more cleanup and tests
 	var targetAction Action
@@ -92,7 +92,7 @@ func lookupFlag(cmd *cobra.Command, arg string) (flag *pflag.Flag) {
 	if strings.HasPrefix(arg, "--") {
 		flag = cmd.Flags().Lookup(nameOrShorthand)
 	} else if strings.HasPrefix(arg, "-") && len(nameOrShorthand) > 0 {
-		if pflagfork.FlagSet(cmd.Flags()).IsPosix() {
+		if (pflagfork.FlagSet{FlagSet: cmd.Flags()}).IsPosix() {
 			flag = cmd.Flags().ShorthandLookup(string(nameOrShorthand[len(nameOrShorthand)-1]))
 		} else {
 			flag = cmd.Flags().ShorthandLookup(nameOrShorthand)

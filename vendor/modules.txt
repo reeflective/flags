@@ -14,7 +14,7 @@ github.com/go-playground/universal-translator
 # github.com/go-playground/validator/v10 v10.11.1
 ## explicit; go 1.13
 github.com/go-playground/validator/v10
-# github.com/inconshreveable/mousetrap v1.0.1
+# github.com/inconshreveable/mousetrap v1.1.0
 ## explicit; go 1.18
 github.com/inconshreveable/mousetrap
 # github.com/leodido/go-urn v1.2.1
@@ -23,7 +23,7 @@ github.com/leodido/go-urn
 # github.com/pmezard/go-difflib v1.0.0
 ## explicit
 github.com/pmezard/go-difflib/difflib
-# github.com/rsteube/carapace v0.29.1
+# github.com/rsteube/carapace v0.30.0
 ## explicit; go 1.15
 github.com/rsteube/carapace
 github.com/rsteube/carapace/internal/cache
