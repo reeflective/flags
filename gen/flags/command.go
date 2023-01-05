@@ -76,8 +76,8 @@ func generate(cmd *cobra.Command, data interface{}, opts ...flags.OptFunc) {
 	// Subcommands, optional or not
 	if cmd.HasSubCommands() {
 		cmd.RunE = unknownSubcommandAction
-	} else if _, isCmd, impl := flags.IsCommand(reflect.ValueOf(data)); isCmd {
-		setRuns(cmd, impl)
+	} else {
+		setRuns(cmd, data)
 	}
 }
 
@@ -126,11 +126,8 @@ func command(cmd *cobra.Command, grp *cobra.Group, tag tag.MultiTag, val reflect
 		return false, nil
 	}
 
-	// ... and check the field implements at least the Commander interface
-	val, implements, cmdType := flags.IsCommand(val)
-	if !implements && len(name) == 0 {
-		return false, nil
-	}
+	// Initialize the field if nil
+	data := initialize(val)
 
 	// Always populate the maximum amount of information
 	// in the new subcommand, so that when it scans recursively,
@@ -141,19 +138,18 @@ func command(cmd *cobra.Command, grp *cobra.Group, tag tag.MultiTag, val reflect
 	tagged, _ := tag.Get("group")
 	setGroup(cmd, subc, grp, tagged)
 
-	// Bind the various pre/run/post implementations of our command.
-	setRuns(subc, cmdType)
-
 	// Scan the struct recursively, for arg/option groups and subcommands
 	scanner := scanRoot(subc, grp, opts)
-	if err := scan.Type(val.Interface(), scanner); err != nil {
+	if err := scan.Type(data, scanner); err != nil {
 		return true, fmt.Errorf("%w: %s", scan.ErrScan, err.Error())
 	}
 
-	if _, isSet := tag.Get("subcommands-optional"); !isSet {
-		if len(subc.Commands()) > 0 {
-			subc.RunE = unknownSubcommandAction
-		}
+	// Bind the various pre/run/post implementations of our command.
+	if _, isSet := tag.Get("subcommands-optional"); !isSet && subc.HasSubCommands() {
+		subc.RunE = unknownSubcommandAction
+	} else {
+		data := initialize(val)
+		setRuns(subc, data)
 	}
 
 	// And bind this subcommand back to us
@@ -180,32 +176,6 @@ func newCommand(name string, mtag tag.MultiTag, parent *cobra.Group) *cobra.Comm
 	_, subc.Hidden = mtag.Get("hidden")
 
 	return subc
-}
-
-// setRuns binds the various pre/run/post implementations to a cobra command.
-func setRuns(cmd *cobra.Command, impl flags.Commander) {
-	// No implementation means that this command
-	// requires subcommands by default.
-	if impl == nil {
-		return
-	}
-
-	// If our command hasn't any positional argument handler,
-	// we must make one to automatically put any of them in Execute
-	cmd.Args = func(cmd *cobra.Command, args []string) error {
-		setRemainingArgs(cmd, args)
-
-		return nil
-	}
-
-	// The args passed to the command have already been parsed,
-	// this is why we mute the args []string function parameter.
-	cmd.RunE = func(c *cobra.Command, _ []string) error {
-		retargs := getRemainingArgs(c)
-		cmd.SetArgs(retargs)
-
-		return impl.Execute(retargs)
-	}
 }
 
 func setGroup(parent, subc *cobra.Command, parentGroup *cobra.Group, tagged string) {
@@ -250,4 +220,95 @@ func unknownSubcommandAction(cmd *cobra.Command, args []string) error {
 	}
 
 	return fmt.Errorf(err)
+}
+
+func setRuns(cmd *cobra.Command, data interface{}) {
+	// No implementation means that this command
+	// requires subcommands by default.
+	if data == nil {
+		return
+	}
+
+	// If our command hasn't any positional argument handler,
+	// we must make one to automatically put any of them in Execute
+	cmd.Args = func(cmd *cobra.Command, args []string) error {
+		setRemainingArgs(cmd, args)
+
+		return nil
+	}
+
+	// Pre-runners
+	if runner, ok := data.(flags.PreRunner); ok && runner != nil {
+		cmd.PreRun = func(c *cobra.Command, _ []string) {
+			retargs := getRemainingArgs(c)
+			cmd.SetArgs(retargs)
+			runner.PreRun(retargs)
+		}
+	}
+	if runner, ok := data.(flags.PreRunnerE); ok && runner != nil {
+		cmd.PreRunE = func(c *cobra.Command, _ []string) error {
+			retargs := getRemainingArgs(c)
+			cmd.SetArgs(retargs)
+			return runner.PreRunE(retargs)
+		}
+	}
+
+	// Runners
+	//
+	if commander, ok := data.(flags.Commander); ok && commander != nil {
+		cmd.RunE = func(c *cobra.Command, _ []string) error {
+			retargs := getRemainingArgs(c)
+			cmd.SetArgs(retargs)
+			return commander.Execute(retargs)
+		}
+	} else if runner, ok := data.(flags.RunnerE); ok && runner != nil {
+		cmd.RunE = func(c *cobra.Command, _ []string) error {
+			retargs := getRemainingArgs(c)
+			cmd.SetArgs(retargs)
+			return runner.RunE(retargs)
+		}
+	}
+
+	if runner, ok := data.(flags.Runner); ok && runner != nil {
+		cmd.Run = func(c *cobra.Command, _ []string) {
+			retargs := getRemainingArgs(c)
+			cmd.SetArgs(retargs)
+			runner.Run(retargs)
+		}
+	}
+
+	// Post-runners
+	if runner, ok := data.(flags.PostRunner); ok && runner != nil {
+		cmd.PreRun = func(c *cobra.Command, _ []string) {
+			retargs := getRemainingArgs(c)
+			cmd.SetArgs(retargs)
+			runner.PostRun(retargs)
+		}
+	}
+	if runner, ok := data.(flags.PostRunnerE); ok && runner != nil {
+		cmd.PreRunE = func(c *cobra.Command, _ []string) error {
+			retargs := getRemainingArgs(c)
+			cmd.SetArgs(retargs)
+			return runner.PostRunE(retargs)
+		}
+	}
+}
+
+func initialize(val reflect.Value) interface{} {
+	// Initialize if needed
+	var ptrval reflect.Value
+
+	// We just want to get interface, even if nil
+	if val.Kind() == reflect.Ptr {
+		ptrval = val
+	} else {
+		ptrval = val.Addr()
+	}
+
+	// Once we're sure it's a command, initialize the field if needed.
+	if ptrval.IsNil() {
+		ptrval.Set(reflect.New(ptrval.Type().Elem()))
+	}
+
+	return ptrval.Interface()
 }
