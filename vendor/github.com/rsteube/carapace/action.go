@@ -14,9 +14,9 @@ import (
 
 // Action indicates how to complete a flag or positional argument.
 type Action struct {
-	rawValues []common.RawValue
-	callback  CompletionCallback
 	meta      common.Meta
+	rawValues common.RawValues
+	callback  CompletionCallback
 }
 
 // ActionMap maps Actions to an identifier.
@@ -207,7 +207,12 @@ func (a Action) List(divider string) Action {
 // UniqueList wraps the Action in an ActionMultiParts with given divider.
 func (a Action) UniqueList(divider string) Action {
 	return ActionMultiParts(divider, func(c Context) Action {
-		return a.Invoke(c).Filter(c.Parts).ToA().NoSpace()
+		noSpace := make([]rune, 0)
+		if runes := []rune(divider); len(runes) > 0 {
+			noSpace = append(noSpace, runes[len(runes)-1])
+		}
+		noSpace = append(noSpace, []rune(a.meta.Nospace.String())...)
+		return a.Invoke(c).Filter(c.Parts).ToA().NoSpace([]rune(noSpace)...)
 	})
 }
 
