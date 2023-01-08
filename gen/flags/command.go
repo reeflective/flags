@@ -12,20 +12,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var onFinalize func()
-
-// WithReset registers a function to cobra finalizers: when invoked, this function
-// will create a new instance of the command-tree struct passed to Generate(), will
-// rescan it and bind new commands with their blank/default state.
-// This should normally only be used if you are using commands within a closed
-// loop Go program/shell, where commands will be invoked more than once.
-//
-// The associated function is returned, so that programs can reuse it at other times.
-func WithReset() func() {
-	cobra.OnFinalize(onFinalize)
-	return onFinalize
-}
-
 // Generate returns a root cobra Command to be used directly as an entry-point.
 // The data interface parameter can be nil, or arbitrarily:
 // - A simple group of options to bind at the local, root level
@@ -39,24 +25,6 @@ func Generate(data interface{}, opts ...flags.OptFunc) *cobra.Command {
 
 	// Scan the struct and bind all commands to this root.
 	generate(cmd, data, opts...)
-
-	// Make a handler to be used when this command
-	// tree is used in a closed-loop Go program/shell.
-	onFinalize = func() {
-		cmd.ResetCommands()
-
-		// Instantiate a new command struct
-		val := reflect.ValueOf(data)
-		if val.Kind() == reflect.Ptr {
-			val = reflect.Indirect(val)
-		}
-
-		data := reflect.New(val.Type()).Interface()
-
-		// And scan again to rebind all commands
-		// to their blank/default state.
-		generate(cmd, data, opts...)
-	}
 
 	return cmd
 }
