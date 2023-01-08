@@ -60,7 +60,7 @@ functionality (completions and validations), and then generates powerful and rea
 
 ## Features 
 
-### Commands, flags and positional arguments
+### Commands, flags & positionals 
 - Easily declare commands, flags, and positional arguments through struct tags.
 - Various ways to structure the command trees in groups (tagged, or encapsulated in structs).
 - Almost entirely retrocompatible with [go-flags](https://github.com/jessevdk/go-flags), with a ported and enlarged test suite.
