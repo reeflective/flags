@@ -7,7 +7,7 @@ require (
 	github.com/go-playground/validator/v10 v10.11.1
 	github.com/rsteube/carapace v0.30.0
 	github.com/rsteube/carapace-bin v0.19.0
-	github.com/spf13/cobra v1.6.1
+	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.8.0
 )
@@ -25,4 +25,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/rsteube/carapace v0.30.0 => github.com/reeflective/carapace v0.25.2-0.20230106225838-382407e213d4
+replace github.com/rsteube/carapace v0.30.0 => github.com/reeflective/carapace v0.25.2-0.20230416191807-fc9b8c3aa6f6

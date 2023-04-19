@@ -23,12 +23,14 @@ github.com/leodido/go-urn
 # github.com/pmezard/go-difflib v1.0.0
 ## explicit
 github.com/pmezard/go-difflib/difflib
-# github.com/rsteube/carapace v0.30.0 => github.com/reeflective/carapace v0.25.2-0.20230106225838-382407e213d4
+# github.com/rsteube/carapace v0.30.0 => github.com/reeflective/carapace v0.25.2-0.20230416191807-fc9b8c3aa6f6
 ## explicit; go 1.15
 github.com/rsteube/carapace
 github.com/rsteube/carapace/internal/cache
 github.com/rsteube/carapace/internal/common
 github.com/rsteube/carapace/internal/config
+github.com/rsteube/carapace/internal/export
+github.com/rsteube/carapace/internal/man
 github.com/rsteube/carapace/internal/pflagfork
 github.com/rsteube/carapace/internal/shell
 github.com/rsteube/carapace/internal/shell/bash
@@ -48,6 +50,7 @@ github.com/rsteube/carapace/internal/uid
 github.com/rsteube/carapace/pkg/cache
 github.com/rsteube/carapace/pkg/ps
 github.com/rsteube/carapace/pkg/style
+github.com/rsteube/carapace/pkg/xdg
 github.com/rsteube/carapace/third_party/github.com/acarl005/stripansi
 github.com/rsteube/carapace/third_party/github.com/drone/envsubst
 github.com/rsteube/carapace/third_party/github.com/drone/envsubst/parse
@@ -60,7 +63,7 @@ github.com/rsteube/carapace/third_party/golang.org/x/sys/execabs
 ## explicit; go 1.19
 github.com/rsteube/carapace-bin/pkg/actions/net
 github.com/rsteube/carapace-bin/pkg/actions/number
-# github.com/spf13/cobra v1.6.1
+# github.com/spf13/cobra v1.7.0
 ## explicit; go 1.15
 github.com/spf13/cobra
 # github.com/spf13/pflag v1.0.5
