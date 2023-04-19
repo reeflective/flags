@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Snippet creates the nushell completion script
+// Snippet creates the nushell completion script.
 func Snippet(cmd *cobra.Command) string {
 	return fmt.Sprintf(`let external_completer = {|spans| 
   {
@@ -18,6 +18,11 @@ func Snippet(cmd *cobra.Command) string {
 }
 
 let-env config = {
-  external_completer: $external_completer
+  completions: {
+    external: {
+      enable: true
+      completer: $external_completer
+    }
+  }
 }`, cmd.Name(), uid.Executable())
 }

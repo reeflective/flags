@@ -1,6 +1,5 @@
 # carapace
 
-[![CircleCI](https://circleci.com/gh/rsteube/carapace.svg?style=svg)](https://circleci.com/gh/rsteube/carapace)
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/rsteube/carapace)](https://pkg.go.dev/github.com/rsteube/carapace)
 [![documentation](https://img.shields.io/badge/&zwnj;-documentation-blue?logo=gitbook)](https://rsteube.github.io/carapace/)
 [![GoReportCard](https://goreportcard.com/badge/github.com/rsteube/carapace)](https://goreportcard.com/report/github.com/rsteube/carapace)
@@ -23,7 +22,7 @@ Supported shells:
 
 ## Usage
 
-Calling `carapace.Gen` on the root command is sufficient to enable completion script generation using the [hidden command](https://rsteube.github.io/carapace/carapace/gen/hiddenSubcommand.html).
+Calling `carapace.Gen` on the root command is sufficient to enable completion using the [hidden command](https://rsteube.github.io/carapace/carapace/gen/hiddenSubcommand.html).
 
 ```go
 import (
@@ -33,76 +32,24 @@ import (
 carapace.Gen(rootCmd)
 ```
 
-## Standalone Mode
-
-Carapace can also be used to provide completion for arbitrary commands as well (similar to [aws_completer](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-completion.html)).
-See [rsteube/carapace-bin](https://github.com/rsteube/carapace-bin) for examples. There is also a binary to parse flags from gnu help pages at [caraparse](https://github.com/rsteube/carapace-bin/tree/master/cmd/caraparse).
-
 ## Example
 
 An example implementation can be found in the [example](./example/) folder.
 
-```sh
-cd example
-go build .
 
-# bash
-PATH=$PATH:$(pwd)
-source <(example _carapace bash)
+## Standalone Mode
 
-# elvish
-paths=[$@paths (pwd)]
-eval (example _carapace elvish | slurp)
+Carapace can also be used to provide completion for arbitrary commands.
+See [carapace-bin](https://github.com/rsteube/carapace-bin) for examples.
 
-# fish
-set PATH $PATH (pwd) 
-example _carapace fish | source
-
-# nushell
-example _carapace nushell
-
-# oil
-PATH=$PATH:$(pwd)
-source <(example _carapace oil)
-
-# powershell
-Set-PSReadLineOption -Colors @{ "Selection" = "`e[7m" }
-Set-PSReadlineKeyHandler -Key Tab -Function MenuComplete
-$env:PATH += ":$pwd"
-example _carapace powershell | out-string | Invoke-Expression
-
-# tcsh
-set autolist
-eval `example _carapace tcsh`
-
-# xonsh
-$COMPLETION_QUERY_LIMIT = 500 # increase limit
-$PATH.append($(pwd))
-exec($(example _carapace xonsh))
-
-# zsh
-PATH=$PATH:$(pwd)
-source <(example _carapace zsh)
-
-example <TAB>
-```
-
-or use [docker-compose](https://docs.docker.com/compose/):
-```sh
-docker-compose pull
-docker-compose run --rm build
-docker-compose run --rm [bash|elvish|fish|ion|nushell|oil|powershell|tcsh|xonsh|zsh]
-
-example <TAB>
-```
-
-## Projects
+## Related Projects
 
 - [carapace-bin](https://github.com/rsteube/carapace-bin) multi-shell multi-command argument completer
+- [carapace-bridge](https://github.com/rsteube/carapace-bridge) completion bridge
+- [carapace-pflag](https://github.com/rsteube/carapace-pflag) Drop-in replacement for spf13/pflag with support for non-posix variants
 - [carapace-spec](https://github.com/rsteube/carapace-spec) define simple completions using a spec file
-- [freckles](https://github.com/rsteube/freckles) simple dotfiles manager
-- [go-jira-cli](https://github.com/rsteube/go-jira-cli) simple jira command line client
-- [knoxite](https://github.com/knoxite/knoxite) A data storage & backup system
-- [lab](https://github.com/zaquestion/lab) cli client for GitLab
+- [carapace-spec-clap](https://github.com/rsteube/carapace-spec-clap) spec generation for clap-rs/clap
+- [carapace-spec-kong](https://github.com/rsteube/carapace-spec-kong) spec generation for alecthomas/kong
+- [carapace-spec-urfavecli](https://github.com/rsteube/carapace-spec-urfavecli) spec generation for urfave/cli
 
 [cobra]:https://github.com/spf13/cobra

@@ -14,24 +14,15 @@ var sanitizer = strings.NewReplacer(
 
 const nospaceIndicator = "\001"
 
-// ActionRawValues formats values for oil
-func ActionRawValues(currentWord string, nospace bool, values common.RawValues) string {
-	filtered := make([]common.RawValue, 0)
-
-	for _, r := range values {
-		// TODO should rather access callbackvalue (circular dependency) - seems to work though so good enough for now
-		if strings.HasPrefix(r.Value, currentWord) {
-			filtered = append(filtered, r)
-		}
-	}
-
-	vals := make([]string, len(filtered))
-	for index, val := range filtered {
-		if nospace && !strings.HasSuffix(val.Value, nospaceIndicator) {
+// ActionRawValues formats values for oil.
+func ActionRawValues(currentWord string, meta common.Meta, values common.RawValues) string {
+	vals := make([]string, len(values))
+	for index, val := range values {
+		if meta.Nospace.Matches(val.Value) {
 			val.Value = val.Value + nospaceIndicator
 		}
 
-		if len(filtered) == 1 {
+		if len(values) == 1 {
 			formattedVal := sanitizer.Replace(val.Value)
 			vals[index] = formattedVal
 		} else {

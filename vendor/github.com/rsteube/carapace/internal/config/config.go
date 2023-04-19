@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"reflect"
 	"strings"
+
+	"github.com/rsteube/carapace/pkg/xdg"
 )
 
 type configMap map[string]interface{}
@@ -20,9 +22,16 @@ func (c configMap) Keys() []string {
 	return keys
 }
 
-func (c configMap) Fields(name string) ([]string, error) {
+type Field struct {
+	Name        string
+	Description string
+	Style       string
+	Tag         string
+}
+
+func (c configMap) Fields(name string) ([]Field, error) {
 	if i, ok := c[name]; ok {
-		fields := make([]string, 0)
+		fields := make([]Field, 0)
 		t := reflect.TypeOf(i).Elem()
 		v := reflect.ValueOf(i).Elem()
 		for index := 0; index < t.NumField(); index++ {
@@ -30,7 +39,7 @@ func (c configMap) Fields(name string) ([]string, error) {
 			if field.Type.Name() != "string" {
 				return nil, fmt.Errorf("invalid field type [name: '%v', type: '%v']", field.Name, field.Type.Name())
 			}
-			fields = append(fields, field.Name, field.Tag.Get("desc"), v.FieldByName(field.Name).String())
+			fields = append(fields, Field{field.Name, field.Tag.Get("desc"), v.FieldByName(field.Name).String(), field.Tag.Get("tag")})
 		}
 		return fields, nil
 	}
@@ -55,7 +64,7 @@ func Load() error {
 }
 
 func load(name string, c configMap) error {
-	if dir, err := os.UserConfigDir(); err == nil {
+	if dir, err := xdg.UserConfigDir(); err == nil {
 		content, err := os.ReadFile(fmt.Sprintf("%v/carapace/%v.json", dir, name))
 		if err != nil {
 			if os.IsNotExist(err) {
@@ -83,14 +92,14 @@ func load(name string, c configMap) error {
 	return nil
 }
 
-func GetStyleConfigs() []string                    { return config.Styles.Keys() }
-func GetStyleFields(name string) ([]string, error) { return config.Styles.Fields(name) }
+func GetStyleConfigs() []string                   { return config.Styles.Keys() }
+func GetStyleFields(name string) ([]Field, error) { return config.Styles.Fields(name) }
 func SetStyle(key, value string) error {
 	return set("styles", key, strings.Replace(value, ",", " ", -1))
 }
 
 func set(name, key, value string) error {
-	dir, err := os.UserConfigDir()
+	dir, err := xdg.UserConfigDir()
 	if err != nil {
 		return err
 	}
@@ -101,7 +110,9 @@ func set(name, key, value string) error {
 		if !os.IsNotExist(err) {
 			return err
 		}
-		os.MkdirAll(filepath.Dir(file), os.ModePerm)
+		if err := os.MkdirAll(filepath.Dir(file), os.ModePerm); err != nil {
+			return err
+		}
 		content = []byte("{}")
 	}
 
@@ -127,7 +138,5 @@ func set(name, key, value string) error {
 	if err != nil {
 		return err
 	}
-	os.WriteFile(file, marshalled, os.ModePerm)
-
-	return nil
+	return os.WriteFile(file, marshalled, os.ModePerm)
 }

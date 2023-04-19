@@ -20,18 +20,10 @@ type richCompletion struct {
 	Description string
 }
 
-// ActionRawValues formats values for xonsh
-func ActionRawValues(currentWord string, nospace bool, values common.RawValues) string {
-	filtered := make([]common.RawValue, 0)
-
-	for _, r := range values {
-		if strings.HasPrefix(r.Value, currentWord) {
-			filtered = append(filtered, r)
-		}
-	}
-
-	vals := make([]richCompletion, len(filtered))
-	for index, val := range filtered {
+// ActionRawValues formats values for xonsh.
+func ActionRawValues(currentWord string, meta common.Meta, values common.RawValues) string {
+	vals := make([]richCompletion, len(values))
+	for index, val := range values {
 		val.Value = sanitizer.Replace(val.Value)
 
 		if strings.ContainsAny(val.Value, ` ()[]{}*$?\"|<>&;#`+"`") {
@@ -42,7 +34,7 @@ func ActionRawValues(currentWord string, nospace bool, values common.RawValues) 
 			}
 		}
 
-		if !nospace {
+		if !meta.Nospace.Matches(val.Value) {
 			val.Value = val.Value + " "
 		}
 
