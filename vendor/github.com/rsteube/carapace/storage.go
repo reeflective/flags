@@ -2,7 +2,6 @@ package carapace
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/rsteube/carapace/internal/common"
 	"github.com/rsteube/carapace/internal/uid"
@@ -36,15 +35,7 @@ func (s _storage) getFlag(cmd *cobra.Command, name string) Action {
 	if flag := cmd.LocalFlags().Lookup(name); flag == nil && cmd.HasParent() {
 		return s.getFlag(cmd.Parent(), name)
 	} else {
-		a := s.preinvoke(cmd, flag, s.get(cmd).flag[name])
-
-		return ActionCallback(func(c Context) Action { // TODO verify order of execution is correct
-			invoked := a.Invoke(c)
-			if invoked.meta.Usage == "" {
-				invoked.meta.Usage = flag.Usage
-			}
-			return invoked.ToA()
-		})
+		return s.preinvoke(cmd, flag, s.get(cmd).flag[name])
 	}
 }
 
@@ -67,31 +58,21 @@ func (s _storage) preinvoke(cmd *cobra.Command, flag *pflag.Flag, action Action)
 func (s _storage) getPositional(cmd *cobra.Command, pos int) Action {
 	entry := s.get(cmd)
 
-	var a Action
 	// TODO nil check?
 	if !common.IsDash(cmd) {
 		if len(entry.positional) > pos {
-			a = s.preinvoke(cmd, nil, entry.positional[pos])
-		} else {
-			a = s.preinvoke(cmd, nil, entry.positionalAny)
+			return s.preinvoke(cmd, nil, entry.positional[pos])
 		}
+		return s.preinvoke(cmd, nil, entry.positionalAny)
 	} else {
 		if len(entry.dash) > pos {
-			a = s.preinvoke(cmd, nil, entry.dash[pos])
-		} else {
-			a = s.preinvoke(cmd, nil, entry.dashAny)
+			return s.preinvoke(cmd, nil, entry.dash[pos])
 		}
+		return s.preinvoke(cmd, nil, entry.dashAny)
 	}
-
-	return ActionCallback(func(c Context) Action { // TODO verify order of execution is correct
-		invoked := a.Invoke(c)
-		if invoked.meta.Usage == "" && len(strings.Fields(cmd.Use)) > 1 {
-			invoked.meta.Usage = cmd.Use
-		}
-		return invoked.ToA()
-	})
 }
 
+// TODO implicit execution during build - go:generate possible?
 func (s _storage) check() []string {
 	errors := make([]string, 0)
 	for cmd, entry := range s {

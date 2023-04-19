@@ -23,14 +23,13 @@ github.com/leodido/go-urn
 # github.com/pmezard/go-difflib v1.0.0
 ## explicit
 github.com/pmezard/go-difflib/difflib
-# github.com/rsteube/carapace v0.30.0 => github.com/reeflective/carapace v0.25.2-0.20230106225838-382407e213d4
+# github.com/rsteube/carapace v0.30.0 => github.com/reeflective/carapace v0.25.1
 ## explicit; go 1.15
 github.com/rsteube/carapace
 github.com/rsteube/carapace/internal/cache
 github.com/rsteube/carapace/internal/common
 github.com/rsteube/carapace/internal/config
 github.com/rsteube/carapace/internal/pflagfork
-github.com/rsteube/carapace/internal/shell
 github.com/rsteube/carapace/internal/shell/bash
 github.com/rsteube/carapace/internal/shell/bash_ble
 github.com/rsteube/carapace/internal/shell/elvish

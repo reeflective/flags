@@ -20,16 +20,9 @@ func (c configMap) Keys() []string {
 	return keys
 }
 
-type Field struct {
-	Name        string
-	Description string
-	Style       string
-	Tag         string
-}
-
-func (c configMap) Fields(name string) ([]Field, error) {
+func (c configMap) Fields(name string) ([]string, error) {
 	if i, ok := c[name]; ok {
-		fields := make([]Field, 0)
+		fields := make([]string, 0)
 		t := reflect.TypeOf(i).Elem()
 		v := reflect.ValueOf(i).Elem()
 		for index := 0; index < t.NumField(); index++ {
@@ -37,7 +30,7 @@ func (c configMap) Fields(name string) ([]Field, error) {
 			if field.Type.Name() != "string" {
 				return nil, fmt.Errorf("invalid field type [name: '%v', type: '%v']", field.Name, field.Type.Name())
 			}
-			fields = append(fields, Field{field.Name, field.Tag.Get("desc"), v.FieldByName(field.Name).String(), field.Tag.Get("tag")})
+			fields = append(fields, field.Name, field.Tag.Get("desc"), v.FieldByName(field.Name).String())
 		}
 		return fields, nil
 	}
@@ -90,8 +83,8 @@ func load(name string, c configMap) error {
 	return nil
 }
 
-func GetStyleConfigs() []string                   { return config.Styles.Keys() }
-func GetStyleFields(name string) ([]Field, error) { return config.Styles.Fields(name) }
+func GetStyleConfigs() []string                    { return config.Styles.Keys() }
+func GetStyleFields(name string) ([]string, error) { return config.Styles.Fields(name) }
 func SetStyle(key, value string) error {
 	return set("styles", key, strings.Replace(value, ",", " ", -1))
 }

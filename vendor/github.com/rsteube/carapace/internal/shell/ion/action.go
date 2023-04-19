@@ -3,6 +3,7 @@ package ion
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/rsteube/carapace/internal/common"
@@ -27,11 +28,14 @@ type suggestion struct {
 	Display string
 }
 
-// ActionRawValues formats values for ion.
-func ActionRawValues(currentWord string, meta common.Meta, values common.RawValues) string {
-	vals := make([]suggestion, len(values))
-	for index, val := range sanitize(values) {
-		if !meta.Nospace.Matches(val.Value) {
+// ActionRawValues formats values for ion
+func ActionRawValues(currentWord string, nospace bool, values common.RawValues) string {
+	filtered := values.FilterPrefix(currentWord)
+	sort.Sort(common.ByDisplay(filtered))
+
+	vals := make([]suggestion, len(filtered))
+	for index, val := range sanitize(filtered) {
+		if !nospace {
 			val.Value = val.Value + " "
 		}
 

@@ -2,17 +2,15 @@ package carapace
 
 import "sync"
 
-type (
-	batch        []Action
-	invokedBatch []InvokedAction
-)
+type batch []Action
+type invokedBatch []InvokedAction
 
-// Batch creates a batch of Actions that can be invoked in parallel.
+// Batch creates a batch of Actions that can be invoked in parallel
 func Batch(actions ...Action) batch {
 	return batch(actions)
 }
 
-// Invoke invokes contained Actions of the batch using goroutines.
+// Invoke invokes contained Actions of the batch using goroutines
 func (b batch) Invoke(c Context) invokedBatch {
 	invokedActions := make([]InvokedAction, len(b))
 	functions := make([]func(), len(b))
@@ -39,7 +37,7 @@ func (b batch) ToA() Action {
 	})
 }
 
-// Merge merges Actions of a batch.
+// Merge merges Actions of a batch
 func (b invokedBatch) Merge() InvokedAction {
 	switch len(b) {
 	case 0:

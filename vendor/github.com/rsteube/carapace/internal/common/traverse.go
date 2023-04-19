@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/pflag"
 )
 
-// TraverseLenient traverses the command tree but filters errors regarding arguments currently being completed.
+// TraverseLenient traverses the command tree but filters errors regarding arguments currently being completed
 func TraverseLenient(cmd *cobra.Command, args []string) (*cobra.Command, []string, error) {
 	a := args
 
@@ -86,11 +86,6 @@ func filterError(args []string, err error) error {
 
 	if strings.HasPrefix(current, "-") && msg == fmt.Sprintf("unknown shorthand flag: %v", current) { // rsteube/carapace-pflag: long shorthand
 		// ignore non-posix shorthand flag currently being completed
-		return nil
-	}
-
-	if re := regexp.MustCompile(`invalid argument ".*" for "(?P<flag>.*)" flag:.*`); re.MatchString(msg) && strings.SplitN(current, "=", 2)[0] == re.FindStringSubmatch(msg)[1] {
-		// ignore invalid argument for flag currently being completed (e.g. empty IntSlice)
 		return nil
 	}
 

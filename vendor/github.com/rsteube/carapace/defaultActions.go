@@ -4,10 +4,15 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/rsteube/carapace/internal/common"
 	"github.com/rsteube/carapace/internal/config"
+	"github.com/rsteube/carapace/internal/pflagfork"
 	"github.com/rsteube/carapace/internal/shell/export"
 	"github.com/rsteube/carapace/pkg/style"
 	"github.com/rsteube/carapace/third_party/github.com/acarl005/stripansi"
@@ -15,7 +20,7 @@ import (
 	"github.com/spf13/pflag"
 )
 
-// ActionCallback invokes a go function during completion.
+// ActionCallback invokes a go function during completion
 func ActionCallback(callback CompletionCallback) Action {
 	return Action{callback: callback}
 }
@@ -62,15 +67,16 @@ func ActionImport(output []byte) Action {
 		if err := json.Unmarshal(output, &e); err != nil {
 			return ActionMessage(err.Error())
 		}
-		return Action{
-			rawValues: e.RawValues,
-			meta:      e.Meta,
+		a := actionRawValues(e.RawValues...)
+		if e.Nospace {
+			a = a.NoSpace()
 		}
+		return a
 	})
 }
 
 // ActionExecute executes completion on an internal command
-// TODO example.
+// TODO example
 func ActionExecute(cmd *cobra.Command) Action {
 	return ActionCallback(func(c Context) Action {
 		args := []string{"_carapace", "export", cmd.Name()}
@@ -80,6 +86,7 @@ func ActionExecute(cmd *cobra.Command) Action {
 
 		Gen(cmd).PreInvoke(func(cmd *cobra.Command, flag *pflag.Flag, action Action) Action {
 			return ActionCallback(func(_c Context) Action {
+				// TODO verify
 				_c.Env = c.Env
 				_c.Dir = c.Dir
 				return action.Invoke(_c).ToA()
@@ -97,32 +104,98 @@ func ActionExecute(cmd *cobra.Command) Action {
 	})
 }
 
-// ActionDirectories completes directories.
+// ActionDirectories completes directories
 func ActionDirectories() Action {
 	return ActionCallback(func(c Context) Action {
-		return actionPath([]string{""}, true).Invoke(c).ToMultiPartsA("/").StyleF(style.ForPath)
-	}).Tag("directories")
+		return actionPath([]string{""}, true).Invoke(c).ToMultiPartsA("/").noSpace(true).StyleF(func(s string) string {
+			if abs, err := c.Abs(s); err == nil {
+				return style.ForPath(abs)
+			}
+			return ""
+		})
+	})
 }
 
-// ActionFiles completes files with optional suffix filtering.
+// ActionFiles completes files with optional suffix filtering
 func ActionFiles(suffix ...string) Action {
 	return ActionCallback(func(c Context) Action {
-		return actionPath(suffix, false).Invoke(c).ToMultiPartsA("/").StyleF(style.ForPath)
-	}).Tag("files")
+		return actionPath(suffix, false).Invoke(c).ToMultiPartsA("/").noSpace(true).StyleF(func(s string) string {
+			if abs, err := c.Abs(s); err == nil {
+				return style.ForPath(abs)
+			}
+			return ""
+		})
+	})
 }
 
-// ActionValues completes arbitrary keywords (values).
+func actionPath(fileSuffixes []string, dirOnly bool) Action {
+	return ActionCallback(func(c Context) Action {
+		abs, err := c.Abs(c.CallbackValue)
+		if err != nil {
+			return ActionMessage(err.Error())
+		}
+
+		displayFolder := filepath.Dir(c.CallbackValue)
+		if displayFolder == "." {
+			displayFolder = ""
+		} else if !strings.HasSuffix(displayFolder, "/") {
+			displayFolder = displayFolder + "/"
+		}
+
+		actualFolder := filepath.Dir(abs)
+		files, err := ioutil.ReadDir(actualFolder)
+		if err != nil {
+			return ActionMessage(err.Error())
+		}
+
+		showHidden := !strings.HasSuffix(abs, "/") && strings.HasPrefix(filepath.Base(abs), ".")
+
+		vals := make([]string, 0, len(files)*2)
+		for _, file := range files {
+			if !showHidden && strings.HasPrefix(file.Name(), ".") {
+				continue
+			}
+
+			resolvedFile := file
+			if resolved, err := filepath.EvalSymlinks(actualFolder + file.Name()); err == nil {
+				if stat, err := os.Stat(resolved); err == nil {
+					resolvedFile = stat
+				}
+			}
+
+			if resolvedFile.IsDir() {
+				vals = append(vals, displayFolder+file.Name()+"/", style.ForPath(filepath.Clean(actualFolder+"/"+file.Name()+"/")))
+			} else if !dirOnly {
+				if len(fileSuffixes) == 0 {
+					fileSuffixes = []string{""}
+				}
+				for _, suffix := range fileSuffixes {
+					if strings.HasSuffix(file.Name(), suffix) {
+						vals = append(vals, displayFolder+file.Name(), style.ForPath(filepath.Clean(actualFolder+"/"+file.Name())))
+						break
+					}
+				}
+			}
+		}
+		if strings.HasPrefix(c.CallbackValue, "./") {
+			return ActionStyledValues(vals...).Invoke(Context{}).Prefix("./").ToA()
+		}
+		return ActionStyledValues(vals...)
+	})
+}
+
+// ActionValues completes arbitrary keywords (values)
 func ActionValues(values ...string) Action {
 	return ActionCallback(func(c Context) Action {
 		vals := make([]common.RawValue, 0, len(values))
 		for _, val := range values {
-			vals = append(vals, common.RawValue{Value: val, Display: val})
+			vals = append(vals, common.RawValue{Value: val, Display: val, Description: "", Style: style.Default})
 		}
-		return Action{rawValues: vals}
+		return actionRawValues(vals...)
 	})
 }
 
-// ActionStyledValues is like ActionValues but also accepts a style.
+// ActionStyledValues is like ActionValues but also accepts a style
 func ActionStyledValues(values ...string) Action {
 	return ActionCallback(func(c Context) Action {
 		if length := len(values); length%2 != 0 {
@@ -131,13 +204,13 @@ func ActionStyledValues(values ...string) Action {
 
 		vals := make([]common.RawValue, 0, len(values)/2)
 		for i := 0; i < len(values); i += 2 {
-			vals = append(vals, common.RawValue{Value: values[i], Display: values[i], Style: values[i+1]})
+			vals = append(vals, common.RawValue{Value: values[i], Display: values[i], Description: "", Style: values[i+1]})
 		}
-		return Action{rawValues: vals}
+		return actionRawValues(vals...)
 	})
 }
 
-// ActionValuesDescribed completes arbitrary key (values) with an additional description (value, description pairs).
+// ActionValuesDescribed completes arbitrary key (values) with an additional description (value, description pairs)
 func ActionValuesDescribed(values ...string) Action {
 	return ActionCallback(func(c Context) Action {
 		if length := len(values); length%2 != 0 {
@@ -146,13 +219,13 @@ func ActionValuesDescribed(values ...string) Action {
 
 		vals := make([]common.RawValue, 0, len(values)/2)
 		for i := 0; i < len(values); i += 2 {
-			vals = append(vals, common.RawValue{Value: values[i], Display: values[i], Description: values[i+1]})
+			vals = append(vals, common.RawValue{Value: values[i], Display: values[i], Description: values[i+1], Style: style.Default})
 		}
-		return Action{rawValues: vals}
+		return actionRawValues(vals...)
 	})
 }
 
-// ActionStyledValuesDescribed is like ActionValues but also accepts a style.
+// ActionStyledValuesDescribed is like ActionValues but also accepts a style
 func ActionStyledValuesDescribed(values ...string) Action {
 	return ActionCallback(func(c Context) Action {
 		if length := len(values); length%3 != 0 {
@@ -163,23 +236,29 @@ func ActionStyledValuesDescribed(values ...string) Action {
 		for i := 0; i < len(values); i += 3 {
 			vals = append(vals, common.RawValue{Value: values[i], Display: values[i], Description: values[i+1], Style: values[i+2]})
 		}
-		return Action{rawValues: vals}
+		return actionRawValues(vals...)
 	})
 }
 
-// ActionMessage displays a help messages in places where no completions can be generated.
-func ActionMessage(msg string, args ...interface{}) Action {
+func actionRawValues(rawValues ...common.RawValue) Action {
+	return Action{
+		rawValues: rawValues,
+	}
+}
+
+// ActionMessage displays a help messages in places where no completions can be generated
+func ActionMessage(msg string, a ...interface{}) Action {
 	return ActionCallback(func(c Context) Action {
-		if len(args) > 0 {
-			msg = fmt.Sprintf(msg, args...)
+		if len(a) > 0 {
+			msg = fmt.Sprintf(msg, a...)
 		}
-		a := ActionValues().NoSpace()
-		a.meta.Messages.Add(msg)
-		return a
+		return ActionStyledValuesDescribed("_", "", style.Default, "ERR", msg, style.Carapace.Error).
+			Invoke(c).Prefix(c.CallbackValue).ToA(). // needs to be prefixed with current callback value to not be filtered out
+			noSpace(true).skipCache(true)
 	})
 }
 
-// ActionMultiParts completes multiple parts of words separately where each part is separated by some char (CallbackValue is set to the currently completed part during invocation).
+// ActionMultiParts completes multiple parts of words separately where each part is separated by some char (CallbackValue is set to the currently completed part during invocation)
 func ActionMultiParts(divider string, callback func(c Context) Action) Action {
 	return ActionCallback(func(c Context) Action {
 		index := strings.LastIndex(c.CallbackValue, string(divider))
@@ -197,11 +276,68 @@ func ActionMultiParts(divider string, callback func(c Context) Action) Action {
 		}
 		c.Parts = parts
 
-		nospace := '*'
-		if runes := []rune(divider); len(runes) > 0 {
-			nospace = runes[len(runes)-1]
+		return callback(c).Invoke(c).Prefix(prefix).ToA().noSpace(true)
+	})
+}
+
+func actionSubcommands(cmd *cobra.Command) Action {
+	vals := make([]string, 0)
+	for _, subcommand := range cmd.Commands() {
+		if !subcommand.Hidden && subcommand.Deprecated == "" {
+			vals = append(vals, subcommand.Name(), subcommand.Short)
+			for _, alias := range subcommand.Aliases {
+				vals = append(vals, alias, subcommand.Short)
+			}
 		}
-		return callback(c).Invoke(c).Prefix(prefix).ToA().NoSpace(nospace)
+	}
+	return ActionValuesDescribed(vals...)
+}
+
+func actionFlags(cmd *cobra.Command) Action {
+	return ActionCallback(func(c Context) Action {
+		re := regexp.MustCompile("^-(?P<shorthand>[^-=]+)")
+		isShorthandSeries := re.MatchString(c.CallbackValue) && pflagfork.IsPosix(cmd.Flags())
+
+		vals := make([]string, 0)
+		cmd.Flags().VisitAll(func(f *pflag.Flag) {
+			if f.Deprecated != "" {
+				return // skip deprecated flags
+			}
+
+			if f.Changed &&
+				!strings.Contains(f.Value.Type(), "Slice") &&
+				!strings.Contains(f.Value.Type(), "Array") &&
+				f.Value.Type() != "count" {
+				return // don't repeat flag
+			}
+
+			if isShorthandSeries {
+				if f.Shorthand != "" && f.ShorthandDeprecated == "" {
+					for _, shorthand := range c.CallbackValue[1:] {
+						if shorthandFlag := cmd.Flags().ShorthandLookup(string(shorthand)); shorthandFlag != nil && shorthandFlag.Value.Type() != "bool" && shorthandFlag.Value.Type() != "count" && shorthandFlag.NoOptDefVal == "" {
+							return // abort shorthand flag series if a previous one is not bool or count and requires an argument (no default value)
+						}
+					}
+					vals = append(vals, f.Shorthand, f.Usage)
+				}
+			} else {
+				if flagstyle := pflagfork.Style(f); flagstyle != pflagfork.ShorthandOnly {
+					if flagstyle == pflagfork.NameAsShorthand {
+						vals = append(vals, "-"+f.Name, f.Usage)
+					} else {
+						vals = append(vals, "--"+f.Name, f.Usage)
+					}
+				}
+				if f.Shorthand != "" && f.ShorthandDeprecated == "" {
+					vals = append(vals, "-"+f.Shorthand, f.Usage)
+				}
+			}
+		})
+
+		if isShorthandSeries {
+			return ActionValuesDescribed(vals...).Invoke(c).Prefix(c.CallbackValue).ToA().noSpace(true)
+		}
+		return ActionValuesDescribed(vals...)
 	})
 }
 
@@ -223,11 +359,7 @@ func ActionStyleConfig() Action {
 					if err != nil {
 						return ActionMessage(err.Error())
 					}
-					batch := Batch()
-					for _, field := range fields {
-						batch = append(batch, ActionStyledValuesDescribed(field.Name, field.Description, field.Style).Tag(field.Tag))
-					}
-					return batch.Invoke(c).Merge().Suffix("=").ToA()
+					return ActionStyledValuesDescribed(fields...).Invoke(c).Suffix("=").ToA()
 
 				default:
 					return ActionValues()
@@ -235,7 +367,7 @@ func ActionStyleConfig() Action {
 			})
 		case 1:
 			return ActionMultiParts(",", func(c Context) Action {
-				return ActionStyles(c.Parts...).Invoke(c).Filter(c.Parts).ToA().NoSpace()
+				return ActionStyles(c.Parts...).Invoke(c).Filter(c.Parts).ToA()
 			})
 		default:
 			return ActionValues()
@@ -281,36 +413,33 @@ func ActionStyles(styles ...string) Action {
 		}
 
 		batch := Batch()
-		_s := func(s string) string {
-			return style.Of(append(styles, s)...)
-		}
 
 		if !fg {
 			batch = append(batch, ActionStyledValues(
-				style.Black, _s(style.Black),
-				style.Red, _s(style.Red),
-				style.Green, _s(style.Green),
-				style.Yellow, _s(style.Yellow),
-				style.Blue, _s(style.Blue),
-				style.Magenta, _s(style.Magenta),
-				style.Cyan, _s(style.Cyan),
-				style.White, _s(style.White),
-				style.Gray, _s(style.Gray),
+				style.Black, style.Of(append(styles, style.Black)...),
+				style.Red, style.Of(append(styles, style.Red)...),
+				style.Green, style.Of(append(styles, style.Green)...),
+				style.Yellow, style.Of(append(styles, style.Yellow)...),
+				style.Blue, style.Of(append(styles, style.Blue)...),
+				style.Magenta, style.Of(append(styles, style.Magenta)...),
+				style.Cyan, style.Of(append(styles, style.Cyan)...),
+				style.White, style.Of(append(styles, style.White)...),
+				style.Gray, style.Of(append(styles, style.Gray)...),
 
-				style.BrightBlack, _s(style.BrightBlack),
-				style.BrightRed, _s(style.BrightRed),
-				style.BrightGreen, _s(style.BrightGreen),
-				style.BrightYellow, _s(style.BrightYellow),
-				style.BrightBlue, _s(style.BrightBlue),
-				style.BrightMagenta, _s(style.BrightMagenta),
-				style.BrightCyan, _s(style.BrightCyan),
-				style.BrightWhite, _s(style.BrightWhite),
+				style.BrightBlack, style.Of(append(styles, style.BrightBlack)...),
+				style.BrightRed, style.Of(append(styles, style.BrightRed)...),
+				style.BrightGreen, style.Of(append(styles, style.BrightGreen)...),
+				style.BrightYellow, style.Of(append(styles, style.BrightYellow)...),
+				style.BrightBlue, style.Of(append(styles, style.BrightBlue)...),
+				style.BrightMagenta, style.Of(append(styles, style.BrightMagenta)...),
+				style.BrightCyan, style.Of(append(styles, style.BrightCyan)...),
+				style.BrightWhite, style.Of(append(styles, style.BrightWhite)...),
 			))
 
 			if strings.HasPrefix(c.CallbackValue, "color") {
 				for i := 0; i <= 255; i++ {
 					batch = append(batch, ActionStyledValues(
-						fmt.Sprintf("color%v", i), _s(style.XTerm256Color(uint8(i))),
+						fmt.Sprintf("color%v", i), style.Of(append(styles, style.XTerm256Color(uint8(i)))...),
 					))
 				}
 			} else {
@@ -320,29 +449,29 @@ func ActionStyles(styles ...string) Action {
 
 		if !bg {
 			batch = append(batch, ActionStyledValues(
-				style.BgBlack, _s(style.BgBlack),
-				style.BgRed, _s(style.BgRed),
-				style.BgGreen, _s(style.BgGreen),
-				style.BgYellow, _s(style.BgYellow),
-				style.BgBlue, _s(style.BgBlue),
-				style.BgMagenta, _s(style.BgMagenta),
-				style.BgCyan, _s(style.BgCyan),
-				style.BgWhite, _s(style.BgWhite),
+				style.BgBlack, style.Of(append(styles, style.BgBlack)...),
+				style.BgRed, style.Of(append(styles, style.BgRed)...),
+				style.BgGreen, style.Of(append(styles, style.BgGreen)...),
+				style.BgYellow, style.Of(append(styles, style.BgYellow)...),
+				style.BgBlue, style.Of(append(styles, style.BgBlue)...),
+				style.BgMagenta, style.Of(append(styles, style.BgMagenta)...),
+				style.BgCyan, style.Of(append(styles, style.BgCyan)...),
+				style.BgWhite, style.Of(append(styles, style.BgWhite)...),
 
-				style.BgBrightBlack, _s(style.BgBrightBlack),
-				style.BgBrightRed, _s(style.BgBrightRed),
-				style.BgBrightGreen, _s(style.BgBrightGreen),
-				style.BgBrightYellow, _s(style.BgBrightYellow),
-				style.BgBrightBlue, _s(style.BgBrightBlue),
-				style.BgBrightMagenta, _s(style.BgBrightMagenta),
-				style.BgBrightCyan, _s(style.BgBrightCyan),
-				style.BgBrightWhite, _s(style.BgBrightWhite),
+				style.BgBrightBlack, style.Of(append(styles, style.BgBrightBlack)...),
+				style.BgBrightRed, style.Of(append(styles, style.BgBrightRed)...),
+				style.BgBrightGreen, style.Of(append(styles, style.BgBrightGreen)...),
+				style.BgBrightYellow, style.Of(append(styles, style.BgBrightYellow)...),
+				style.BgBrightBlue, style.Of(append(styles, style.BgBrightBlue)...),
+				style.BgBrightMagenta, style.Of(append(styles, style.BgBrightMagenta)...),
+				style.BgBrightCyan, style.Of(append(styles, style.BgBrightCyan)...),
+				style.BgBrightWhite, style.Of(append(styles, style.BgBrightWhite)...),
 			))
 
 			if strings.HasPrefix(c.CallbackValue, "bg-color") {
 				for i := 0; i <= 255; i++ {
 					batch = append(batch, ActionStyledValues(
-						fmt.Sprintf("bg-color%v", i), _s("bg-"+style.XTerm256Color(uint8(i))),
+						fmt.Sprintf("bg-color%v", i), style.Of(append(styles, "bg-"+style.XTerm256Color(uint8(i)))...),
 					))
 				}
 			} else {
@@ -351,14 +480,14 @@ func ActionStyles(styles ...string) Action {
 		}
 
 		batch = append(batch, ActionStyledValues(
-			style.Bold, _s(style.Bold),
-			style.Dim, _s(style.Dim),
-			style.Italic, _s(style.Italic),
-			style.Underlined, _s(style.Underlined),
-			style.Blink, _s(style.Blink),
-			style.Inverse, _s(style.Inverse),
+			style.Bold, style.Of(append(styles, style.Bold)...),
+			style.Dim, style.Of(append(styles, style.Dim)...),
+			style.Italic, style.Of(append(styles, style.Italic)...),
+			style.Underlined, style.Of(append(styles, style.Underlined)...),
+			style.Blink, style.Of(append(styles, style.Blink)...),
+			style.Inverse, style.Of(append(styles, style.Inverse)...),
 		))
 
 		return batch.ToA()
-	}).Tag("styles")
+	})
 }

@@ -6,10 +6,21 @@ import (
 	"strings"
 
 	"github.com/rsteube/carapace/internal/common"
-	_shell "github.com/rsteube/carapace/internal/shell"
+	"github.com/rsteube/carapace/internal/shell/bash"
+	"github.com/rsteube/carapace/internal/shell/bash_ble"
+	"github.com/rsteube/carapace/internal/shell/elvish"
+	"github.com/rsteube/carapace/internal/shell/export"
+	"github.com/rsteube/carapace/internal/shell/fish"
+	"github.com/rsteube/carapace/internal/shell/ion"
+	"github.com/rsteube/carapace/internal/shell/nushell"
+	"github.com/rsteube/carapace/internal/shell/oil"
+	"github.com/rsteube/carapace/internal/shell/powershell"
+	"github.com/rsteube/carapace/internal/shell/tcsh"
+	"github.com/rsteube/carapace/internal/shell/xonsh"
+	"github.com/rsteube/carapace/internal/shell/zsh"
 )
 
-// InvokedAction is a logical alias for an Action whose (nested) callback was invoked.
+// InvokedAction is a logical alias for an Action whose (nested) callback was invoked
 type InvokedAction struct {
 	Action
 }
@@ -19,8 +30,17 @@ type InvokedAction struct {
 //	a := carapace.ActionValues("A", "B", "C").Invoke(c)
 //	b := a.Filter([]string{"B"}) // ["A", "C"]
 func (a InvokedAction) Filter(values []string) InvokedAction {
-	a.rawValues = a.rawValues.Filter(values...)
-	return a
+	toremove := make(map[string]bool)
+	for _, v := range values {
+		toremove[v] = true
+	}
+	filtered := make([]common.RawValue, 0)
+	for _, rawValue := range a.rawValues {
+		if _, ok := toremove[rawValue.Value]; !ok {
+			filtered = append(filtered, rawValue)
+		}
+	}
+	return InvokedAction{actionRawValues(filtered...).noSpace(a.nospace).skipCache(a.skipcache)}
 }
 
 // Merge merges InvokedActions (existing values are overwritten)
@@ -29,17 +49,28 @@ func (a InvokedAction) Filter(values []string) InvokedAction {
 //	b := carapace.ActionValues("B", "C").Invoke(c)
 //	c := a.Merge(b) // ["A", "B", "C"]
 func (a InvokedAction) Merge(others ...InvokedAction) InvokedAction {
+	uniqueRawValues := make(map[string]common.RawValue)
+	nospace := a.nospace
+	skipcache := a.skipcache
 	for _, other := range append([]InvokedAction{a}, others...) {
-		a.rawValues = append(a.rawValues, other.rawValues...)
-		a.meta.Merge(other.meta)
+		for _, c := range other.rawValues {
+			uniqueRawValues[c.Value] = c
+		}
+		nospace = nospace || other.nospace
+		skipcache = skipcache || other.skipcache
 	}
-	a.rawValues = a.rawValues.Unique()
-	return a
+
+	rawValues := make([]common.RawValue, 0, len(uniqueRawValues))
+	for _, c := range uniqueRawValues {
+		rawValues = append(rawValues, c)
+	}
+	return InvokedAction{actionRawValues(rawValues...).noSpace(nospace).skipCache(skipcache)}
 }
 
 // Prefix adds a prefix to values (only the ones inserted, not the display values)
 //
-//	carapace.ActionValues("melon", "drop", "fall").Invoke(c).Prefix("water")
+//	a := carapace.ActionValues("melon", "drop", "fall").Invoke(c)
+//	b := a.Prefix("water") // ["watermelon", "waterdrop", "waterfall"] but display still ["melon", "drop", "fall"]
 func (a InvokedAction) Prefix(prefix string) InvokedAction {
 	for index, val := range a.rawValues {
 		a.rawValues[index].Value = prefix + val.Value
@@ -49,7 +80,8 @@ func (a InvokedAction) Prefix(prefix string) InvokedAction {
 
 // Suffix adds a suffx to values (only the ones inserted, not the display values)
 //
-//	carapace.ActionValues("apple", "melon", "orange").Invoke(c).Suffix("juice")
+//	a := carapace.ActionValues("apple", "melon", "orange").Invoke(c)
+//	b := a.Suffix("juice") // ["applejuice", "melonjuice", "orangejuice"] but display still ["apple", "melon", "orange"]
 func (a InvokedAction) Suffix(suffix string) InvokedAction {
 	for index, val := range a.rawValues {
 		a.rawValues[index].Value = val.Value + suffix
@@ -57,7 +89,7 @@ func (a InvokedAction) Suffix(suffix string) InvokedAction {
 	return a
 }
 
-// ToA casts an InvokedAction to Action.
+// ToA casts an InvokedAction to Action
 func (a InvokedAction) ToA() Action {
 	return a.Action
 }
@@ -89,6 +121,7 @@ func (a InvokedAction) ToMultiPartsA(dividers ...string) Action {
 				splittedCV = append(splittedCV, "")
 				break
 			}
+
 		}
 
 		uniqueVals := make(map[string]common.RawValue)
@@ -121,29 +154,27 @@ func (a InvokedAction) ToMultiPartsA(dividers ...string) Action {
 		for _, val := range uniqueVals {
 			vals = append(vals, val)
 		}
-
-		a := Action{rawValues: vals}
-		for _, divider := range dividers {
-			if runes := []rune(divider); len(runes) == 0 {
-				a.meta.Nospace.Add('*')
-				break
-			} else {
-				a.meta.Nospace.Add(runes[len(runes)-1])
-			}
-		}
-		return a
+		return actionRawValues(vals...).noSpace(true)
 	})
 }
 
-func (a InvokedAction) value(shell string, callbackValue string) string {
-	return _shell.Value(shell, callbackValue, a.meta, a.rawValues)
-}
-
-func init() {
-	common.FromInvokedAction = func(i interface{}) (common.Meta, common.RawValues) {
-		if a, ok := i.(InvokedAction); ok {
-			return a.meta, a.rawValues
-		}
-		return common.Meta{}, nil
+func (a InvokedAction) value(shell string, callbackValue string) string { // TODO use context instead?
+	shellFuncs := map[string]func(currentWord string, nospace bool, values common.RawValues) string{
+		"bash":       bash.ActionRawValues,
+		"bash-ble":   bash_ble.ActionRawValues,
+		"fish":       fish.ActionRawValues,
+		"elvish":     elvish.ActionRawValues,
+		"export":     export.ActionRawValues,
+		"ion":        ion.ActionRawValues,
+		"nushell":    nushell.ActionRawValues,
+		"oil":        oil.ActionRawValues,
+		"powershell": powershell.ActionRawValues,
+		"tcsh":       tcsh.ActionRawValues,
+		"xonsh":      xonsh.ActionRawValues,
+		"zsh":        zsh.ActionRawValues,
 	}
+	if f, ok := shellFuncs[shell]; ok {
+		return f(callbackValue, a.nospace, a.rawValues)
+	}
+	return ""
 }

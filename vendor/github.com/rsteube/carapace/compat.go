@@ -40,11 +40,8 @@ func cobraValuesFor(action InvokedAction) []string {
 
 func cobraDirectiveFor(action InvokedAction) cobra.ShellCompDirective {
 	directive := cobra.ShellCompDirectiveNoFileComp
-	for _, val := range action.rawValues {
-		if action.meta.Nospace.Matches(val.Value) {
-			directive = directive | cobra.ShellCompDirectiveNoSpace
-			break
-		}
+	if action.nospace {
+		directive = directive | cobra.ShellCompDirectiveNoSpace
 	}
 	return directive
 }

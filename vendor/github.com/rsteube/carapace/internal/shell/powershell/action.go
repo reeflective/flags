@@ -3,6 +3,7 @@ package powershell
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/rsteube/carapace/internal/common"
@@ -21,7 +22,7 @@ type completionResult struct {
 	ToolTip        string
 }
 
-// CompletionResult doesn't like empty parameters, so just replace with space if needed.
+// CompletionResult doesn't like empty parameters, so just replace with space if needed
 func ensureNotEmpty(s string) string {
 	if s == "" {
 		return " "
@@ -29,8 +30,11 @@ func ensureNotEmpty(s string) string {
 	return s
 }
 
-// ActionRawValues formats values for powershell.
-func ActionRawValues(currentWord string, meta common.Meta, values common.RawValues) string {
+// ActionRawValues formats values for powershell
+func ActionRawValues(currentWord string, nospace bool, values common.RawValues) string {
+	filtered := values.FilterPrefix(currentWord)
+	sort.Sort(common.ByDisplay(filtered))
+
 	valueStyle := "default"
 	if s := style.Carapace.Value; s != "" && ui.ParseStyling(s) != nil {
 		valueStyle = s
@@ -41,8 +45,8 @@ func ActionRawValues(currentWord string, meta common.Meta, values common.RawValu
 		descriptionStyle = s
 	}
 
-	vals := make([]completionResult, 0, len(values))
-	for _, val := range values {
+	vals := make([]completionResult, 0, len(filtered))
+	for _, val := range filtered {
 		if val.Value != "" { // must not be empty - any empty `''` parameter in CompletionResult causes an error
 			val.Value = sanitizer.Replace(val.Value)
 
@@ -50,7 +54,7 @@ func ActionRawValues(currentWord string, meta common.Meta, values common.RawValu
 				val.Value = fmt.Sprintf("'%v'", val.Value)
 			}
 
-			if !meta.Nospace.Matches(val.Value) {
+			if !nospace {
 				val.Value = val.Value + " "
 			}
 

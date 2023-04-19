@@ -29,7 +29,7 @@ type flag struct {
 
 func convertFlag(f *pflag.Flag) flag {
 	longhand := ""
-	if (pflagfork.Flag{Flag: f}).Style() != pflagfork.ShorthandOnly {
+	if pflagfork.Style(f) != pflagfork.ShorthandOnly {
 		longhand = f.Name
 	}
 
@@ -76,7 +76,7 @@ func convert(cmd *cobra.Command) command {
 	return c
 }
 
-// Snippet exports the command structure as json.
+// Snippet exports the command structure as json
 func Snippet(cmd *cobra.Command) string {
 	out, err := json.Marshal(convert(cmd))
 	if err == nil {
