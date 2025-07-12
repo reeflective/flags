@@ -1,15 +1,17 @@
 module github.com/reeflective/flags
 
-go 1.19
+go 1.23.0
+
+toolchain go1.24.2
 
 require (
-	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d
 	github.com/go-playground/validator/v10 v10.11.1
 	github.com/rsteube/carapace v0.30.0
 	github.com/rsteube/carapace-bin v0.19.0
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.8.0
+	golang.org/x/exp v0.0.0-20250711185948-6ae5c78190dc
 )
 
 require (

@@ -6,7 +6,6 @@ import (
 
 	"github.com/reeflective/flags"
 	"github.com/reeflective/flags/example/commands"
-	// "github.com/reeflective/flags/internal/validation"
 )
 
 func main() {
@@ -23,7 +22,7 @@ func main() {
 	// which checks for struct tags specifying validations:
 	// when found, this handler wraps the generated flag into
 	// a special value which will validate the user input.
-	// opts = append(opts, flags.WithValidator(validation.New()))
+	opts = append(opts, flags.WithValidation())
 
 	// Run the scan: this generates the entire command tree
 	// into a cobra root command (and its subcommands).

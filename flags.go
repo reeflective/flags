@@ -12,11 +12,13 @@
 package flags
 
 import (
+	"github.com/go-playground/validator/v10"
 	"github.com/reeflective/flags/internal/errors"
 	"github.com/reeflective/flags/internal/gen/completions"
 	"github.com/reeflective/flags/internal/gen/flags"
 	"github.com/reeflective/flags/internal/interfaces"
 	"github.com/reeflective/flags/internal/parser"
+	"github.com/reeflective/flags/internal/validation"
 	"github.com/reeflective/flags/internal/values"
 	"github.com/spf13/cobra"
 )
@@ -81,19 +83,6 @@ func toInternalOpts(opts []Option) []parser.OptFunc {
 	return internalOpts
 }
 
-// ValidateFunc describes a validation function that can be used with the
-// WithValidator option. It receives the raw string value of a flag or
-// positional argument and should return an error if validation fails.
-type ValidateFunc func(val string) error
-
-// WithValidator registers a custom validation function for flags and arguments.
-func WithValidator(v ValidateFunc) Option {
-	return func(o *parser.Opts) {
-		// This requires a new internal option or modifying the existing one.
-		// For now, this is a placeholder.
-	}
-}
-
 // WithPrefix sets a prefix that will be applied to all long flag names.
 func WithPrefix(prefix string) Option {
 	return Option(parser.Prefix(prefix))
@@ -112,6 +101,30 @@ func WithFlagDivider(divider string) Option {
 // WithEnvDivider sets the character used to separate words in environment variable names.
 func WithEnvDivider(divider string) Option {
 	return Option(parser.EnvDivider(divider))
+}
+
+// === Validation ===
+
+// ValidateFunc is the core validation function type.
+// It takes the actual Go value to validate, the validation tag string,
+// and the field name for error reporting.
+// This is the simplified interface the user wants to implement.
+type ValidateFunc = validation.ValidateFunc
+
+// WithValidation adds field validation for fields with the "validate" tag.
+// This makes use of go-playground/validator internally, refer to their docs
+// for an exhaustive list of valid tag validations.
+func WithValidation() Option {
+	return Option(parser.Validator(validation.NewDefault()))
+}
+
+// WithValidator registers a custom validation function for flags and arguments.
+// It is required to pass a go-playground/validator object for customization.
+// The latter library has been chosen because it supports most of the validation
+// one would want in CLI, and because there are vast possibilities for registering
+// and using custom validations through the *Validate type.
+func WithValidator(v *validator.Validate) Option {
+	return Option(parser.Validator(validation.NewWith(v)))
 }
 
 // === Core Interfaces ===
