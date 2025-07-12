@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/reeflective/flags/internal/scan"
+	"github.com/reeflective/flags/internal/parser"
 )
 
 // ErrInvalidChoice indicates that the provided flag argument is not among the valid choices.
@@ -21,7 +21,7 @@ type ValueValidator interface {
 }
 
 // Bind builds a validation function including all validation routines (builtin or user-defined) available.
-func Bind(value reflect.Value, field reflect.StructField, choices []string, opt scan.Opts) func(val string) error {
+func Bind(value reflect.Value, field reflect.StructField, choices []string, opt parser.Opts) func(val string) error {
 	if opt.Validator == nil && len(choices) == 0 {
 		return nil
 	}

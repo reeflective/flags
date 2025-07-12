@@ -88,7 +88,7 @@ The behavior is the following:
 type FirstListArgs struct {
 	Args struct {
 		Hosts  []Host `description:"A list of hosts with minimum and maximum requirements" required:"1-2"`
-		Target Proxy  `description:"A single, required remaining argument" required:"1"`
+		Target Proxy  `description:"A single, required remaining argument"                 required:"1"`
 	} `positional-args:"yes" required:"yes"`
 }
 
@@ -136,9 +136,9 @@ declare their own requirements.
 // Since the IP slot is also a list, all arguments in excess (here, if more than 5 args) will be stored in it.
 type MultipleMinMaxArgs struct {
 	Args struct {
-		Hosts     []Host  `description:"A list of hosts with minimum and maximum requirements" required:"1-2"`
+		Hosts     []Host  `description:"A list of hosts with minimum and maximum requirements"               required:"1-2"`
 		Proxies   []Proxy `description:"A list of proxies, with min/max requirements overlapping with Hosts" required:"1-2"`
-		Addresses IP      `description:"A last list of IPs, which will store any words given in excess" required:"1"`
+		Addresses IP      `description:"A last list of IPs, which will store any words given in excess"      required:"1"`
 	} `positional-args:"yes" required:"yes"`
 }
 
@@ -178,10 +178,10 @@ type TagCompletedArgs struct {
 		// Files accepts at most two values, and the completions for them will be restricted to files with a '.go' extension.
 		// Since this slot has a min and max requirement value, once one argument is provided at the command-line, completions
 		// will be proposed both for this slot and for the next one, up until the maximum requirements are fulfilled.
-		Files []string `description:"A list of files with min/max requirements" required:"1-2" complete:"FilterExt,go"`
+		Files []string `complete:"FilterExt,go" description:"A list of files with min/max requirements" required:"1-2"`
 
 		// JSONConfig also completes files, but with a .json extension.
-		JSONConfig string `description:"the target of your command (anything string-based)" required:"1" complete:"FilterExt,json"`
+		JSONConfig string `complete:"FilterExt,json" description:"the target of your command (anything string-based)" required:"1"`
 	} `positional-args:"yes" required:"yes"`
 }
 

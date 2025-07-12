@@ -14,15 +14,15 @@ import (
 // (eg, options grouped in a struct), but just declares them at the root level.
 type BasicOptions struct {
 	// First flag tags notation
-	Path     string            `short:"p" long:"path" description:"a path used by your command" optional-value:"/home/user" complete:"Files"`
-	Files    []string          `short:"f" long:"files" desc:"A list of files, with repeated flags or comma-separated items" complete:"Files"`
-	Elems    map[string]string `short:"e" long:"elems" description:"A map[string]string flag, can be repeated or used with comma-separated items" choice:"user:host machine:testing another:target"`
-	Check    bool              `long:"check" short:"c" description:"a boolean checker, can be used in an option stacking, like -cp <path>"`
-	Machines Machines          `long:"machines" short:"m" description:"A type that implements user@host (multipart) completion"`
+	Path     string            `complete:"Files"                                                                    description:"a path used by your command"                                                  long:"path"  optional-value:"/home/user" short:"p"`
+	Files    []string          `complete:"Files"                                                                    desc:"A list of files, with repeated flags or comma-separated items"                       long:"files" short:"f"`
+	Elems    map[string]string `choice:"user:host machine:testing another:target"                                   description:"A map[string]string flag, can be repeated or used with comma-separated items" long:"elems" short:"e"`
+	Check    bool              `description:"a boolean checker, can be used in an option stacking, like -cp <path>" long:"check"                                                                               short:"c"`
+	Machines Machines          `description:"A type that implements user@host (multipart) completion"               long:"machines"                                                                            short:"m"`
 
 	// Second flag tag notation
-	Alternate string   `flag:"alternate a" desc:"A flag declared with struct tag flag:\"a alternate\" instead of short:\"a\" / long:\"alternate\""`
-	Email     []string `flag:"email E" desc:"An email address, validated with go-playground/validator" validate:"email"`
+	Alternate string   `desc:"A flag declared with struct tag flag:\"a alternate\" instead of short:\"a\" / long:\"alternate\"" flag:"alternate a"`
+	Email     []string `desc:"An email address, validated with go-playground/validator"                                         flag:"email E"     validate:"email"`
 }
 
 // Execute is the command implementation, shows how options are parsed.
@@ -54,7 +54,6 @@ func (c *GroupedOptions) Execute(args []string) error {
 	// fmt.Printf("Path (string):               %v\n", c.Path)
 	// fmt.Printf("Elems (map[string]string):   %v\n", c.Elems)
 	// fmt.Printf("Check (bool):                %v\n", c.Check)
-
 	return nil
 }
 
@@ -62,10 +61,10 @@ func (c *GroupedOptions) Execute(args []string) error {
 // and how it automatically initializes those fields if they are pointers.
 type IgnoredOptions struct {
 	// Both types below are automatically initialized by the library, since we consider them as (groups of) flags.
-	Verbose *bool `short:"v" long:"verbose" desc:"This pointer to bool type is marked as flag with struct tags"`
+	Verbose *bool `desc:"This pointer to bool type is marked as flag with struct tags" long:"verbose" short:"v"`
 	Group   *struct {
-		Path  *string `short:"p" long:"path" description:"A pointer to a string, which is automatically initialized by the library"`
-		Check bool    `long:"check" short:"c" description:"a boolean checker, can be used in an option stacking, like -cp <path>"`
+		Path  *string `description:"A pointer to a string, which is automatically initialized by the library" long:"path"  short:"p"`
+		Check bool    `description:"a boolean checker, can be used in an option stacking, like -cp <path>"    long:"check" short:"c"`
 	} `group:"group pointer"`
 
 	// Both types below are not marked either as groups, or as options:
@@ -94,8 +93,8 @@ type DefaultOptions struct {
 	// Extensions illustrate the two possible uses of the `choice` tag:
 	// - With a single value, but with multiple tag uses.
 	// - With multiple values, space-separated.
-	Extensions []string `short:"e" long:"extensions" desc:"A flag with validated choices" choice:".json .go .yaml"`
-	Defaults   string   `short:"d" long:"default" desc:"A flag with a default value, if not specified" optional-value:"my-value"`
+	Extensions []string `choice:".json .go .yaml"                             desc:"A flag with validated choices" long:"extensions"         short:"e"`
+	Defaults   string   `desc:"A flag with a default value, if not specified" long:"default"                       optional-value:"my-value" short:"d"`
 }
 
 // Execute is the command implementation, shows how options are parsed.
@@ -114,6 +113,5 @@ func (c *NamespacedOptions) Execute(args []string) error {
 	// fmt.Printf("Path (string):               %v\n", c.Path)
 	// fmt.Printf("Elems (map[string]string):   %v\n", c.Elems)
 	// fmt.Printf("Check (bool):                %v\n", c.Check)
-
 	return nil
 }

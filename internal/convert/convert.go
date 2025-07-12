@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/reeflective/flags/internal/tag"
+	"github.com/reeflective/flags/internal/parser"
 )
 
 const (
@@ -57,7 +57,7 @@ type unmarshaler interface {
 
 // Value converts a string to its underlying/native value type, therefore
 // directly applying this value on the struct field it was created from.
-func Value(val string, retval reflect.Value, options tag.MultiTag) error {
+func Value(val string, retval reflect.Value, options parser.MultiTag) error {
 	// Use unmarshaller if available/possible
 	if ok, err := convertUnmarshal(val, retval); ok {
 		return err
@@ -107,7 +107,7 @@ func Value(val string, retval reflect.Value, options tag.MultiTag) error {
 	return nil
 }
 
-func convertToString(val reflect.Value, options tag.MultiTag) (string, error) {
+func convertToString(val reflect.Value, options parser.MultiTag) (string, error) {
 	if ok, ret, err := convertMarshal(val); ok {
 		return ret, err
 	}
@@ -249,7 +249,7 @@ func convertBoolStr(val reflect.Value) (string, error) {
 	return "false", nil
 }
 
-func convertInt(val string, valType reflect.Type, retval reflect.Value, options tag.MultiTag) error {
+func convertInt(val string, valType reflect.Type, retval reflect.Value, options parser.MultiTag) error {
 	base, err := getBase(options, baseParseInt)
 	if err != nil {
 		return err
@@ -265,7 +265,7 @@ func convertInt(val string, valType reflect.Type, retval reflect.Value, options 
 	return nil
 }
 
-func convertIntStr(val reflect.Value, options tag.MultiTag) (string, error) {
+func convertIntStr(val reflect.Value, options parser.MultiTag) (string, error) {
 	base, err := getBase(options, baseParseInt)
 	if err != nil {
 		return "", err
@@ -274,7 +274,7 @@ func convertIntStr(val reflect.Value, options tag.MultiTag) (string, error) {
 	return strconv.FormatInt(val.Int(), base), nil
 }
 
-func convertUint(val string, valType reflect.Type, retval reflect.Value, options tag.MultiTag) error {
+func convertUint(val string, valType reflect.Type, retval reflect.Value, options parser.MultiTag) error {
 	base, err := getBase(options, baseParseInt)
 	if err != nil {
 		return err
@@ -290,7 +290,7 @@ func convertUint(val string, valType reflect.Type, retval reflect.Value, options
 	return nil
 }
 
-func convertUintStr(val reflect.Value, options tag.MultiTag) (string, error) {
+func convertUintStr(val reflect.Value, options parser.MultiTag) (string, error) {
 	base, err := getBase(options, baseParseInt)
 	if err != nil {
 		return "", err
@@ -310,7 +310,7 @@ func convertFloat(val string, valType reflect.Type, retval reflect.Value) error 
 	return nil
 }
 
-func convertSlice(val string, valType reflect.Type, retval reflect.Value, options tag.MultiTag) error {
+func convertSlice(val string, valType reflect.Type, retval reflect.Value, options parser.MultiTag) error {
 	elemtp := valType.Elem()
 
 	elemvalptr := reflect.New(elemtp)
@@ -325,7 +325,7 @@ func convertSlice(val string, valType reflect.Type, retval reflect.Value, option
 	return nil
 }
 
-func convertSliceStr(val reflect.Value, options tag.MultiTag) (string, error) {
+func convertSliceStr(val reflect.Value, options parser.MultiTag) (string, error) {
 	if val.Len() == 0 {
 		return "", nil
 	}
@@ -348,7 +348,7 @@ func convertSliceStr(val reflect.Value, options tag.MultiTag) (string, error) {
 	return ret + "]", nil
 }
 
-func convertMap(val string, valType reflect.Type, retval reflect.Value, options tag.MultiTag) error {
+func convertMap(val string, valType reflect.Type, retval reflect.Value, options parser.MultiTag) error {
 	parts := strings.SplitN(val, ":", requiredNumParsedValues)
 
 	key := parts[0]
@@ -382,7 +382,7 @@ func convertMap(val string, valType reflect.Type, retval reflect.Value, options 
 	return nil
 }
 
-func convertMapStr(val reflect.Value, options tag.MultiTag) (string, error) {
+func convertMapStr(val reflect.Value, options parser.MultiTag) (string, error) {
 	ret := "{"
 
 	for i, key := range val.MapKeys() {
@@ -422,7 +422,7 @@ func typeIsUnmarshaller(retval reflect.Value) (unmarshaler, bool) {
 	return nil, false
 }
 
-func getBase(options tag.MultiTag, base int) (int, error) {
+func getBase(options parser.MultiTag, base int) (int, error) {
 	var err error
 
 	var ivbase int64

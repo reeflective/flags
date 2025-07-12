@@ -4,11 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 	"sync"
 
 	"github.com/reeflective/flags/internal/convert"
-	"github.com/reeflective/flags/internal/tag"
+	"github.com/reeflective/flags/internal/parser"
 )
 
 // ErrRequired signals an argument field has not been
@@ -34,14 +35,14 @@ func WithWordConsumer(args *Args, consumer WordConsumer) *Args {
 // many places, so that we can parse/convert and make informed
 // decisions on how to handle those tasks.
 type Arg struct {
-	Index     int           // The position in the struct (n'th struct field used as a slot)
-	Name      string        // name of the argument, either tag name or struct field
-	Minimum   int           // minimum number of arguments we want.
-	Maximum   int           // Maximum number of args we want (-1: infinite)
-	StartMin  int           // Index of first positional word for which we are used
-	StartMax  int           // if previous positional slots are full, this replaces startAt
-	Tag       tag.MultiTag  // struct tag
-	Value     reflect.Value // A reference to the field value itself
+	Index     int             // The position in the struct (n'th struct field used as a slot)
+	Name      string          // name of the argument, either tag name or struct field
+	Minimum   int             // minimum number of arguments we want.
+	Maximum   int             // Maximum number of args we want (-1: infinite)
+	StartMin  int             // Index of first positional word for which we are used
+	StartMax  int             // if previous positional slots are full, this replaces startAt
+	Tag       parser.MultiTag // struct tag
+	Value     reflect.Value   // A reference to the field value itself
 	Validator func(val string) error
 }
 
@@ -114,7 +115,7 @@ func (args *Args) Parse(words []string, dash int) (retargs []string, err error) 
 	}
 
 	// Finally, if we have some return arguments, we verify that
-	// that the last positional was not a list with a maximum specified:
+	// the last positional was not a list with a maximum specified:
 	// This is to keep retrocompatibility with go-flags. Should be moved.
 	return retargs, args.checkRequirementsFinal()
 }
@@ -254,7 +255,7 @@ func (args *Args) checkRequirementsFinal() error {
 	// silently passing the excess args onto the Execute() parameters.
 	if isSlice && current.Value.Len() == current.Maximum && len(args.words) > 0 {
 		overweight := argHasTooMany(*current, len(args.words))
-		msgErr := fmt.Sprintf("%s was not provided", overweight)
+		msgErr := overweight + " was not provided"
 
 		return fmt.Errorf("%w: %s", ErrRequired, msgErr)
 	}
@@ -269,7 +270,7 @@ func (args *Args) positionalRequiredErr(arg Arg) error {
 		var msg string
 
 		if len(names) == 1 {
-			msg = fmt.Sprintf("%s was not provided", names[0])
+			msg = names[0] + " was not provided"
 		} else {
 			msg = fmt.Sprintf("%s and %s were not provided",
 				strings.Join(names[:len(names)-1], ", "), names[len(names)-1])
@@ -320,13 +321,12 @@ func argHasNotEnough(arg Arg) string {
 	var arguments string
 
 	if arg.Minimum > 1 {
-		arguments = "arguments, but got only " + fmt.Sprintf("%d", arg.Value.Len())
+		arguments = "arguments, but got only " + strconv.Itoa(arg.Value.Len())
 	} else {
 		arguments = "argument"
 	}
 
-	argRequired := "`" + arg.Name + " (at least " + fmt.Sprintf("%d",
-		arg.Minimum) + " " + arguments + ")`"
+	argRequired := "`" + arg.Name + " (at least " + strconv.Itoa(arg.Minimum) + " " + arguments + ")`"
 
 	return argRequired
 }
@@ -342,12 +342,12 @@ func argHasTooMany(arg Arg, added int) string {
 	var parsed string
 
 	if arg.Maximum > 1 {
-		parsed = "arguments, but got " + fmt.Sprintf("%d", arg.Value.Len()+added)
+		parsed = "arguments, but got " + strconv.Itoa(arg.Value.Len()+added)
 	} else {
 		parsed = "argument"
 	}
 
-	hasTooMany := "`" + arg.Name + " (at most " + fmt.Sprintf("%d", arg.Maximum) + " " + parsed + ")`"
+	hasTooMany := "`" + arg.Name + " (at most " + strconv.Itoa(arg.Maximum) + " " + parsed + ")`"
 
 	return hasTooMany
 }

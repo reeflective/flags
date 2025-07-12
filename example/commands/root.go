@@ -33,10 +33,10 @@ type Root struct {
 	// First remarks:
 	// - The commands are registered individually, but each is tagged with a group (eg, they are not grouped in a struct)
 	args.MultipleListsArgs  `command:"multiple-ambiguous" description:"Demonstrates an ambiguous use of several lists and tag min-max requirements" group:"positionals"`
-	args.FirstListArgs      `command:"list-first" description:"Use several positionals, of which the first is a list, but not the last." group:"positionals"`
-	args.MultipleMinMaxArgs `command:"overlap-min-max" description:"Use multiple lists as positionals, with overlapping min/max requirements" group:"positionals"`
-	args.TagCompletedArgs   `command:"tag-completed" description:"Specify completers with struct tags" group:"positionals"`
-	args.RestSliceMax       `command:"rest-slice-max" desc:"Shows how declaring a rest slice will behave when having a maximum words allowed" group:"positionals"`
+	args.FirstListArgs      `command:"list-first"         description:"Use several positionals, of which the first is a list, but not the last."    group:"positionals"`
+	args.MultipleMinMaxArgs `command:"overlap-min-max"    description:"Use multiple lists as positionals, with overlapping min/max requirements"    group:"positionals"`
+	args.TagCompletedArgs   `command:"tag-completed"      description:"Specify completers with struct tags"                                         group:"positionals"`
+	args.RestSliceMax       `command:"rest-slice-max"     desc:"Shows how declaring a rest slice will behave when having a maximum words allowed"   group:"positionals"`
 
 	//
 	// Flags commands ----------------------------------------------------------------
@@ -46,9 +46,9 @@ type Root struct {
 	//
 	// First remarks:
 	// - As with the 'positionals' commands above, each of these command is embedded individually, and each is tagged with its group name.
-	opts.BasicOptions   `command:"basic" alias:"ba" desc:"Shows how to use some basic flags (shows option stacking, and maps)" group:"flags"`
-	opts.IgnoredOptions `command:"ignored" desc:"Contains types tagged as flags (automatically initialized), and types to be ignored (not tagged)" group:"flags"`
-	opts.DefaultOptions `command:"defaults" desc:"Contains flags with default values, and others with validated choices" group:"flags"`
+	opts.BasicOptions   `alias:"ba"         command:"basic"                                                                                         desc:"Shows how to use some basic flags (shows option stacking, and maps)" group:"flags"`
+	opts.IgnoredOptions `command:"ignored"  desc:"Contains types tagged as flags (automatically initialized), and types to be ignored (not tagged)" group:"flags"`
+	opts.DefaultOptions `command:"defaults" desc:"Contains flags with default values, and others with validated choices"                            group:"flags"`
 
 	// Validated args/flags ----------------------------------------------------------
 	//
