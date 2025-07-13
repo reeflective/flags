@@ -41,4 +41,4 @@ func (err *invalidVarError) Error() string {
 }
 
 // noOpValidator is a validation no-op function.
-func noOpValidator(value any, validationTag string, fieldName string) error { return nil }
+func noOpValidator(_ any, _ string, _ string) error { return nil }

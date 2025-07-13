@@ -4,88 +4,95 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/reeflective/flags/types"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestCounter_Set(t *testing.T) {
+	t.Parallel()
 	var err error
 
 	initial := 0
 	counter := (*types.Counter)(&initial)
 
-	assert.Equal(t, 0, initial)
-	assert.Equal(t, "0", counter.String())
-	assert.Equal(t, 0, counter.Get())
-	assert.True(t, counter.IsBoolFlag())
-	assert.True(t, counter.IsCumulative())
+	require.Equal(t, 0, initial)
+	require.Equal(t, "0", counter.String())
+	require.Equal(t, 0, counter.Get())
+	require.True(t, counter.IsBoolFlag())
+	require.True(t, counter.IsCumulative())
 
 	err = counter.Set("")
-	assert.NoError(t, err)
-	assert.Equal(t, 1, initial)
-	assert.Equal(t, "1", counter.String())
+	require.NoError(t, err)
+	require.Equal(t, 1, initial)
+	require.Equal(t, "1", counter.String())
 
 	err = counter.Set("10")
-	assert.NoError(t, err)
-	assert.Equal(t, 10, initial)
-	assert.Equal(t, "10", counter.String())
+	require.NoError(t, err)
+	require.Equal(t, 10, initial)
+	require.Equal(t, "10", counter.String())
 
 	err = counter.Set("-1")
-	assert.NoError(t, err)
-	assert.Equal(t, 11, initial)
-	assert.Equal(t, "11", counter.String())
+	require.NoError(t, err)
+	require.Equal(t, 11, initial)
+	require.Equal(t, "11", counter.String())
 
 	err = counter.Set("b")
-	assert.Error(t, err, "strconv.ParseInt: parsing \"b\": invalid syntax")
-	assert.Equal(t, 11, initial)
-	assert.Equal(t, "11", counter.String())
+	require.Error(t, err, "strconv.ParseInt: parsing \"b\": invalid syntax")
+	require.Equal(t, 11, initial)
+	require.Equal(t, "11", counter.String())
 }
 
 func TestBoolValue_IsBoolFlag(t *testing.T) {
+	t.Parallel()
 	b := &boolValue{}
-	assert.True(t, b.IsBoolFlag())
+	require.True(t, b.IsBoolFlag())
 }
 
 func TestValidateValue_IsBoolFlag(t *testing.T) {
+	t.Parallel()
 	boolV := true
 	v := &validateValue{Value: newBoolValue(&boolV)}
-	assert.True(t, v.IsBoolFlag())
+	require.True(t, v.IsBoolFlag())
 
 	v = &validateValue{Value: newStringValue(strP("stringValue"))}
-	assert.False(t, v.IsBoolFlag())
+	require.False(t, v.IsBoolFlag())
 }
 
 func TestValidateValue_IsCumulative(t *testing.T) {
+	t.Parallel()
 	v := &validateValue{Value: newStringValue(strP("stringValue"))}
-	assert.False(t, v.IsCumulative())
+	require.False(t, v.IsCumulative())
 
 	v = &validateValue{Value: newStringSliceValue(&[]string{})}
-	assert.True(t, v.IsCumulative())
+	require.True(t, v.IsCumulative())
 }
 
 func TestValidateValue_String(t *testing.T) {
+	t.Parallel()
 	v := &validateValue{Value: newStringValue(strP("stringValue"))}
-	assert.Equal(t, "stringValue", v.String())
+	require.Equal(t, "stringValue", v.String())
 
 	v = &validateValue{Value: nil}
-	assert.Empty(t, v.String())
+	require.Empty(t, v.String())
 }
 
 func TestValidateValue_Set(t *testing.T) {
+	t.Parallel()
 	sV := strP("stringValue")
 	v := &validateValue{Value: newStringValue(sV)}
-	assert.NoError(t, v.Set("newVal"))
-	assert.Equal(t, "newVal", *sV)
+	require.NoError(t, v.Set("newVal"))
+	require.Equal(t, "newVal", *sV)
 
-	v.validateFunc = func(val string) error {
+	v.validateFunc = func(_ string) error {
 		return nil
 	}
-	assert.NoError(t, v.Set("newVal"))
+	require.NoError(t, v.Set("newVal"))
 
 	v.validateFunc = func(val string) error {
 		return fmt.Errorf("invalid %s", val)
 	}
-	assert.EqualError(t, v.Set("newVal"), "invalid newVal")
+	require.EqualError(t, v.Set("newVal"), "invalid newVal")
 }
 
 func strP(value string) *string {

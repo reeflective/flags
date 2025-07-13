@@ -8,7 +8,7 @@ var (
 
 	// ErrNotPointerToStruct indicates that a provided data container is not
 	// a pointer to a struct.
-	ErrNotPointerToStruct = errors.New("object must be a pointer to struct")
+	ErrNotPointerToStruct = errors.New("object must be a pointer to struct or interface")
 
 	// ErrNotCommander is returned when a struct is tagged as a command but
 	// does not implement a command interface (e.g., Commander).
@@ -20,4 +20,7 @@ var (
 	// ErrNotValue indicates that a struct field type for a flag does not
 	// implement the flags.Value interface.
 	ErrNotValue = errors.New("field marked as flag does not implement flags.Value")
+
+	// ErrNilObject indicates that an object is nil although it should not.
+	ErrNilObject = errors.New("object cannot be nil")
 )

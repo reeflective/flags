@@ -35,7 +35,8 @@ var MapAllowedKinds = []reflect.Kind{ \nn
 	reflect.{{. | Title}},{{end}}
 }
 
-func parseGenerated(value interface{}) Value {
+// ParseGenerated generates a flag with underlying interface type.
+func ParseGenerated(value interface{}) Value {
 	switch value.(type) {
 	{{range .Values}}{{ if eq (.|InterfereType) (.Type) }}\nn
 	case *{{.Type}}:
@@ -50,7 +51,8 @@ func parseGenerated(value interface{}) Value {
 	}
 }
 
-func parseGeneratedPtrs(value interface{}) Value {
+// ParseGenerated generates a flag with underlying ptr type.
+func ParseGeneratedPtrs(value interface{}) Value {
 	switch value.(type) {
 	{{range .Values}}{{ if ne (.|InterfereType) (.Type) }}\nn
 	case *{{.Type}}:
@@ -61,7 +63,8 @@ func parseGeneratedPtrs(value interface{}) Value {
 	}
 }
 
-func parseGeneratedMap(value interface{}) Value {
+// ParseGenerated generates a flag with underlying map type.
+func ParseGeneratedMap(value interface{}) Value {
 	switch value.(type) {
 	{{range .Values}}{{ if not .NoMap }}\nn
 	{{ $value := . }}{{range $mapKeyTypes}}\nn
@@ -772,7 +775,7 @@ func split(src string) (entries []string) {
 	}
 	// handle upper case -> lower case sequences, e.g.
 	// "PDFL", "oader" -> "PDF", "Loader"
-	for i := 0; i < len(runes)-1; i++ {
+	for i := range len(runes) - 1 {
 		if unicode.IsUpper(runes[i][0]) && unicode.IsLower(runes[i+1][0]) {
 			runes[i+1] = append([]rune{runes[i][len(runes[i])-1]}, runes[i+1]...)
 			runes[i] = runes[i][:len(runes[i])-1]

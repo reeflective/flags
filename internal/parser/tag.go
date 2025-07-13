@@ -1,11 +1,12 @@
 package parser
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
 
-	"github.com/reeflective/flags/internal/errors"
+	flagerrors "github.com/reeflective/flags/internal/errors"
 )
 
 const (
@@ -26,6 +27,7 @@ func GetFieldTag(field reflect.StructField) (*MultiTag, bool, error) {
 	if err := tag.parse(string(field.Tag)); err != nil {
 		return nil, true, err
 	}
+
 	return &tag, len(tag) == 0, nil
 }
 
@@ -34,6 +36,7 @@ func (t *MultiTag) Get(key string) (string, bool) {
 	if val, ok := (*t)[key]; ok {
 		return val[0], true
 	}
+
 	return "", false
 }
 
@@ -42,6 +45,7 @@ func (t *MultiTag) GetMany(key string) []string {
 	if val, ok := (*t)[key]; ok {
 		return val
 	}
+
 	return nil
 }
 
@@ -64,7 +68,7 @@ func (t *MultiTag) parse(tag string) error {
 			i++
 		}
 		if i == 0 || i+1 >= len(tag) || tag[i] != ':' || tag[i+1] != '"' {
-			return fmt.Errorf("invalid tag syntax")
+			return errors.New("invalid tag syntax")
 		}
 		name := string(tag[:i])
 		tag = tag[i+1:]
@@ -78,17 +82,18 @@ func (t *MultiTag) parse(tag string) error {
 			i++
 		}
 		if i >= len(tag) {
-			return fmt.Errorf("invalid tag syntax")
+			return errors.New("invalid tag syntax")
 		}
 		qvalue := string(tag[:i+1])
 		tag = tag[i+1:]
 
 		value, ok := reflect.StructTag(name + ":" + qvalue).Lookup(name)
 		if !ok {
-			return fmt.Errorf("did not find tag value") 
+			return errors.New("did not find tag value")
 		}
 		(*t)[name] = append((*t)[name], value)
 	}
+
 	return nil
 }
 
@@ -105,7 +110,7 @@ func parseFlagTag(field reflect.StructField, options *Opts) (*Flag, *MultiTag, e
 		return nil, nil, err
 	}
 
-	if skip {
+	if skip && !options.ParseAll {
 		return nil, nil, nil
 	}
 
@@ -122,8 +127,10 @@ func parseFlagTag(field reflect.StructField, options *Opts) (*Flag, *MultiTag, e
 		flag.Name = options.Prefix + flag.Name
 	}
 
-	hidden, _ := flagTags.Get("hidden")
-	flag.Hidden = hidden != ""
+	hidden, ok := flagTags.Get("hidden")
+	if ok {
+		flag.Hidden = hidden != ""
+	}
 
 	return flag, flagTags, nil
 }
@@ -292,7 +299,8 @@ func getShortName(name string) (rune, error) {
 
 	if runeCount > 1 {
 		msg := fmt.Sprintf("flag `%s'", name)
-		return short, fmt.Errorf("%w: %s", errors.ErrInvalidTag, msg)
+
+		return short, fmt.Errorf("%w: %s", flagerrors.ErrInvalidTag, msg)
 	}
 
 	if runeCount == 1 {

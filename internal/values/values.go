@@ -19,7 +19,7 @@ import (
 // flag.
 type Value interface {
 	String() string
-	Set(string) error
+	Set(val string) error
 
 	// pflag.Flag require this
 	Type() string
@@ -31,7 +31,7 @@ type Value interface {
 // by this package satisfy the Getter interface.
 type Getter interface {
 	Value
-	Get() interface{}
+	Get() any
 }
 
 // BoolFlag is an optional interface to indicate boolean flags
@@ -178,17 +178,9 @@ func ParseMap(value reflect.Value) Value {
 	}
 
 	valueInterface := value.Addr().Interface()
-	val := parseGeneratedMap(valueInterface)
+	val := ParseGeneratedMap(valueInterface)
 
 	return val
-}
-
-func ParseGenerated(val any) Value {
-	return parseGenerated(val)
-}
-
-func NewStringValue(p *string) *stringValue {
-	return newStringValue(p)
 }
 
 func parseIP(s string) (net.IP, error) {

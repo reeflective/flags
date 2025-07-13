@@ -29,7 +29,7 @@ var MapAllowedKinds = []reflect.Kind{
 	reflect.Uint64,
 }
 
-func parseGenerated(value interface{}) Value {
+func ParseGenerated(value interface{}) Value {
 	switch value := value.(type) {
 	case *string:
 		return newStringValue(value)
@@ -114,7 +114,7 @@ func parseGenerated(value interface{}) Value {
 	}
 }
 
-func parseGeneratedPtrs(value interface{}) Value {
+func ParseGeneratedPtrs(value interface{}) Value {
 	switch value := value.(type) {
 	case **regexp.Regexp:
 		return newRegexpValue(value)
@@ -123,7 +123,7 @@ func parseGeneratedPtrs(value interface{}) Value {
 	}
 }
 
-func parseGeneratedMap(value interface{}) Value {
+func ParseGeneratedMap(value interface{}) Value {
 	switch value := value.(type) {
 	case *map[string]string:
 		return newStringStringMapValue(value)

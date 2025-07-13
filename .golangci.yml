@@ -89,7 +89,6 @@ linters:
     - varnamelen
     - wastedassign
     - wrapcheck
-    - wsl
     - zerologlint
   disable:
     - asciicheck
@@ -125,6 +124,7 @@ linters:
       - third_party$
       - builtin$
       - examples$
+
 issues:
   max-same-issues: 0
   new-from-rev: HEAD
@@ -132,10 +132,10 @@ issues:
   new: true
   fix: true
 formatters:
-  enable:
-    - gci
-    - gofmt
-    - gofumpt
+  # enable:
+  #   - gci
+  #   - gofmt
+  #   - gofumpt
   exclusions:
     generated: lax
     paths:

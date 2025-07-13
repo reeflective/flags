@@ -2,7 +2,6 @@ package parser
 
 import (
 	"reflect"
-	// "github.com/reeflective/flags/internal/validation"
 )
 
 // ValidateFunc describes a validation func, that takes string val for flag from command line,
@@ -67,6 +66,7 @@ func (o *Opts) Apply(optFuncs ...OptFunc) *Opts {
 	for _, f := range optFuncs {
 		(f)(o)
 	}
+
 	return o
 }
 

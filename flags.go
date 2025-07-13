@@ -12,7 +12,11 @@
 package flags
 
 import (
+	"fmt"
+
 	"github.com/go-playground/validator/v10"
+	"github.com/spf13/cobra"
+
 	"github.com/reeflective/flags/internal/errors"
 	"github.com/reeflective/flags/internal/gen/completions"
 	"github.com/reeflective/flags/internal/gen/flags"
@@ -20,7 +24,6 @@ import (
 	"github.com/reeflective/flags/internal/parser"
 	"github.com/reeflective/flags/internal/validation"
 	"github.com/reeflective/flags/internal/values"
-	"github.com/spf13/cobra"
 )
 
 // === Primary Entry Points ===
@@ -38,13 +41,12 @@ func Generate(data any, opts ...Option) (*cobra.Command, error) {
 	// 1. Generate the command structure
 	cmd, err := flags.Generate(data, toInternalOpts(opts)...)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to generate command: %w", err)
 	}
 
 	// 2. Add shell completions automatically
 	if _, err := completions.Generate(cmd, data, nil); err != nil {
-		// We don't fail the whole generation if completions fail,
-		// but we should ideally log this. For now, we ignore the error.
+		return nil, fmt.Errorf("failed to generate completions: %w", err)
 	}
 
 	return cmd, nil
@@ -58,12 +60,12 @@ func Generate(data any, opts ...Option) (*cobra.Command, error) {
 func Bind(cmd *cobra.Command, data any, opts ...Option) error {
 	// 1. Bind the struct to the command
 	if err := flags.Bind(cmd, data, toInternalOpts(opts)...); err != nil {
-		return err
+		return fmt.Errorf("failed to bind command: %w", err)
 	}
 
 	// 2. Add shell completions automatically
 	if _, err := completions.Generate(cmd, data, nil); err != nil {
-		// We don't fail the whole generation if completions fail.
+		return fmt.Errorf("failed to generate completions: %w", err)
 	}
 
 	return nil

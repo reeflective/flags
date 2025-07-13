@@ -273,5 +273,5 @@ func (args *Args) errorSliceShadowing(arg string, index int) error {
 
 	shadowed = strings.TrimSuffix(shadowed, ",")
 
-	return fmt.Errorf("Positional `%s` is a slice with no maximum: will shadow%s positionals", arg, shadowed)
+	return fmt.Errorf("Positional `%s` is a slice with no maximum: will shadow %s positionals", arg, shadowed)
 }

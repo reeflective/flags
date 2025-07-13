@@ -21,6 +21,7 @@ func Scan(data any, handler Handler) error {
 	if v.Kind() != reflect.Struct {
 		return errors.ErrNotPointerToStruct
 	}
+
 	return scan(v, handler)
 }
 
@@ -38,13 +39,14 @@ func scan(v reflect.Value, handler Handler) error {
 			return err
 		}
 	}
+
 	return nil
 }
 
 // ParseStruct parses structure and returns list of flags based on this structure.
 func ParseStruct(cfg any, optFuncs ...OptFunc) ([]*Flag, error) {
 	if cfg == nil {
-		return nil, errors.ErrNotPointerToStruct
+		return nil, errors.ErrNilObject
 	}
 
 	v := reflect.ValueOf(cfg)
@@ -157,12 +159,20 @@ func parseVal(value reflect.Value, optFuncs ...OptFunc) ([]*Flag, values.Value, 
 		if value.IsNil() {
 			value.Set(reflect.New(value.Type().Elem()))
 		}
+
+		val := values.ParseGeneratedPtrs(value.Addr().Interface())
+		if val != nil {
+			return nil, val, nil
+		}
+
 		return parseVal(value.Elem(), optFuncs...)
 	case reflect.Struct:
 		flags, err := parseStruct(value, optFuncs...)
+
 		return flags, nil, err
 	case reflect.Map:
 		val := values.ParseMap(value)
+
 		return nil, val, nil
 	}
 
@@ -187,6 +197,7 @@ func parseStruct(value reflect.Value, optFuncs ...OptFunc) ([]*Flag, error) {
 			allFlags = append(allFlags, fieldFlags...)
 		}
 	}
+
 	return allFlags, nil
 }
 
@@ -194,5 +205,6 @@ func markedFlagNotImplementing(tag MultiTag, val values.Value) bool {
 	_, flagOld := tag.Get("flag")
 	_, short := tag.Get("short")
 	_, long := tag.Get("long")
+
 	return (flagOld || short || long) && val == nil
 }
