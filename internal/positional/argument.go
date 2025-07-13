@@ -8,8 +8,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/reeflective/flags/internal/convert"
 	"github.com/reeflective/flags/internal/parser"
+	"github.com/reeflective/flags/internal/values"
 )
 
 // ErrRequired signals an argument field has not been
@@ -43,6 +43,7 @@ type Arg struct {
 	StartMax  int             // if previous positional slots are full, this replaces startAt
 	Tag       parser.MultiTag // struct tag
 	Value     reflect.Value   // A reference to the field value itself
+	value     values.Value
 	Validator func(val string) error
 }
 
@@ -104,11 +105,6 @@ func (args *Args) Parse(words []string, dash int) (retargs []string, err error) 
 
 		// Or we have failed to parse the word onto the struct field
 		// value, most probably because it's the wrong type.
-		if errors.Is(err, convert.ErrConvertion) {
-			return retargs, err
-		}
-
-		// Or return the error as is
 		if err != nil {
 			return retargs, err
 		}
@@ -215,8 +211,8 @@ func (args *Args) consumeWords(self *Args, arg *Arg, dash int) error {
 		}
 		// Parse the string value onto its native type, returning any errors.
 		// We also break this loop immediately if we are not parsing onto a list.
-		if err := convert.Value(next, arg.Value, arg.Tag); err != nil {
-			return fmt.Errorf("%w: %s", convert.ErrConvertion, err.Error())
+		if err := arg.value.Set(next); err != nil {
+			return fmt.Errorf("invalid value for %s: %w", arg.Name, err)
 		} else if arg.Value.Type().Kind() != reflect.Slice {
 			return nil
 		}

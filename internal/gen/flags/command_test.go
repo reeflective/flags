@@ -65,7 +65,7 @@ func TestParseCommand(t *testing.T) {
 	t.Parallel()
 
 	data := &testCommand{}
-	cmd, _ := Generate(data)
+	cmd, _ := ParseCommands(data)
 
 	test := assert.New(t)
 	test.NotNil(cmd, "The command parser should have returned a command")

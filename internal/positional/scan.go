@@ -9,6 +9,7 @@ import (
 	"github.com/reeflective/flags/internal/parser"
 	"github.com/reeflective/flags/internal/scan"
 	"github.com/reeflective/flags/internal/validation"
+	"github.com/reeflective/flags/internal/values"
 )
 
 // ScanArgs scans an entire value (must be ensured to be a struct) and creates
@@ -83,6 +84,7 @@ func (args *Args) scanArg(field reflect.StructField, value reflect.Value, reqAll
 		StartMin: args.totalMin,
 		StartMax: args.totalMax,
 		Value:    value,
+		value:    values.NewValue(value),
 	}
 
 	args.slots = append(args.slots, arg)

@@ -4,7 +4,7 @@
 //
 // The primary workflow is to define your CLI structure (commands, flags,
 // positional arguments) using Go structs and field tags, and then call
-// flags.Generate() to create a fully configured *cobra.Command tree, complete
+// flags.ParseCommands() to create a fully configured *cobra.Command tree, complete
 // with shell completions, ready for execution.
 //
 // For useful, pre-built flag types like Counter or HexBytes, see the
@@ -37,9 +37,9 @@ import (
 // Shell completions are generated and attached automatically.
 //
 // This is the primary entry point for creating a new CLI application.
-func Generate(data any, opts ...Option) (*cobra.Command, error) {
+func ParseCommands(data any, opts ...Option) (*cobra.Command, error) {
 	// 1. Generate the command structure
-	cmd, err := flags.Generate(data, toInternalOpts(opts)...)
+	cmd, err := flags.ParseCommands(data, toInternalOpts(opts)...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate command: %w", err)
 	}
@@ -154,6 +154,15 @@ type PostRunnerE = interfaces.PostRunnerE
 // Value is the interface for custom flag types.
 type Value = values.Value
 
+// Marshaler is the interface implemented by types that can marshal themselves
+// to a string representation of the flag. Retroported from jessevdk/go-flags.
+type Marshaler = interfaces.Marshaler
+
+// Unmarshaler is the interface implemented by types that can unmarshal a flag
+// argument to themselves. The provided value is directly passed from the
+// command line. Retroported from jessevdk/go-flags.
+type Unmarshaler = interfaces.Unmarshaler
+
 // Completer is the interface for types that can provide their own shell
 // completion suggestions.
 type Completer = interfaces.Completer
@@ -179,3 +188,12 @@ var (
 	// implement the flags.Value interface.
 	ErrNotValue = errors.ErrNotValue
 )
+
+// AsValue casts an interface to a Value if it implements it.
+func AsValue(val any) (values.Value, bool) {
+	if v, ok := val.(values.Value); ok {
+		return v, true
+	}
+
+	return nil, false
+}

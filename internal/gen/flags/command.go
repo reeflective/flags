@@ -12,8 +12,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Generate returns a root cobra Command to be used directly as an entry-point.
-func Generate(data interface{}, opts ...parser.OptFunc) (*cobra.Command, error) {
+// ParseCommands returns a root cobra Command to be used directly as an entry-point.
+func ParseCommands(data interface{}, opts ...parser.OptFunc) (*cobra.Command, error) {
 	cmd := &cobra.Command{
 		Use:			 os.Args[0],
 		Annotations:	 map[string]string{},
@@ -30,9 +30,12 @@ func Generate(data interface{}, opts ...parser.OptFunc) (*cobra.Command, error) 
 
 // Bind scans the struct and binds all commands/flags to the command given in parameter.
 func Bind(cmd *cobra.Command, data interface{}, opts ...parser.OptFunc) error {
+	// Create the initial options from the functions provided.
+	options := parser.DefOpts().Apply(opts...)
+
 	// Make a scan handler that will run various scans on all
 	// the struct fields, with arbitrary levels of nesting.
-	scanner := scanRoot(cmd, nil, opts)
+	scanner := scanRoot(cmd, nil, options)
 
 	// And scan the struct recursively, for arg/option groups and subcommands
 	if err := parser.Scan(data, scanner); err != nil {
@@ -51,7 +54,7 @@ func Bind(cmd *cobra.Command, data interface{}, opts ...parser.OptFunc) error {
 
 // scan is in charge of building a recursive scanner, working on a given struct field at a time,
 // checking for arguments, subcommands and option groups.
-func scanRoot(cmd *cobra.Command, group *cobra.Group, opts []parser.OptFunc) parser.Handler {
+func scanRoot(cmd *cobra.Command, group *cobra.Group, opts *parser.Opts) parser.Handler {
 	handler := func(val reflect.Value, sfield *reflect.StructField) (bool, error) {
 		// Parse the tag or die tryin. We should find one, or we're not interested.
 		mtag, _, err := parser.GetFieldTag(*sfield)
@@ -84,7 +87,7 @@ func scanRoot(cmd *cobra.Command, group *cobra.Group, opts []parser.OptFunc) par
 }
 
 // command finds if a field is marked as a subcommand, and if yes, scans it.
-func command(cmd *cobra.Command, grp *cobra.Group, tag *parser.MultiTag, val reflect.Value, opts []parser.OptFunc) (bool, error) {
+func command(cmd *cobra.Command, grp *cobra.Group, tag *parser.MultiTag, val reflect.Value, opts *parser.Opts) (bool, error) {
 	// Parse the command name on struct tag...
 	name, _ := tag.Get("command")
 	if len(name) == 0 {

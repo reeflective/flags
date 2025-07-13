@@ -18,7 +18,7 @@
 // B) Retrocompatiblity
 // For library users coming from github.com/octago/sflags:
 // - When parsing structs with no tags (in which case every field is a flag),
-// the option `flags.ParseAll()` should be passed to the `Generate()` call.
+// the option `flags.ParseAll()` should be passed to the `ParseCommands()` call.
 //
 //
 // 2 - Valid tags ************************************************************************
@@ -208,7 +208,7 @@
 //
 // All positionals and flags struct fields can also declare validations compliant with
 // "github.com/go-playground/validator/v10" tag specifications, and provided that the
-// following parsing option is given to the `Generate()` call:
+// following parsing option is given to the `ParseCommands()` call:
 //
 // flags.Validator(validator.New())
 //

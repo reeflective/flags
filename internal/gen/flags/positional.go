@@ -11,7 +11,7 @@ import (
 )
 
 // positionals finds a struct tagged as containing positionals arguments and scans them.
-func positionals(cmd *cobra.Command, stag *parser.MultiTag, val reflect.Value, opts []parser.OptFunc) (bool, error) {
+func positionals(cmd *cobra.Command, stag *parser.MultiTag, val reflect.Value, opts *parser.Opts) (bool, error) {
 	// We need the struct to be marked as such
 	if pargs, _ := stag.Get("positional-args"); len(pargs) == 0 {
 		return false, nil
@@ -19,7 +19,7 @@ func positionals(cmd *cobra.Command, stag *parser.MultiTag, val reflect.Value, o
 
 	// Scan all the fields on the struct and build the list of arguments
 	// with their own requirements, and references to their values.
-	positionals, err := positional.ScanArgs(val, stag, opts...)
+	positionals, err := positional.ScanArgs(val, stag, parser.CopyOpts(opts))
 	if err != nil || positionals == nil {
 		return true, fmt.Errorf("failed to scan positional arguments: %w", err)
 	}

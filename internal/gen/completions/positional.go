@@ -58,7 +58,7 @@ func getCompleters(args *positional.Args, comps *carapace.Carapace) *compCache {
 
 func consumeWith(comps *compCache) positional.WordConsumer {
 	handler := func(args *positional.Args, arg *positional.Arg, _ int) error {
-		for i := 0; i < arg.StartMin; i++ {
+		for range arg.StartMin {
 			args.Pop()
 		}
 

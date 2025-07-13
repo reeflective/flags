@@ -27,7 +27,7 @@ func main() {
 	// Run the scan: this generates the entire command tree
 	// into a cobra root command (and its subcommands).
 	// By default, the name of the command is os.Args[0].
-	rootCmd, err := flags.Generate(rootData, opts...)
+	rootCmd, err := flags.ParseCommands(rootData, opts...)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)

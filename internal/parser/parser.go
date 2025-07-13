@@ -59,127 +59,84 @@ func ParseStruct(cfg any, optFuncs ...OptFunc) ([]*Flag, error) {
 		return nil, errors.ErrNotPointerToStruct
 	}
 
-	return parseStruct(e, optFuncs...)
+	// Create the initial options from the functions provided.
+	opts := DefOpts().Apply(optFuncs...)
+
+	return parseStruct(e, opts)
 }
 
 // ParseField parses a single struct field as a list of flags.
-func ParseField(value reflect.Value, field reflect.StructField, optFuncs ...OptFunc) ([]*Flag, bool, error) {
-	flag, tag, scanOpts, err := parseInfo(field, optFuncs...)
-	if err != nil {
-		return nil, true, err
-	}
-	if flag == nil {
-		return nil, false, nil
+func ParseField(value reflect.Value, field reflect.StructField, opts *Opts) ([]*Flag, bool, error) {
+	flag, tag, newPrefix, err := parseInfo(field, opts)
+	if err != nil || flag == nil {
+		return nil, false, err
 	}
 
-	options := CopyOpts(scanOpts)
+	// If the field is a struct, we recurse into it to parse its fields as flags.
+	if value.Kind() == reflect.Struct {
+		// Create new options for the nested struct with the calculated newPrefix
+		nestedOpts := DefOpts().Apply(CopyOpts(opts), Prefix(newPrefix))
+		flags, err := parseStruct(value, nestedOpts)
 
-	flagSet, val, err := parseVal(value, options)
-	if err != nil {
-		return flagSet, true, err
+		return flags, true, err
 	}
 
+	// It's a potential flag value. Let's create a value handler for it.
+	val := values.NewValue(value)
+
+	// Check if this field was *supposed* to be a flag, but we couldn't create a value for it.
 	if markedFlagNotImplementing(*tag, val) {
-		return flagSet, true, fmt.Errorf("%w: field %s (tagged flag '%s') does not implement Value interface",
+		return nil, true, fmt.Errorf("%w: field %s (tagged as flag '%s') does not implement a supported interface",
 			errors.ErrNotValue, field.Name, flag.Name)
 	}
 
+	// If val is nil, it's not a flag and not a group, so we just ignore it.
 	if val == nil {
-		return flagSet, true, nil
+		return nil, false, nil
 	}
 
-	// Set validators if any.
-	// This part needs to be refactored to work with the new validation package.
-	// if validator := validation.Bind(value, field, flag.Choices, scanOpts); validator != nil {
-	// 	val = &validateValue{
-	// 		Value:        val,
-	// 		validateFunc: validator,
-	// 	}
-	// }
-
+	// It's a valid flag.
 	flag.Value = val
-	flagSet = append(flagSet, flag)
-
 	if val.String() != "" {
 		flag.DefValue = append(flag.DefValue, val.String())
 	}
 
-	if scanOpts.FlagFunc != nil {
+	// Execute any custom flag handler function.
+	if opts.FlagFunc != nil {
 		var name string
 		if flag.Name != "" {
 			name = flag.Name
 		} else {
 			name = flag.Short
 		}
-		if err := scanOpts.FlagFunc(name, tag, value); err != nil {
-			return flagSet, true, fmt.Errorf("flag handler error on flag %s: %w", name, err)
+		if err := opts.FlagFunc(name, tag, value); err != nil {
+			return []*Flag{flag}, true, fmt.Errorf("flag handler error on flag %s: %w", name, err)
 		}
 	}
 
-	return flagSet, true, nil
+	return []*Flag{flag}, true, nil
 }
 
-func parseInfo(fld reflect.StructField, optFuncs ...OptFunc) (*Flag, *MultiTag, *Opts, error) {
-	scanOptions := DefOpts().Apply(optFuncs...)
-
+func parseInfo(fld reflect.StructField, opts *Opts) (*Flag, *MultiTag, string, error) {
 	if fld.PkgPath != "" && !fld.Anonymous {
-		return nil, nil, scanOptions, nil
+		return nil, nil, "", nil
 	}
 
-	flag, tag, err := parseFlagTag(fld, scanOptions)
+	flag, tag, err := parseFlagTag(fld, opts)
 	if flag == nil || err != nil {
-		return flag, tag, scanOptions, err
+		return flag, tag, "", err
 	}
 
-	flag.EnvName = parseEnvTag(flag.Name, fld, scanOptions)
-	prefix := flag.Name + scanOptions.FlagDivider
-	if fld.Anonymous && scanOptions.Flatten {
-		prefix = scanOptions.Prefix
+	flag.EnvName = parseEnvTag(flag.Name, fld, opts)
+	prefix := opts.Prefix + flag.Name + opts.FlagDivider
+	if fld.Anonymous && opts.Flatten {
+		prefix = opts.Prefix
 	}
-	scanOptions.Prefix = prefix
 
-	return flag, tag, scanOptions, err
+	return flag, tag, prefix, err
 }
 
-func parseVal(value reflect.Value, optFuncs ...OptFunc) ([]*Flag, values.Value, error) {
-	if value.CanAddr() && value.Addr().CanInterface() {
-		iface := value.Addr().Interface()
-
-		val := values.ParseGenerated(iface)
-		if val != nil {
-			return nil, val, nil
-		}
-		if val, ok := iface.(values.Value); ok && val != nil {
-			return nil, val, nil
-		}
-	}
-
-	switch value.Kind() {
-	case reflect.Ptr:
-		if value.IsNil() {
-			value.Set(reflect.New(value.Type().Elem()))
-		}
-
-		val := values.ParseGeneratedPtrs(value.Addr().Interface())
-		if val != nil {
-			return nil, val, nil
-		}
-
-		return parseVal(value.Elem(), optFuncs...)
-	case reflect.Struct:
-		flags, err := parseStruct(value, optFuncs...)
-
-		return flags, nil, err
-	case reflect.Map:
-		val := values.ParseMap(value)
-
-		return nil, val, nil
-	}
-
-	return nil, nil, nil
-}
-
-func parseStruct(value reflect.Value, optFuncs ...OptFunc) ([]*Flag, error) {
+func parseStruct(value reflect.Value, opts *Opts) ([]*Flag, error) {
 	var allFlags []*Flag
 	valueType := value.Type()
 	for i := 0; i < value.NumField(); i++ {
@@ -189,7 +146,9 @@ func parseStruct(value reflect.Value, optFuncs ...OptFunc) ([]*Flag, error) {
 			continue
 		}
 
-		fieldFlags, found, err := ParseField(fieldValue, field, optFuncs...)
+		// Pass the current opts directly to ParseField.
+		// ParseField will handle creating new opts for nested structs.
+		fieldFlags, found, err := ParseField(fieldValue, field, opts)
 		if err != nil {
 			return allFlags, err
 		}

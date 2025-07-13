@@ -6,7 +6,7 @@
 // 1) Importing the various packages -----------------------------------------------------
 //
 // This file gives a list of the various global parsing options that can be passed
-// to the `Generate()` entrypoint function in the `gen/flags` package. Below is an
+// to the `ParseCommands()` entrypoint function in the `gen/flags` package. Below is an
 // example of how you want to import this package and use its options:
 //
 // package main
@@ -29,7 +29,7 @@
 //	    opts = append(opts, flags.Validator(validator.New()))
 //
 //	    rootData := &commands.Root{}
-//	    rootCmd := genflags.Generate(rootData, opts...)
+//	    rootCmd := genflags.ParseCommands(rootData, opts...)
 //
 //	    comps, _ := completions.Generate(rootCmd, rootData, nil)
 //	}

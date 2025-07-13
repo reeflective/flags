@@ -14,7 +14,7 @@ import (
 // cobra command, parsing again the native struct for type and struct tags' information.
 func Generate(cmd *cobra.Command, data interface{}, comps *carapace.Carapace) (*carapace.Carapace, error) {
 	// Generate the completions a first time.
-	completions, err := generate(cmd.Root(), data, comps)
+	completions, err := parseCommands(cmd.Root(), data, comps)
 	if err != nil {
 		return completions, err
 	}
@@ -23,7 +23,7 @@ func Generate(cmd *cobra.Command, data interface{}, comps *carapace.Carapace) (*
 }
 
 // generate wraps all main steps' invocations, to be reused in various cases.
-func generate(cmd *cobra.Command, data interface{}, comps *carapace.Carapace) (*carapace.Carapace, error) {
+func parseCommands(cmd *cobra.Command, data interface{}, comps *carapace.Carapace) (*carapace.Carapace, error) {
 	if comps == nil {
 		comps = carapace.Gen(cmd)
 	}
@@ -107,7 +107,7 @@ func command(cmd *cobra.Command, tag *parser.MultiTag, val reflect.Value) (bool,
 	// Simply generate a new carapace around this command,
 	// so that we can register different positional arguments
 	// without overwriting those of our root command.
-	if _, err := generate(subc, commander, nil); err != nil {
+	if _, err := parseCommands(subc, commander, nil); err != nil {
 		return true, err
 	}
 

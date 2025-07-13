@@ -12,10 +12,10 @@ import (
 
 // flagScan builds a small struct field handler so that we can scan
 // it as an option and add it to our current command flags.
-func flagScan(cmd *cobra.Command, opts []parser.OptFunc) parser.Handler {
+func flagScan(cmd *cobra.Command, opts *parser.Opts) parser.Handler {
 	flagScanner := func(val reflect.Value, sfield *reflect.StructField) (bool, error) {
 		// Parse a single field, returning one or more generic Flags
-		flagSet, found, err := parser.ParseField(val, *sfield, opts...)
+		flagSet, found, err := parser.ParseField(val, *sfield, opts)
 		if err != nil {
 			return found, err
 		}
@@ -34,7 +34,7 @@ func flagScan(cmd *cobra.Command, opts []parser.OptFunc) parser.Handler {
 }
 
 // flagsGroup finds if a field is marked as a subgroup of options, and if yes, scans it recursively.
-func flagsGroup(cmd *cobra.Command, val reflect.Value, field *reflect.StructField, opts []parser.OptFunc) (bool, error) {
+func flagsGroup(cmd *cobra.Command, val reflect.Value, field *reflect.StructField, opts *parser.Opts) (bool, error) {
 	mtag, skip, err := parser.GetFieldTag(*field)
 	if err != nil {
 		return true, fmt.Errorf("%w: %s", flagerrors.ErrParse, err.Error())
@@ -93,19 +93,22 @@ func flagsGroup(cmd *cobra.Command, val reflect.Value, field *reflect.StructFiel
 }
 
 // addFlagSet scans a struct (potentially nested) for flag sets to bind to the command.
-func addFlagSet(cmd *cobra.Command, mtag *parser.MultiTag, data interface{}, opts []parser.OptFunc) error {
+func addFlagSet(cmd *cobra.Command, mtag *parser.MultiTag, data interface{}, parentOpts *parser.Opts) error {
+	// Create a new set of options for this group, inheriting from the parent.
+	opts := parser.DefOpts().Apply(parser.CopyOpts(parentOpts))
+
 	// New change, in order to easily propagate parent namespaces
 	// in heavily/specially nested option groups at bind time.
 	delim, _ := mtag.Get("namespace-delimiter")
 
 	namespace, _ := mtag.Get("namespace")
 	if namespace != "" {
-		opts = append(opts, parser.Prefix(namespace+delim))
+		opts.Prefix = namespace + delim
 	}
 
 	envNamespace, _ := mtag.Get("env-namespace")
 	if envNamespace != "" {
-		opts = append(opts, parser.EnvPrefix(envNamespace))
+		opts.EnvPrefix = envNamespace
 	}
 
 	// Create a new set of flags in which we will put our options
@@ -113,7 +116,7 @@ func addFlagSet(cmd *cobra.Command, mtag *parser.MultiTag, data interface{}, opt
 
 	// Define a scanner that will add flags to the flagSet
 	flagAdder := func(val reflect.Value, sfield *reflect.StructField) (bool, error) {
-		fieldFlags, found, err := parser.ParseField(val, *sfield, opts...)
+		fieldFlags, found, err := parser.ParseField(val, *sfield, opts)
 		if err != nil {
 			return found, err
 		}

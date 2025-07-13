@@ -76,7 +76,7 @@ func groupComps(comps *carapace.Carapace, cmd *cobra.Command, val reflect.Value,
 // addFlagComps scans a struct (potentially nested), for a set of flags, and without
 // binding them to the command, parses them for any completions specified/implemented.
 func addFlagComps(comps *carapace.Carapace, mtag *parser.MultiTag, data interface{}) error {
-	var flagOpts []parser.OptFunc
+	opts := parser.DefOpts()
 
 	// New change, in order to easily propagate parent namespaces
 	// in heavily/specially nested option groups at bind time.
@@ -84,24 +84,24 @@ func addFlagComps(comps *carapace.Carapace, mtag *parser.MultiTag, data interfac
 
 	namespace, _ := mtag.Get("namespace")
 	if namespace != "" {
-		flagOpts = append(flagOpts, parser.Prefix(namespace+delim))
+		opts.Prefix = namespace + delim
 	}
 
 	envNamespace, _ := mtag.Get("env-namespace")
 	if envNamespace != "" {
-		flagOpts = append(flagOpts, parser.EnvPrefix(envNamespace))
+		opts.EnvPrefix = envNamespace
 	}
 
 	// All completions for this flag set only.
 	// The handler will append to the completions map as each flag is parsed
 	flagCompletions := flagSetComps{}
 	compScanner := flagCompsScanner(&flagCompletions)
-	flagOpts = append(flagOpts, parser.FlagHandler(compScanner))
+	opts.FlagFunc = compScanner
 
 	// Instead of calling flags.ParseFlags, use parser.Scan directly
 	// to process the struct fields and trigger the FlagHandler.
 	if err := parser.Scan(data, func(val reflect.Value, sfield *reflect.StructField) (bool, error) {
-		_, found, err := parser.ParseField(val, *sfield, flagOpts...)
+		_, found, err := parser.ParseField(val, *sfield, opts)
 
 		return found, err
 	}); err != nil {
@@ -121,10 +121,11 @@ func addFlagComps(comps *carapace.Carapace, mtag *parser.MultiTag, data interfac
 // it as an option and add it to our current command flags.
 func flagComps(comps *carapace.Carapace, flagComps *flagSetComps) parser.Handler {
 	flagScanner := func(val reflect.Value, sfield *reflect.StructField) (bool, error) {
-		compScanner := flagCompsScanner(flagComps)
+		opts := parser.DefOpts()
+		opts.FlagFunc = flagCompsScanner(flagComps)
 
 		// Parse a single field, returning one or more generic Flags
-		_, found, err := parser.ParseField(val, *sfield, parser.FlagHandler(compScanner))
+		_, found, err := parser.ParseField(val, *sfield, opts)
 		if err != nil {
 			return found, err
 		}
