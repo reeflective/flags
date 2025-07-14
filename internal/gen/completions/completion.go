@@ -70,29 +70,47 @@ func getCompletionAction(name, value, desc string) carapace.Action {
 	return action
 }
 
+// typeCompleter checks for completer implementations on the type, checks
+// if the implementations are on the type of its elements (if slice/map), and
+// returns the results.
 func typeCompleter(val reflect.Value) (carapace.CompletionCallback, bool, bool) {
 	isRepeatable := false
 	itemsImplement := false
 
 	var completer carapace.CompletionCallback
 
-	if val.Type().Kind() == reflect.Slice || val.Type().Kind() == reflect.Map {
+	// Always check that the type itself does implement, even if
+	// it's a list of type X that implements the completer as well.
+	// If yes, we return this implementation, since it has priority.
+	if val.Type().Kind() == reflect.Slice {
 		isRepeatable = true
-		// For slices, we want to check if the slice type itself implements Completer
-		// or if a pointer to the slice type implements Completer.
-		// We do NOT want to check the element type here, as the Completer is on the slice.
+
+		i := val.Interface()
+		if impl, ok := i.(Completer); ok {
+			completer = impl.Complete
+		} else if val.CanAddr() {
+			if impl, ok := val.Addr().Interface().(Completer); ok {
+				completer = impl.Complete
+			}
+		}
+
+		// Else we reassign the value to the list type.
+		val = reflect.New(val.Type().Elem())
 	}
 
-	// Check if the value itself implements Completer
-	i := val.Interface()
-	if impl, ok := i.(Completer); ok && impl != nil {
-		completer = impl.Complete
-		itemsImplement = true
-	} else if val.CanAddr() {
-		// If not, check if a pointer to the value implements Completer
-		if impl, ok := val.Addr().Interface().(Completer); ok && impl != nil {
-			completer = impl.Complete
+	// If we did NOT find an implementation on the compound type,
+	// check for one on the items.
+	if completer == nil {
+		i := val.Interface()
+		if impl, ok := i.(Completer); ok && impl != nil {
 			itemsImplement = true
+			completer = impl.Complete
+		} else if val.CanAddr() {
+			isRepeatable = true
+			if impl, ok := val.Addr().Interface().(Completer); ok && impl != nil {
+				itemsImplement = true
+				completer = impl.Complete
+			}
 		}
 	}
 
