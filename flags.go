@@ -188,12 +188,3 @@ var (
 	// implement the flags.Value interface.
 	ErrNotValue = errors.ErrNotValue
 )
-
-// AsValue casts an interface to a Value if it implements it.
-func AsValue(val any) (values.Value, bool) {
-	if v, ok := val.(values.Value); ok {
-		return v, true
-	}
-
-	return nil, false
-}
