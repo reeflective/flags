@@ -6,17 +6,18 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/spf13/cobra"
+
 	flagerrors "github.com/reeflective/flags/internal/errors"
 	"github.com/reeflective/flags/internal/interfaces"
 	"github.com/reeflective/flags/internal/parser"
-	"github.com/spf13/cobra"
 )
 
 // ParseCommands returns a root cobra Command to be used directly as an entry-point.
 func ParseCommands(data interface{}, opts ...parser.OptFunc) (*cobra.Command, error) {
 	cmd := &cobra.Command{
-		Use:			 os.Args[0],
-		Annotations:	 map[string]string{},
+		Use:              os.Args[0],
+		Annotations:      map[string]string{},
 		TraverseChildren: true,
 	}
 
@@ -129,7 +130,7 @@ func command(cmd *cobra.Command, grp *cobra.Group, tag *parser.MultiTag, val ref
 // builds a quick command template based on what has been specified through tags, and in context.
 func newCommand(name string, mtag *parser.MultiTag, parent *cobra.Group) *cobra.Command {
 	subc := &cobra.Command{
-		Use:		 name,
+		Use:         name,
 		Annotations: map[string]string{},
 	}
 
