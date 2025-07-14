@@ -1,7 +1,7 @@
 package interfaces
 
 import (
-	"github.com/rsteube/carapace"
+	"github.com/carapace-sh/carapace"
 )
 
 // Completer is the interface for types that can provide their own shell

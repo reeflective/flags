@@ -1,8 +1,8 @@
 package args
 
 import (
-	"github.com/rsteube/carapace"
-	"github.com/rsteube/carapace/pkg/style"
+	"github.com/carapace-sh/carapace"
+	"github.com/carapace-sh/carapace/pkg/style"
 )
 
 // IP is another argument field, but which implements

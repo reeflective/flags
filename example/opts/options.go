@@ -4,8 +4,9 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/rsteube/carapace"
-	"github.com/rsteube/carapace-bin/pkg/actions/net"
+	"github.com/carapace-sh/carapace"
+	"github.com/carapace-sh/carapace-bin/pkg/actions/net/ssh"
+	"github.com/carapace-sh/carapace-bin/pkg/actions/os"
 )
 
 //
@@ -26,30 +27,30 @@ type RequiredOptions struct{}
 // TagCompletedOptions shows how to specify completers through struct tags.
 type TagCompletedOptions struct{}
 
-// Machines is a type that implements multipart completion.
-type Machines string
+// Machine is a type that implements multipart completion.
+type Machine string
 
 // Complete provides user@host completions.
-func (m *Machines) Complete(ctx carapace.Context) carapace.Action {
+func (m *Machine) Complete(ctx carapace.Context) carapace.Action {
 	if strings.Contains(ctx.Value, "@") {
 		prefix := strings.SplitN(ctx.Value, "@", 2)[0]
 
-		return net.ActionHosts().Invoke(ctx).Prefix(prefix + "@").ToA()
+		return ssh.ActionHosts().Invoke(ctx).Prefix(prefix + "@").ToA()
 	} else {
-		return net.ActionHosts()
+		return os.ActionUsers().Suffix("@").NoSpace('@')
 	}
 }
 
-func (p *Machines) String() string {
+func (p *Machine) String() string {
 	return string(*p)
 }
 
-func (p *Machines) Set(value string) error {
-	*p = (Machines)(value)
+func (p *Machine) Set(value string) error {
+	*p = (Machine)(value)
 
 	return nil
 }
 
-func (p *Machines) Type() string {
+func (p *Machine) Type() string {
 	return reflect.TypeOf(*p).Kind().String()
 }

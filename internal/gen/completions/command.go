@@ -6,7 +6,7 @@ import (
 
 	"github.com/reeflective/flags/internal/interfaces"
 	"github.com/reeflective/flags/internal/parser"
-	"github.com/rsteube/carapace"
+	"github.com/carapace-sh/carapace"
 	"github.com/spf13/cobra"
 )
 

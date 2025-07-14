@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/carapace-sh/carapace"
+	"github.com/spf13/cobra"
+
 	"github.com/reeflective/flags/internal/errors"
 	"github.com/reeflective/flags/internal/parser"
-	"github.com/rsteube/carapace"
-	"github.com/spf13/cobra"
 )
 
 // groupComps finds if a field is marked as a subgroup of options, and if yes, scans it recursively.
@@ -149,22 +150,13 @@ func flagComps(comps *carapace.Carapace, flagComps *flagSetComps) parser.Handler
 // flagCompsScanner builds a scanner that will register some completers for an option flag.
 func flagCompsScanner(actions *flagSetComps) parser.FlagFunc {
 	handler := func(flag string, tag *parser.MultiTag, val reflect.Value) error {
-		// First get any completer implementation, and identifies if
-		// type is an array, and if yes, where the completer is implemented.
-		completer, isRepeatable, itemsImplement := typeCompleter(val)
+		// Get the combined completer from the type and the struct tag.
+		completer, isRepeatable, _ := GetCombinedCompletionAction(val, *tag)
 
 		// Check if the flag has some choices: if yes, we simply overwrite
 		// the completer implementation with a builtin one.
 		if choices := choiceCompletions(*tag, val); choices != nil {
 			completer = choices
-			itemsImplement = true
-		}
-
-		// Or we might find struct tags specifying some completions,
-		// in which case we also override the completer implementation
-		if tagged, found := taggedCompletions(*tag); found {
-			completer = tagged
-			itemsImplement = true
 		}
 
 		// We are done if no completer is found whatsoever.
@@ -176,7 +168,7 @@ func flagCompsScanner(actions *flagSetComps) parser.FlagFunc {
 
 		// Then, and irrespectively of where the completer comes from,
 		// we adapt it considering the kind of type we're dealing with.
-		if isRepeatable && itemsImplement {
+		if isRepeatable {
 			action = action.UniqueList(",")
 		}
 

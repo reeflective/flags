@@ -14,11 +14,11 @@ import (
 // (eg, options grouped in a struct), but just declares them at the root level.
 type BasicOptions struct {
 	// First flag tags notation
-	Path     string            `complete:"Files"                                                                    description:"a path used by your command"                                                  long:"path"  optional-value:"/home/user" short:"p"`
-	Files    []string          `complete:"Files"                                                                    desc:"A list of files, with repeated flags or comma-separated items"                       long:"files" short:"f"`
-	Elems    map[string]string `choice:"user:host machine:testing another:target"                                   description:"A map[string]string flag, can be repeated or used with comma-separated items" long:"elems" short:"e"`
-	Check    bool              `description:"a boolean checker, can be used in an option stacking, like -cp <path>" long:"check"                                                                               short:"c"`
-	Machines Machines          `description:"A type that implements user@host (multipart) completion"               long:"machines"                                                                            short:"m"`
+	Path    string            `complete:"Files"                                                                    description:"a path used by your command"                                                  long:"path"  optional-value:"/home/user" short:"p"`
+	Files   []string          `complete:"Files"                                                                    desc:"A list of files, with repeated flags or comma-separated items"                       long:"files" short:"f"`
+	Elems   map[string]string `choice:"user:host machine:testing another:target"                                   description:"A map[string]string flag, can be repeated or used with comma-separated items" long:"elems" short:"e"`
+	Check   bool              `description:"a boolean checker, can be used in an option stacking, like -cp <path>" long:"check"                                                                               short:"c"`
+	Machine Machine           `description:"A type that implements user@host (multipart) completion"               long:"machine"                                                                             short:"m"`
 
 	// Second flag tag notation
 	Alternate string   `desc:"A flag declared with struct tag flag:\"a alternate\" instead of short:\"a\" / long:\"alternate\"" flag:"alternate a"`
@@ -31,6 +31,7 @@ func (c *BasicOptions) Execute(args []string) error {
 	fmt.Printf("Files ([]string):            %v\n", c.Files)
 	fmt.Printf("Elems (map[string]string):   %v\n", c.Elems)
 	fmt.Printf("Check (bool):                %v\n\n", c.Check)
+	fmt.Printf("Machines (string):           %v\n\n", c.Machine)
 
 	fmt.Printf("Alternate (string):          %v\n", c.Alternate)
 	fmt.Printf("Email (string):              %v\n", c.Email)

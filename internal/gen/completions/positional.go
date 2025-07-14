@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/carapace-sh/carapace"
+
 	"github.com/reeflective/flags/internal/parser"
 	"github.com/reeflective/flags/internal/positional"
-	"github.com/rsteube/carapace"
 )
 
 // positionals finds a struct tagged as containing positional arguments and scans them.
@@ -48,7 +49,7 @@ func getCompleters(args *positional.Args, comps *carapace.Carapace) *compCache {
 			cache.add(arg.Index, completer)
 		}
 
-		if completer, found := taggedCompletions(arg.Tag); found {
+		if completer, _, found := getTaggedCompletionAction(arg.Tag); found {
 			cache.add(arg.Index, completer)
 		}
 	}
