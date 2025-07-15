@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"reflect"
 
-	flagerrors "github.com/reeflective/flags/internal/errors"
-	"github.com/reeflective/flags/internal/parser"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+
+	flagerrors "github.com/reeflective/flags/internal/errors"
+	"github.com/reeflective/flags/internal/parser"
 )
 
 // flagScan builds a small struct field handler so that we can scan
@@ -43,9 +44,10 @@ func flagsGroup(cmd *cobra.Command, val reflect.Value, field *reflect.StructFiel
 	}
 
 	legacyGroup, legacyIsSet := mtag.Get("group")
+	newGroup, newIsSet := mtag.Get("options")
 	commandGroup, commandsIsSet := mtag.Get("commands")
 
-	if !legacyIsSet && !commandsIsSet {
+	if !legacyIsSet && !newIsSet && !commandsIsSet {
 		return false, nil
 	}
 
@@ -62,7 +64,7 @@ func flagsGroup(cmd *cobra.Command, val reflect.Value, field *reflect.StructFiel
 	}
 
 	// A group of options ("group" is the legacy name)
-	if legacyIsSet && legacyGroup != "" {
+	if (legacyIsSet && legacyGroup != "") || (newIsSet && newGroup != "") {
 		err := addFlagSet(cmd, mtag, ptrval.Interface(), opts)
 
 		return true, err

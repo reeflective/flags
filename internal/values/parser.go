@@ -1,7 +1,6 @@
 package values
 
 import (
-	"fmt"
 	"reflect"
 
 	"github.com/reeflective/flags/internal/interfaces"
@@ -34,15 +33,8 @@ func NewValue(val reflect.Value) Value {
 			return newGoFlagsValue(ptr)
 		}
 	}
-	// 3. `encoding.TextUnmarshaler` implementation:
-	// if val.CanAddr() {
-	// 	ptr := val.Addr().Interface()
-	// 	if _, ok := ptr.(encoding.TextUnmarshaler); ok {
-	// 		return newTextUnmarshaler(ptr)
-	// 	}
-	// }
 
-	// 4. Known Go types (using generated parsers):
+	// 3. Known Go types (using generated parsers):
 	if val.CanAddr() {
 		addr := val.Addr().Interface()
 		if v := ParseGenerated(addr); v != nil {
@@ -53,13 +45,53 @@ func NewValue(val reflect.Value) Value {
 		}
 	}
 
-	fmt.Println(val.Type())
-
-	// 5 - Dereference pointers if we need.
+	// 4 - Dereference pointers if we need.
 	if val.Kind() == reflect.Ptr {
 		return NewValue(val.Elem())
 	}
 
 	// 5. Reflective Parser Fallback:
 	return newReflectiveValue(val)
+}
+
+func NewValueT(value reflect.Value) Value {
+	// value is addressable, let's check if we can parse it
+	if value.CanAddr() && value.Addr().CanInterface() {
+		valueInterface := value.Addr().Interface()
+		val := ParseGenerated(valueInterface)
+
+		if val != nil {
+			return val
+		}
+		// check if field implements Value interface
+		if val, casted := valueInterface.(Value); casted {
+			return val
+		}
+	}
+
+	switch value.Kind() {
+	case reflect.Ptr:
+		if value.IsNil() {
+			value.Set(reflect.New(value.Type().Elem()))
+		}
+
+		val := ParseGeneratedPtrs(value.Addr().Interface())
+
+		if val != nil {
+			return val
+		}
+
+		return NewValue(value.Elem())
+
+	case reflect.Struct:
+		// Also check structs here, so that things like net.IPNet
+		// are not considered as simple reflective values.
+		if value.CanAddr() {
+			if v := ParseGenerated(value.Addr().Interface()); v != nil {
+				return v
+			}
+		}
+	}
+
+	return nil
 }

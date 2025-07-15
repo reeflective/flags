@@ -67,18 +67,9 @@ func ParseStruct(cfg any, optFuncs ...OptFunc) ([]*Flag, error) {
 
 // ParseField parses a single struct field as a list of flags.
 func ParseField(value reflect.Value, field reflect.StructField, opts *Opts) ([]*Flag, bool, error) {
-	flag, tag, newPrefix, err := parseInfo(field, opts)
+	flag, tag, _, err := parseInfo(field, opts)
 	if err != nil || flag == nil {
 		return nil, false, err
-	}
-
-	// If the field is a struct, we recurse into it to parse its fields as flags.
-	if value.Kind() == reflect.Struct {
-		// Create new options for the nested struct with the calculated newPrefix
-		nestedOpts := DefOpts().Apply(CopyOpts(opts), Prefix(newPrefix))
-		flags, err := parseStruct(value, nestedOpts)
-
-		return flags, true, err
 	}
 
 	// It's a potential flag value. Let's create a value handler for it.
