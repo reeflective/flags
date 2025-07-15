@@ -1,6 +1,6 @@
 package values
 
-//go:generate go run ./cmd/genvalues/main.go
+//go:generate go run ./genvalues/main.go
 
 import (
 	"fmt"
@@ -169,7 +169,7 @@ func ParseMap(value reflect.Value) Value {
 	keyKind := value.Type().Key().Kind()
 
 	// check that map key is string or integer
-	if !anyOf(MapAllowedKinds, keyKind) {
+	if !anyOf(mapAllowedKinds, keyKind) {
 		return nil
 	}
 
