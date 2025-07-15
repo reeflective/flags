@@ -23,7 +23,7 @@ func TestCompletions(t *testing.T) {
 	// the resulting carapace object: the carapace
 	// library takes care of verifying its output.
 	rootCmd := cobra.Command{}
-	ParseCommands(&rootCmd, argsCmd, nil)
+	Generate(&rootCmd, argsCmd, nil)
 
 	carapace.Test(t)
 }

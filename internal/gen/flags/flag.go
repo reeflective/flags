@@ -5,10 +5,11 @@ import (
 	"os"
 	"strings"
 
-	"github.com/reeflective/flags/internal/parser"
 	"github.com/spf13/pflag"
 
 	flagerrors "github.com/reeflective/flags/internal/errors"
+	"github.com/reeflective/flags/internal/parser"
+	"github.com/reeflective/flags/internal/values"
 )
 
 // flagSet describes interface,
@@ -39,12 +40,11 @@ func generateTo(src []*parser.Flag, dst flagSet) {
 
 		flag.NoOptDefVal = strings.Join(srcFlag.OptionalValue, " ")
 
-		// if boolFlag, casted := srcFlag.Value.(flags.BoolFlag); casted && boolFlag.IsBoolFlag() {
-		// 	// pflag uses -1 in this case,
-		// 	// we will use the same behaviour as in flag library
-		// 	flag.NoOptDefVal = "true"
-		// } else
-		if srcFlag.Required {
+		if boolFlag, casted := srcFlag.Value.(values.BoolFlag); casted && boolFlag.IsBoolFlag() {
+			// 	// pflag uses -1 in this case,
+			// 	// we will use the same behaviour as in flag library
+			flag.NoOptDefVal = "true"
+		} else if srcFlag.Required {
 			// Only non-boolean flags can be required.
 			annots = append(annots, "required")
 		}

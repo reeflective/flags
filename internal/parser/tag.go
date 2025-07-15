@@ -101,7 +101,7 @@ func (t *MultiTag) parse(tag string) error {
 func parseFlagTag(field reflect.StructField, options *Opts) (*Flag, *MultiTag, error) {
 	flag := &Flag{}
 
-	ignorePrefix := false
+	var ignorePrefix bool
 	flag.Name = CamelToFlag(field.Name, options.FlagDivider)
 
 	// Parse the struct tag

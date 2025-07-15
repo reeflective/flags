@@ -9,11 +9,13 @@ import (
 	"testing"
 	"time"
 
-	flagerrors "github.com/reeflective/flags/internal/errors"
-	"github.com/reeflective/flags/internal/parser"
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	flagerrors "github.com/reeflective/flags/internal/errors"
+	"github.com/reeflective/flags/internal/parser"
+	"github.com/reeflective/flags/internal/values"
 )
 
 //
@@ -36,10 +38,10 @@ type flagsConfig struct {
 	StringValue1 string
 	StringValue2 string `flag:"string-value-two s"`
 
-	CounterValue1 types.Counter
+	CounterValue1 values.Counter
 
 	StringSliceValue1 []string
-	DeprecatedValue1  string `flag:",deprecated" desc:"DEP_MESSAGE"`
+	DeprecatedValue1  string `desc:"DEP_MESSAGE" flag:",deprecated"`
 }
 
 // allPflags contains all possible types to be parsed as pflags.
@@ -61,7 +63,7 @@ type allPflags struct {
 	BoolValue     bool
 	StringValue   string
 	DurationValue time.Duration
-	CountValue    types.Counter
+	CountValue    values.Counter
 
 	IPValue    net.IP
 	IPNetValue net.IPNet
@@ -259,10 +261,10 @@ func TestParseToDef(t *testing.T) {
 	parseOptions := parser.ParseAll()
 
 	err := parseToDef(cfg, parseOptions)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	err = pflag.CommandLine.Parse([]string{"--string-value1", "value2"})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, "value2", cfg.StringValue1)
 
 	err = parseToDef("bad string", parseOptions)
@@ -307,79 +309,79 @@ func TestPFlagGetters(t *testing.T) {
 	require.NoError(t, err)
 
 	intValue, err := flagSet.GetInt("int-value")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, 10, intValue)
 
 	int8Value, err := flagSet.GetInt8("int8-value")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, int8(11), int8Value)
 
 	int32Value, err := flagSet.GetInt32("int32-value")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, int32(12), int32Value)
 
 	int64Value, err := flagSet.GetInt64("int64-value")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, int64(13), int64Value)
 
 	uintValue, err := flagSet.GetUint("uint-value")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, uint(14), uintValue)
 
 	uint8Value, err := flagSet.GetUint8("uint8-value")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, uint8(15), uint8Value)
 
 	uint16Value, err := flagSet.GetUint16("uint16-value")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, uint16(16), uint16Value)
 
 	uint32Value, err := flagSet.GetUint32("uint32-value")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, uint32(17), uint32Value)
 
 	uint64Value, err := flagSet.GetUint64("uint64-value")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, uint64(18), uint64Value)
 
 	float32Value, err := flagSet.GetFloat32("float32-value")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, float32(19.1), float32Value)
 
 	float64Value, err := flagSet.GetFloat64("float64-value")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, float64(20.1), float64Value)
 
 	boolValue, err := flagSet.GetBool("bool-value")
-	assert.NoError(t, err)
-	assert.Equal(t, true, boolValue)
+	require.NoError(t, err)
+	assert.True(t, boolValue)
 
 	countValue, err := flagSet.GetCount("count-value")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, 30, countValue)
 
 	durationValue, err := flagSet.GetDuration("duration-value")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, time.Second*10, durationValue)
 
 	stringValue, err := flagSet.GetString("string-value")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, "stringValue", stringValue)
 
 	ipValue, err := flagSet.GetIP("ip-value")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, net.ParseIP("127.0.0.1"), ipValue)
 
 	ipNetValue, err := flagSet.GetIPNet("ip-net-value")
-	assert.NoError(t, err)
+	fmt.Println(flagSet)
+	require.NoError(t, err)
 	assert.Equal(t, cfg.IPNetValue, ipNetValue)
 
 	stringSliceValue, err := flagSet.GetStringSlice("string-slice-value")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, []string{"one", "two"}, stringSliceValue)
 
 	intSliceValue, err := flagSet.GetIntSlice("int-slice-value")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, []int{10, 20}, intSliceValue)
 }
-

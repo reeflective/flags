@@ -77,7 +77,7 @@ func TestCommandInline(t *testing.T) {
 	t.Parallel()
 
 	opts := struct {
-		Value   bool        `short:"v" long:"version"`
+		Value   bool        `long:"version" short:"v"`
 		Command testCommand `command:"cmd"` // Can be a copy, or a pointer.
 	}{}
 
@@ -87,7 +87,7 @@ func TestCommandInline(t *testing.T) {
 
 	test := assert.New(t)
 	test.NotNil(cmd)
-	test.Nil(err, "Command should have exited successfully")
+	test.NoError(err, "Command should have exited successfully")
 
 	test.Equal("cmd", cmd.Name(), "Target command `cmd` should have been found.")
 	test.NotNil(root.Flags().ShorthandLookup("v"), "A flag -v should have been found on the root command")
@@ -113,7 +113,7 @@ func TestCommandInlineMulti(t *testing.T) {
 
 	test := assert.New(t)
 	test.NotNil(cmd)
-	test.Nil(err, "Command should have exited successfully")
+	test.NoError(err, "Command should have exited successfully")
 
 	test.Equal("c2", cmd.Name(), "Target command `c2` should have been found.")
 	test.NotNil(root.Flags().ShorthandLookup("v"), "A flag -v should have been found on the root command")
@@ -129,7 +129,7 @@ func TestCommandFlagOrderFail(t *testing.T) {
 	t.Parallel()
 
 	opts := struct {
-		Value   bool        `short:"v" long:"version"`
+		Value   bool        `long:"version" short:"v"`
 		Command testCommand `command:"cmd"`
 	}{}
 
@@ -139,8 +139,8 @@ func TestCommandFlagOrderFail(t *testing.T) {
 
 	pt := assert.New(t)
 	pt.NotNil(cmd)
-	pt.NotNil(err, "Command should have raised an unknown flag error")
-	pt.ErrorContains(err, "unknown shorthand flag: \"g\" in -g")
+	pt.Error(err, "Command should have raised an unknown flag error")
+	pt.ErrorContains(err, "unknown shorthand flag: 'g' in -g")
 }
 
 // TestCommandFlagOrder checks that flags bound to some commands
@@ -149,7 +149,7 @@ func TestCommandFlagOrderSuccess(t *testing.T) {
 	t.Parallel()
 
 	opts := struct {
-		Value   bool        `short:"v" long:"version"`
+		Value   bool        `long:"version" short:"v"`
 		Command testCommand `command:"cmd"`
 	}{}
 
@@ -158,7 +158,7 @@ func TestCommandFlagOrderSuccess(t *testing.T) {
 
 	pt := assert.New(t)
 	pt.NotNil(cmd)
-	pt.Nil(err, "Command should have successfully parsed the flags")
+	pt.NoError(err, "Command should have successfully parsed the flags")
 }
 
 // TestCommandFlagPersistentSuccess checks that flag groups marked
@@ -169,7 +169,7 @@ func TestCommandFlagPersistentSuccess(t *testing.T) {
 
 	cmdData := struct {
 		Opts struct {
-			Value bool `short:"v" long:"version"`
+			Value bool `long:"version" short:"v"`
 		} `group:"options" persistent:"true"`
 
 		Command testCommand `command:"cmd"`
@@ -181,7 +181,7 @@ func TestCommandFlagPersistentSuccess(t *testing.T) {
 	pt := assert.New(t)
 	pt.NotNil(cmd)
 	pt.Equal("cmd", cmd.Name())
-	pt.Nil(err, "Command should have successfully parsed the flags") //
+	pt.NoError(err, "Command should have successfully parsed the flags") //
 	pt.True(cmdData.Opts.Value, "flag -v should be true")
 }
 
@@ -194,7 +194,7 @@ func TestCommandFlagPersistentFail(t *testing.T) {
 
 	cmdData := struct {
 		Opts struct {
-			Value bool `short:"v" long:"version"`
+			Value bool `long:"version" short:"v"`
 		} `group:"options" persistent:"true"` // We use a tag to mark them.
 
 		Command testCommand `command:"cmd"`
@@ -205,8 +205,8 @@ func TestCommandFlagPersistentFail(t *testing.T) {
 
 	pt := assert.New(t)
 	pt.NotNil(cmd)
-	pt.NotNil(err, "Command should have raised an unknown flag error")
-	pt.ErrorContains(err, "unknown shorthand flag: \"p\" in -p")
+	pt.Error(err, "Command should have raised an unknown flag error")
+	pt.ErrorContains(err, "unknown shorthand flag: 'p' in -p")
 	pt.Equal(cmd.Name(), root.Name())
 }
 
@@ -229,7 +229,7 @@ func TestCommandFlagOverrideParent(t *testing.T) {
 	pt := assert.New(t)
 	pt.NotNil(cmd)
 	pt.Equal("cmd", cmd.Name())
-	pt.Nil(err, "Command should have successfully parsed the flags") //
+	pt.NoError(err, "Command should have successfully parsed the flags") //
 	pt.False(opts.Value, "parent flag -v should be false")
 	pt.True(opts.Command.V, "child flag -v should be true")
 }
@@ -252,7 +252,7 @@ func TestCommandFlagOverrideChild(t *testing.T) {
 	test := assert.New(t)
 	test.NotNil(cmd)
 	test.Equal("cmd", cmd.Name())
-	test.Nil(err, "Command should have successfully parsed the flags") //
+	test.NoError(err, "Command should have successfully parsed the flags") //
 	test.True(opts.Value, "parent flag -v should be true")
 	test.False(opts.Command.V, "child flag -v should be false")
 }
@@ -286,7 +286,7 @@ func TestCommandAdd(t *testing.T) {
 	// Binding checks
 	test := assert.New(t)
 	test.NotNil(root.RunE) // The command has not SubcommandsOptional true
-	test.Equal(2, len(root.Commands()))
+	test.Len(root.Commands(), 2)
 
 	// Command 1
 	cmd1 := root.Commands()[0]
@@ -299,7 +299,7 @@ func TestCommandAdd(t *testing.T) {
 	test.NotNil(cmd2.RunE)
 
 	resultCmd, err := root.ExecuteC()
-	test.Nil(err)
+	test.NoError(err)
 	test.True(rootData.V)
 	test.Equal(cmd1, resultCmd)
 	test.True(rootData.C1.G)
@@ -317,12 +317,12 @@ func TestSubcommandsOptional(t *testing.T) {
 	test.NotNil(root.RunE)
 
 	err := root.Execute()
-	test.Nil(err)
+	test.NoError(err)
 }
 
 // TestSubcommandsRequiredUsage checks that a command having required
 // subcommands (hence not being marked "subcommands-optional"), will
-/// return the correct errors (or no errors), depending on the words.
+// / return the correct errors (or no errors), depending on the words.
 func TestSubcommandsRequiredUsage(t *testing.T) {
 	t.Parallel()
 
@@ -334,10 +334,10 @@ func TestSubcommandsRequiredUsage(t *testing.T) {
 
 	// No error since help usage printed does not return an error.
 	err := root.Execute()
-	test.Nil(err)
+	test.NoError(err)
 
 	// And error since invoked command does not exist
 	root.SetArgs([]string{"c2", "invalid"})
 	err = root.Execute()
-	test.NotNil(err)
+	test.Error(err)
 }

@@ -124,6 +124,7 @@ func addFlagSet(cmd *cobra.Command, mtag *parser.MultiTag, data interface{}, par
 			return false, nil
 		}
 		generateTo(fieldFlags, flagSet)
+
 		return true, nil
 	}
 

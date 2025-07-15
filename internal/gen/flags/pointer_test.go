@@ -67,7 +67,7 @@ func TestPointerPrimitiveFlags(t *testing.T) {
 
 	test := assert.New(t)
 	test.NotNil(cmd)
-	test.Nil(err, "Command should have exited successfully")
+	test.NoError(err, "Command should have exited successfully")
 
 	test.True(*data.Bool, "flag -v should be true")
 	test.Equal("strVal", *data.String)
@@ -90,7 +90,7 @@ func TestPointerGroup(t *testing.T) {
 
 	test := assert.New(t)
 	test.NotNil(cmd)
-	test.Nil(err, "Command should have exited successfully")
+	test.NoError(err, "Command should have exited successfully")
 	test.NotNil(opts.Group)
 	test.True(opts.Group.Value, "flag -v should be true")
 }
@@ -106,7 +106,7 @@ func TestDoNotChangeNonTaggedFields(t *testing.T) {
 
 	test := assert.New(t)
 	test.NotNil(cmd)
-	test.Nil(err, "Command should have exited successfully")
+	test.NoError(err, "Command should have exited successfully")
 	test.Nil(opts.A.Pointer, "expected A.Pointer to be nil")
 	test.Nil(opts.B, "expected B struct to be nil")
 }

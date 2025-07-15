@@ -1,7 +1,7 @@
 package values
 
 import (
-	"encoding"
+	"fmt"
 	"reflect"
 
 	"github.com/reeflective/flags/internal/interfaces"
@@ -11,6 +11,10 @@ import (
 // based on its reflect.Value. It uses a tiered strategy to find the best
 // way to handle the type.
 func NewValue(val reflect.Value) Value {
+	if val.Kind() == reflect.Ptr && val.IsNil() {
+		val.Set(reflect.New(val.Type().Elem()))
+	}
+
 	// 1. Direct `flags.Value` implementation:
 	if val.CanInterface() {
 		if v, ok := val.Interface().(Value); ok {
@@ -30,14 +34,13 @@ func NewValue(val reflect.Value) Value {
 			return newGoFlagsValue(ptr)
 		}
 	}
-
 	// 3. `encoding.TextUnmarshaler` implementation:
-	if val.CanAddr() {
-		ptr := val.Addr().Interface()
-		if _, ok := ptr.(encoding.TextUnmarshaler); ok {
-			return newTextUnmarshaler(ptr)
-		}
-	}
+	// if val.CanAddr() {
+	// 	ptr := val.Addr().Interface()
+	// 	if _, ok := ptr.(encoding.TextUnmarshaler); ok {
+	// 		return newTextUnmarshaler(ptr)
+	// 	}
+	// }
 
 	// 4. Known Go types (using generated parsers):
 	if val.CanAddr() {
@@ -48,6 +51,13 @@ func NewValue(val reflect.Value) Value {
 		if v := ParseGeneratedPtrs(addr); v != nil {
 			return v
 		}
+	}
+
+	fmt.Println(val.Type())
+
+	// 5 - Dereference pointers if we need.
+	if val.Kind() == reflect.Ptr {
+		return NewValue(val.Elem())
 	}
 
 	// 5. Reflective Parser Fallback:

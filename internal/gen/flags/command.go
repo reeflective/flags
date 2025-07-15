@@ -1,6 +1,7 @@
 package flags
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"reflect"
@@ -188,7 +189,7 @@ func unknownSubcommandAction(cmd *cobra.Command, args []string) error {
 		err = strings.TrimSuffix(err, "\n")
 	}
 
-	return fmt.Errorf(err)
+	return errors.New(err)
 }
 
 func setRuns(cmd *cobra.Command, data interface{}) {
@@ -199,6 +200,7 @@ func setRuns(cmd *cobra.Command, data interface{}) {
 	if cmd.Args == nil {
 		cmd.Args = func(cmd *cobra.Command, args []string) error {
 			setRemainingArgs(cmd, args)
+
 			return nil
 		}
 	}

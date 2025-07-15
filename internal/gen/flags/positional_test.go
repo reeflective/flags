@@ -2,8 +2,6 @@ package flags
 
 import (
 	"errors"
-	// "os"
-	// "os/exec".
 	"strings"
 	"testing"
 
@@ -40,7 +38,7 @@ func TestAllOptional(t *testing.T) {
 	err := cmd.Execute()
 
 	pt := assert.New(t)
-	pt.Nilf(err, "Unexpected error: %v", err)
+	pt.NoErrorf(err, "Unexpected error: %v", err)
 	pt.Equal(10, opts.Positional.Command, "Expected opts.Positional.Command to match")
 	pt.Equal("arg_test.go", opts.Positional.Filename, "Expected opts.Positional.Filename to match")
 	pt.Equal([]string{"a", "b"}, opts.Positional.Rest, "Expected opts.Positional.Rest to match")
@@ -107,7 +105,7 @@ func TestRequiredRestUndefinedPass(t *testing.T) {
 	err := cmd.Args(cmd, []string{"rest1"})
 
 	pt := assert.New(t)
-	pt.Nilf(err, "Unexpected error: %v", err)
+	pt.NoErrorf(err, "Unexpected error: %v", err)
 	pt.Equal("rest1", opts.Positional.Rest[0],
 		"Expected opts.Positional.Rest[0] to match")
 }
@@ -151,7 +149,7 @@ func TestRequiredRestQuantityPass(t *testing.T) {
 	err := cmd.Args(cmd, []string{"rest1", "rest2", "rest3"})
 
 	pt := assert.New(t)
-	pt.Nilf(err, "Unexpected error: %v", err)
+	pt.NoErrorf(err, "Unexpected error: %v", err)
 	pt.Equal("rest1", opts.Positional.Rest[0])
 	pt.Equal("rest2", opts.Positional.Rest[1])
 	pt.Equal("rest3", opts.Positional.Rest[2])
@@ -227,7 +225,7 @@ func TestOptionalNonRestRangeMinimumPass(t *testing.T) {
 	err := cmd.Args(cmd, []string{"first", "second", "third"})
 
 	pt := assert.New(t)
-	pt.Nilf(err, "Unexpected error: %v", err)
+	pt.NoErrorf(err, "Unexpected error: %v", err)
 	pt.Equal([]string{"first"}, opts.Positional.NonRest)
 	pt.Equal("second", opts.Positional.Second)
 	pt.Equal("third", opts.Positional.Third)
@@ -257,7 +255,7 @@ func TestRequiredNonRestRangeExcessPass(t *testing.T) {
 	err := cmd.Args(cmd, args)
 
 	pt := assert.New(t)
-	pt.Nilf(err, "Unexpected error: %v", err)
+	pt.NoErrorf(err, "Unexpected error: %v", err)
 	pt.Equal([]string{"nonrest1", "nonrest2"}, opts.Positional.NonRest)
 	pt.Equal("second", opts.Positional.Second)
 	pt.Equal("third", opts.Positional.Third)
@@ -310,7 +308,7 @@ func TestMixedSlicesMaxIsMinDefault(t *testing.T) {
 	err := cmd.Args(cmd, args)
 
 	pt := assert.New(t)
-	pt.Nilf(err, "Unexpected error: %v", err)
+	pt.NoErrorf(err, "Unexpected error: %v", err)
 	pt.Equal([]string{"first1", "first2"}, opts.Positional.FirstList)
 	pt.Equal([]string{"second1", "second2"}, opts.Positional.SecondList)
 	pt.Equal("third", opts.Positional.Third)
@@ -338,7 +336,7 @@ func TestMixedSlicesMinimumNonRestPass(t *testing.T) {
 	err := cmd.Args(cmd, args)
 
 	pt := assert.New(t)
-	pt.Nilf(err, "Unexpected error: %v", err)
+	pt.NoErrorf(err, "Unexpected error: %v", err)
 	pt.Equal([]string{"first1", "first2"}, opts.Positional.FirstList)
 	pt.Equal([]string{"second1"}, opts.Positional.SecondList)
 	pt.Equal("third", opts.Positional.Third)
@@ -372,10 +370,10 @@ func TestMixedSlicesMinimumNonRestFail(t *testing.T) {
 // TestMixedSlicesLastHasPriority checks that 2 slices of positionals,
 // when being given less words than what their combined maximum allows,
 // will:
-// - Fill the slices according to their ordering in the struct: the
-//   fist one is being fed words until max, and then passes the words
-//   up to the next slice.
-// - Will still respect the minimum requirements of the following fields.
+//   - Fill the slices according to their ordering in the struct: the
+//     fist one is being fed words until max, and then passes the words
+//     up to the next slice.
+//   - Will still respect the minimum requirements of the following fields.
 //
 // The function is therefore passed a number of words that is higher
 // than the total minimum required, but less than the "max".
@@ -398,7 +396,7 @@ func TestMixedSlicesLastHasPriority(t *testing.T) {
 	err := cmd.Args(cmd, args)
 
 	pt := assert.New(t)
-	pt.Nilf(err, "Unexpected error: %v", err)
+	pt.NoErrorf(err, "Unexpected error: %v", err)
 	pt.Equal([]string{"first1", "first2", "second1"}, opts.Positional.FirstList)
 	pt.Equal([]string{"third1"}, opts.Positional.SecondList)
 	pt.Equal([]string{"third2"}, opts.Positional.ThirdList)
@@ -482,7 +480,7 @@ func TestPositionalDoubleDashSuccess(t *testing.T) {
 	pt.Equal([]string{"first1", "first2"}, opts.Double.Positional.FirstList)
 	pt.Equal([]string{"second1"}, opts.Double.Positional.SecondList)
 	pt.Equal("third1", opts.Double.Positional.Third)
-	pt.Nilf(err, "The command returned a retargs error: %v", err)
+	pt.NoErrorf(err, "The command returned a retargs error: %v", err)
 }
 
 // TestPositionalDoubleDashFail checks that a command being fed a sufficient
@@ -507,9 +505,9 @@ func TestPositionalDoubleDashFail(t *testing.T) {
 // Helpers --------------------------------------------------------------- //
 //
 
-func newCommandWithArgs(data interface{}, args []string) *cobra.Command {
-	cmd := ParseCommands(data) // Generate the command
-	cmd.SetArgs(args)     // And use our args for execution
+func newCommandWithArgs(data any, args []string) *cobra.Command {
+	cmd, _ := ParseCommands(data) // Generate the command
+	cmd.SetArgs(args)             // And use our args for execution
 
 	// We don't want the errors to be printed to stdout.
 	cmd.SilenceErrors = true
