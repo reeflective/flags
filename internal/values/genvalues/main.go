@@ -337,11 +337,11 @@ func Test{{.|Name}}Value(t *testing.T) {
 		{{ if ne ($value|InterfereType) ($value.Type) }}\nn
 		a := new({{$value|InterfereType}})
 		v := new{{$value|Name}}Value(&a)
-		assert.Equal(t, parseGeneratedPtrs(&a), v)
+		assert.Equal(t, ParseGeneratedPtrs(&a), v)
 		{{ else }}\nn
 		a := new({{$value.Type}})
 		v := new{{$value|Name}}Value(a)
-		assert.Equal(t, parseGenerated(a), v)
+		assert.Equal(t, ParseGenerated(a), v)
 		{{ end }}\nn
 		err := v.Set("{{.In}}")
 		{{if .Err}}\nn
@@ -398,7 +398,7 @@ func Test{{.|Name}}SliceValue(t *testing.T) {
 		var err error
 		a := new([]{{$value.Type}})
 		v := new{{$value|Name}}SliceValue(a)
-		assert.Equal(t, parseGenerated(a), v)
+		assert.Equal(t, ParseGenerated(a), v)
 		assert.True(t, v.IsCumulative())
 		{{range .In}}\nn
 		err = v.Set("{{.}}")
@@ -426,7 +426,7 @@ func Test{{MapValueName $value $keyType | Title}}(t *testing.T) {
 		var err error
 		a := make(map[{{$keyType}}]{{$value.Type}})
 		v := new{{MapValueName $value $keyType | Title}}(&a)
-		assert.Equal(t, parseGeneratedMap(&a), v)
+		assert.Equal(t, ParseGeneratedMap(&a), v)
 		assert.True(t, v.IsCumulative())
 		{{range .In}}\nn
 		err = v.Set("{{$keyType | KindTest}}{{.}}")
@@ -460,7 +460,7 @@ func Test{{MapValueName $value $keyType | Title}}(t *testing.T) {
 func TestParseGeneratedMap_NilDefault(t *testing.T) {
     t.Parallel()
 	a := new(bool)
-	v := parseGeneratedMap(a)
+	v := ParseGeneratedMap(a)
 	assert.Nil(t, v)
 }
 

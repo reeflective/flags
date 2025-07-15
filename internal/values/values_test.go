@@ -94,7 +94,3 @@ func TestValidateValue_Set(t *testing.T) {
 	}
 	require.EqualError(t, v.Set("newVal"), "invalid newVal")
 }
-
-func strP(value string) *string {
-	return &value
-}

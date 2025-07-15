@@ -24,6 +24,7 @@ func (v *goFlagsValue) Set(s string) error {
 		// This should not happen if NewValue is constructed correctly.
 		return fmt.Errorf("internal error: type %T does not implement flags.Unmarshaler", v.value)
 	}
+
 	return unmarshaler.UnmarshalFlag(s)
 }
 

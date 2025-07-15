@@ -31,85 +31,85 @@ var mapAllowedKinds = []reflect.Kind{
 
 // ParseGenerated generates a flag with underlying interface type.
 func ParseGenerated(value interface{}) Value {
-	switch value.(type) {
+	switch value := value.(type) {
 	case *string:
-		return newStringValue(value.(*string))
+		return newStringValue(value)
 	case *bool:
-		return newBoolValue(value.(*bool))
+		return newBoolValue(value)
 	case *uint:
-		return newUintValue(value.(*uint))
+		return newUintValue(value)
 	case *uint8:
-		return newUint8Value(value.(*uint8))
+		return newUint8Value(value)
 	case *uint16:
-		return newUint16Value(value.(*uint16))
+		return newUint16Value(value)
 	case *uint32:
-		return newUint32Value(value.(*uint32))
+		return newUint32Value(value)
 	case *uint64:
-		return newUint64Value(value.(*uint64))
+		return newUint64Value(value)
 	case *int:
-		return newIntValue(value.(*int))
+		return newIntValue(value)
 	case *int8:
-		return newInt8Value(value.(*int8))
+		return newInt8Value(value)
 	case *int16:
-		return newInt16Value(value.(*int16))
+		return newInt16Value(value)
 	case *int32:
-		return newInt32Value(value.(*int32))
+		return newInt32Value(value)
 	case *int64:
-		return newInt64Value(value.(*int64))
+		return newInt64Value(value)
 	case *float64:
-		return newFloat64Value(value.(*float64))
+		return newFloat64Value(value)
 	case *float32:
-		return newFloat32Value(value.(*float32))
+		return newFloat32Value(value)
 	case *time.Duration:
-		return newDurationValue(value.(*time.Duration))
+		return newDurationValue(value)
 	case *net.IP:
-		return newIPValue(value.(*net.IP))
+		return newIPValue(value)
 	case *HexBytes:
-		return newHexBytesValue(value.(*HexBytes))
+		return newHexBytesValue(value)
 	case *net.TCPAddr:
-		return newTCPAddrValue(value.(*net.TCPAddr))
+		return newTCPAddrValue(value)
 	case *net.IPNet:
-		return newIPNetValue(value.(*net.IPNet))
+		return newIPNetValue(value)
 	case *[]string:
-		return newStringSliceValue(value.(*[]string))
+		return newStringSliceValue(value)
 	case *[]bool:
-		return newBoolSliceValue(value.(*[]bool))
+		return newBoolSliceValue(value)
 	case *[]uint:
-		return newUintSliceValue(value.(*[]uint))
+		return newUintSliceValue(value)
 	case *[]uint8:
-		return newUint8SliceValue(value.(*[]uint8))
+		return newUint8SliceValue(value)
 	case *[]uint16:
-		return newUint16SliceValue(value.(*[]uint16))
+		return newUint16SliceValue(value)
 	case *[]uint32:
-		return newUint32SliceValue(value.(*[]uint32))
+		return newUint32SliceValue(value)
 	case *[]uint64:
-		return newUint64SliceValue(value.(*[]uint64))
+		return newUint64SliceValue(value)
 	case *[]int:
-		return newIntSliceValue(value.(*[]int))
+		return newIntSliceValue(value)
 	case *[]int8:
-		return newInt8SliceValue(value.(*[]int8))
+		return newInt8SliceValue(value)
 	case *[]int16:
-		return newInt16SliceValue(value.(*[]int16))
+		return newInt16SliceValue(value)
 	case *[]int32:
-		return newInt32SliceValue(value.(*[]int32))
+		return newInt32SliceValue(value)
 	case *[]int64:
-		return newInt64SliceValue(value.(*[]int64))
+		return newInt64SliceValue(value)
 	case *[]float64:
-		return newFloat64SliceValue(value.(*[]float64))
+		return newFloat64SliceValue(value)
 	case *[]float32:
-		return newFloat32SliceValue(value.(*[]float32))
+		return newFloat32SliceValue(value)
 	case *[]time.Duration:
-		return newDurationSliceValue(value.(*[]time.Duration))
+		return newDurationSliceValue(value)
 	case *[]net.IP:
-		return newIPSliceValue(value.(*[]net.IP))
+		return newIPSliceValue(value)
 	case *[]HexBytes:
-		return newHexBytesSliceValue(value.(*[]HexBytes))
+		return newHexBytesSliceValue(value)
 	case *[]*regexp.Regexp:
-		return newRegexpSliceValue(value.(*[]*regexp.Regexp))
+		return newRegexpSliceValue(value)
 	case *[]net.TCPAddr:
-		return newTCPAddrSliceValue(value.(*[]net.TCPAddr))
+		return newTCPAddrSliceValue(value)
 	case *[]net.IPNet:
-		return newIPNetSliceValue(value.(*[]net.IPNet))
+		return newIPNetSliceValue(value)
 	default:
 		return nil
 	}
@@ -117,9 +117,9 @@ func ParseGenerated(value interface{}) Value {
 
 // ParseGenerated generates a flag with underlying ptr type.
 func ParseGeneratedPtrs(value interface{}) Value {
-	switch value.(type) {
+	switch value := value.(type) {
 	case **regexp.Regexp:
-		return newRegexpValue(value.(**regexp.Regexp))
+		return newRegexpValue(value)
 	default:
 		return nil
 	}
@@ -127,431 +127,431 @@ func ParseGeneratedPtrs(value interface{}) Value {
 
 // ParseGenerated generates a flag with underlying map type.
 func ParseGeneratedMap(value interface{}) Value {
-	switch value.(type) {
+	switch value := value.(type) {
 	case *map[string]string:
-		return newStringStringMapValue(value.(*map[string]string))
+		return newStringStringMapValue(value)
 	case *map[int]string:
-		return newIntStringMapValue(value.(*map[int]string))
+		return newIntStringMapValue(value)
 	case *map[int8]string:
-		return newInt8StringMapValue(value.(*map[int8]string))
+		return newInt8StringMapValue(value)
 	case *map[int16]string:
-		return newInt16StringMapValue(value.(*map[int16]string))
+		return newInt16StringMapValue(value)
 	case *map[int32]string:
-		return newInt32StringMapValue(value.(*map[int32]string))
+		return newInt32StringMapValue(value)
 	case *map[int64]string:
-		return newInt64StringMapValue(value.(*map[int64]string))
+		return newInt64StringMapValue(value)
 	case *map[uint]string:
-		return newUintStringMapValue(value.(*map[uint]string))
+		return newUintStringMapValue(value)
 	case *map[uint8]string:
-		return newUint8StringMapValue(value.(*map[uint8]string))
+		return newUint8StringMapValue(value)
 	case *map[uint16]string:
-		return newUint16StringMapValue(value.(*map[uint16]string))
+		return newUint16StringMapValue(value)
 	case *map[uint32]string:
-		return newUint32StringMapValue(value.(*map[uint32]string))
+		return newUint32StringMapValue(value)
 	case *map[uint64]string:
-		return newUint64StringMapValue(value.(*map[uint64]string))
+		return newUint64StringMapValue(value)
 	case *map[string]bool:
-		return newStringBoolMapValue(value.(*map[string]bool))
+		return newStringBoolMapValue(value)
 	case *map[int]bool:
-		return newIntBoolMapValue(value.(*map[int]bool))
+		return newIntBoolMapValue(value)
 	case *map[int8]bool:
-		return newInt8BoolMapValue(value.(*map[int8]bool))
+		return newInt8BoolMapValue(value)
 	case *map[int16]bool:
-		return newInt16BoolMapValue(value.(*map[int16]bool))
+		return newInt16BoolMapValue(value)
 	case *map[int32]bool:
-		return newInt32BoolMapValue(value.(*map[int32]bool))
+		return newInt32BoolMapValue(value)
 	case *map[int64]bool:
-		return newInt64BoolMapValue(value.(*map[int64]bool))
+		return newInt64BoolMapValue(value)
 	case *map[uint]bool:
-		return newUintBoolMapValue(value.(*map[uint]bool))
+		return newUintBoolMapValue(value)
 	case *map[uint8]bool:
-		return newUint8BoolMapValue(value.(*map[uint8]bool))
+		return newUint8BoolMapValue(value)
 	case *map[uint16]bool:
-		return newUint16BoolMapValue(value.(*map[uint16]bool))
+		return newUint16BoolMapValue(value)
 	case *map[uint32]bool:
-		return newUint32BoolMapValue(value.(*map[uint32]bool))
+		return newUint32BoolMapValue(value)
 	case *map[uint64]bool:
-		return newUint64BoolMapValue(value.(*map[uint64]bool))
+		return newUint64BoolMapValue(value)
 	case *map[string]uint:
-		return newStringUintMapValue(value.(*map[string]uint))
+		return newStringUintMapValue(value)
 	case *map[int]uint:
-		return newIntUintMapValue(value.(*map[int]uint))
+		return newIntUintMapValue(value)
 	case *map[int8]uint:
-		return newInt8UintMapValue(value.(*map[int8]uint))
+		return newInt8UintMapValue(value)
 	case *map[int16]uint:
-		return newInt16UintMapValue(value.(*map[int16]uint))
+		return newInt16UintMapValue(value)
 	case *map[int32]uint:
-		return newInt32UintMapValue(value.(*map[int32]uint))
+		return newInt32UintMapValue(value)
 	case *map[int64]uint:
-		return newInt64UintMapValue(value.(*map[int64]uint))
+		return newInt64UintMapValue(value)
 	case *map[uint]uint:
-		return newUintUintMapValue(value.(*map[uint]uint))
+		return newUintUintMapValue(value)
 	case *map[uint8]uint:
-		return newUint8UintMapValue(value.(*map[uint8]uint))
+		return newUint8UintMapValue(value)
 	case *map[uint16]uint:
-		return newUint16UintMapValue(value.(*map[uint16]uint))
+		return newUint16UintMapValue(value)
 	case *map[uint32]uint:
-		return newUint32UintMapValue(value.(*map[uint32]uint))
+		return newUint32UintMapValue(value)
 	case *map[uint64]uint:
-		return newUint64UintMapValue(value.(*map[uint64]uint))
+		return newUint64UintMapValue(value)
 	case *map[string]uint8:
-		return newStringUint8MapValue(value.(*map[string]uint8))
+		return newStringUint8MapValue(value)
 	case *map[int]uint8:
-		return newIntUint8MapValue(value.(*map[int]uint8))
+		return newIntUint8MapValue(value)
 	case *map[int8]uint8:
-		return newInt8Uint8MapValue(value.(*map[int8]uint8))
+		return newInt8Uint8MapValue(value)
 	case *map[int16]uint8:
-		return newInt16Uint8MapValue(value.(*map[int16]uint8))
+		return newInt16Uint8MapValue(value)
 	case *map[int32]uint8:
-		return newInt32Uint8MapValue(value.(*map[int32]uint8))
+		return newInt32Uint8MapValue(value)
 	case *map[int64]uint8:
-		return newInt64Uint8MapValue(value.(*map[int64]uint8))
+		return newInt64Uint8MapValue(value)
 	case *map[uint]uint8:
-		return newUintUint8MapValue(value.(*map[uint]uint8))
+		return newUintUint8MapValue(value)
 	case *map[uint8]uint8:
-		return newUint8Uint8MapValue(value.(*map[uint8]uint8))
+		return newUint8Uint8MapValue(value)
 	case *map[uint16]uint8:
-		return newUint16Uint8MapValue(value.(*map[uint16]uint8))
+		return newUint16Uint8MapValue(value)
 	case *map[uint32]uint8:
-		return newUint32Uint8MapValue(value.(*map[uint32]uint8))
+		return newUint32Uint8MapValue(value)
 	case *map[uint64]uint8:
-		return newUint64Uint8MapValue(value.(*map[uint64]uint8))
+		return newUint64Uint8MapValue(value)
 	case *map[string]uint16:
-		return newStringUint16MapValue(value.(*map[string]uint16))
+		return newStringUint16MapValue(value)
 	case *map[int]uint16:
-		return newIntUint16MapValue(value.(*map[int]uint16))
+		return newIntUint16MapValue(value)
 	case *map[int8]uint16:
-		return newInt8Uint16MapValue(value.(*map[int8]uint16))
+		return newInt8Uint16MapValue(value)
 	case *map[int16]uint16:
-		return newInt16Uint16MapValue(value.(*map[int16]uint16))
+		return newInt16Uint16MapValue(value)
 	case *map[int32]uint16:
-		return newInt32Uint16MapValue(value.(*map[int32]uint16))
+		return newInt32Uint16MapValue(value)
 	case *map[int64]uint16:
-		return newInt64Uint16MapValue(value.(*map[int64]uint16))
+		return newInt64Uint16MapValue(value)
 	case *map[uint]uint16:
-		return newUintUint16MapValue(value.(*map[uint]uint16))
+		return newUintUint16MapValue(value)
 	case *map[uint8]uint16:
-		return newUint8Uint16MapValue(value.(*map[uint8]uint16))
+		return newUint8Uint16MapValue(value)
 	case *map[uint16]uint16:
-		return newUint16Uint16MapValue(value.(*map[uint16]uint16))
+		return newUint16Uint16MapValue(value)
 	case *map[uint32]uint16:
-		return newUint32Uint16MapValue(value.(*map[uint32]uint16))
+		return newUint32Uint16MapValue(value)
 	case *map[uint64]uint16:
-		return newUint64Uint16MapValue(value.(*map[uint64]uint16))
+		return newUint64Uint16MapValue(value)
 	case *map[string]uint32:
-		return newStringUint32MapValue(value.(*map[string]uint32))
+		return newStringUint32MapValue(value)
 	case *map[int]uint32:
-		return newIntUint32MapValue(value.(*map[int]uint32))
+		return newIntUint32MapValue(value)
 	case *map[int8]uint32:
-		return newInt8Uint32MapValue(value.(*map[int8]uint32))
+		return newInt8Uint32MapValue(value)
 	case *map[int16]uint32:
-		return newInt16Uint32MapValue(value.(*map[int16]uint32))
+		return newInt16Uint32MapValue(value)
 	case *map[int32]uint32:
-		return newInt32Uint32MapValue(value.(*map[int32]uint32))
+		return newInt32Uint32MapValue(value)
 	case *map[int64]uint32:
-		return newInt64Uint32MapValue(value.(*map[int64]uint32))
+		return newInt64Uint32MapValue(value)
 	case *map[uint]uint32:
-		return newUintUint32MapValue(value.(*map[uint]uint32))
+		return newUintUint32MapValue(value)
 	case *map[uint8]uint32:
-		return newUint8Uint32MapValue(value.(*map[uint8]uint32))
+		return newUint8Uint32MapValue(value)
 	case *map[uint16]uint32:
-		return newUint16Uint32MapValue(value.(*map[uint16]uint32))
+		return newUint16Uint32MapValue(value)
 	case *map[uint32]uint32:
-		return newUint32Uint32MapValue(value.(*map[uint32]uint32))
+		return newUint32Uint32MapValue(value)
 	case *map[uint64]uint32:
-		return newUint64Uint32MapValue(value.(*map[uint64]uint32))
+		return newUint64Uint32MapValue(value)
 	case *map[string]uint64:
-		return newStringUint64MapValue(value.(*map[string]uint64))
+		return newStringUint64MapValue(value)
 	case *map[int]uint64:
-		return newIntUint64MapValue(value.(*map[int]uint64))
+		return newIntUint64MapValue(value)
 	case *map[int8]uint64:
-		return newInt8Uint64MapValue(value.(*map[int8]uint64))
+		return newInt8Uint64MapValue(value)
 	case *map[int16]uint64:
-		return newInt16Uint64MapValue(value.(*map[int16]uint64))
+		return newInt16Uint64MapValue(value)
 	case *map[int32]uint64:
-		return newInt32Uint64MapValue(value.(*map[int32]uint64))
+		return newInt32Uint64MapValue(value)
 	case *map[int64]uint64:
-		return newInt64Uint64MapValue(value.(*map[int64]uint64))
+		return newInt64Uint64MapValue(value)
 	case *map[uint]uint64:
-		return newUintUint64MapValue(value.(*map[uint]uint64))
+		return newUintUint64MapValue(value)
 	case *map[uint8]uint64:
-		return newUint8Uint64MapValue(value.(*map[uint8]uint64))
+		return newUint8Uint64MapValue(value)
 	case *map[uint16]uint64:
-		return newUint16Uint64MapValue(value.(*map[uint16]uint64))
+		return newUint16Uint64MapValue(value)
 	case *map[uint32]uint64:
-		return newUint32Uint64MapValue(value.(*map[uint32]uint64))
+		return newUint32Uint64MapValue(value)
 	case *map[uint64]uint64:
-		return newUint64Uint64MapValue(value.(*map[uint64]uint64))
+		return newUint64Uint64MapValue(value)
 	case *map[string]int:
-		return newStringIntMapValue(value.(*map[string]int))
+		return newStringIntMapValue(value)
 	case *map[int]int:
-		return newIntIntMapValue(value.(*map[int]int))
+		return newIntIntMapValue(value)
 	case *map[int8]int:
-		return newInt8IntMapValue(value.(*map[int8]int))
+		return newInt8IntMapValue(value)
 	case *map[int16]int:
-		return newInt16IntMapValue(value.(*map[int16]int))
+		return newInt16IntMapValue(value)
 	case *map[int32]int:
-		return newInt32IntMapValue(value.(*map[int32]int))
+		return newInt32IntMapValue(value)
 	case *map[int64]int:
-		return newInt64IntMapValue(value.(*map[int64]int))
+		return newInt64IntMapValue(value)
 	case *map[uint]int:
-		return newUintIntMapValue(value.(*map[uint]int))
+		return newUintIntMapValue(value)
 	case *map[uint8]int:
-		return newUint8IntMapValue(value.(*map[uint8]int))
+		return newUint8IntMapValue(value)
 	case *map[uint16]int:
-		return newUint16IntMapValue(value.(*map[uint16]int))
+		return newUint16IntMapValue(value)
 	case *map[uint32]int:
-		return newUint32IntMapValue(value.(*map[uint32]int))
+		return newUint32IntMapValue(value)
 	case *map[uint64]int:
-		return newUint64IntMapValue(value.(*map[uint64]int))
+		return newUint64IntMapValue(value)
 	case *map[string]int8:
-		return newStringInt8MapValue(value.(*map[string]int8))
+		return newStringInt8MapValue(value)
 	case *map[int]int8:
-		return newIntInt8MapValue(value.(*map[int]int8))
+		return newIntInt8MapValue(value)
 	case *map[int8]int8:
-		return newInt8Int8MapValue(value.(*map[int8]int8))
+		return newInt8Int8MapValue(value)
 	case *map[int16]int8:
-		return newInt16Int8MapValue(value.(*map[int16]int8))
+		return newInt16Int8MapValue(value)
 	case *map[int32]int8:
-		return newInt32Int8MapValue(value.(*map[int32]int8))
+		return newInt32Int8MapValue(value)
 	case *map[int64]int8:
-		return newInt64Int8MapValue(value.(*map[int64]int8))
+		return newInt64Int8MapValue(value)
 	case *map[uint]int8:
-		return newUintInt8MapValue(value.(*map[uint]int8))
+		return newUintInt8MapValue(value)
 	case *map[uint8]int8:
-		return newUint8Int8MapValue(value.(*map[uint8]int8))
+		return newUint8Int8MapValue(value)
 	case *map[uint16]int8:
-		return newUint16Int8MapValue(value.(*map[uint16]int8))
+		return newUint16Int8MapValue(value)
 	case *map[uint32]int8:
-		return newUint32Int8MapValue(value.(*map[uint32]int8))
+		return newUint32Int8MapValue(value)
 	case *map[uint64]int8:
-		return newUint64Int8MapValue(value.(*map[uint64]int8))
+		return newUint64Int8MapValue(value)
 	case *map[string]int16:
-		return newStringInt16MapValue(value.(*map[string]int16))
+		return newStringInt16MapValue(value)
 	case *map[int]int16:
-		return newIntInt16MapValue(value.(*map[int]int16))
+		return newIntInt16MapValue(value)
 	case *map[int8]int16:
-		return newInt8Int16MapValue(value.(*map[int8]int16))
+		return newInt8Int16MapValue(value)
 	case *map[int16]int16:
-		return newInt16Int16MapValue(value.(*map[int16]int16))
+		return newInt16Int16MapValue(value)
 	case *map[int32]int16:
-		return newInt32Int16MapValue(value.(*map[int32]int16))
+		return newInt32Int16MapValue(value)
 	case *map[int64]int16:
-		return newInt64Int16MapValue(value.(*map[int64]int16))
+		return newInt64Int16MapValue(value)
 	case *map[uint]int16:
-		return newUintInt16MapValue(value.(*map[uint]int16))
+		return newUintInt16MapValue(value)
 	case *map[uint8]int16:
-		return newUint8Int16MapValue(value.(*map[uint8]int16))
+		return newUint8Int16MapValue(value)
 	case *map[uint16]int16:
-		return newUint16Int16MapValue(value.(*map[uint16]int16))
+		return newUint16Int16MapValue(value)
 	case *map[uint32]int16:
-		return newUint32Int16MapValue(value.(*map[uint32]int16))
+		return newUint32Int16MapValue(value)
 	case *map[uint64]int16:
-		return newUint64Int16MapValue(value.(*map[uint64]int16))
+		return newUint64Int16MapValue(value)
 	case *map[string]int32:
-		return newStringInt32MapValue(value.(*map[string]int32))
+		return newStringInt32MapValue(value)
 	case *map[int]int32:
-		return newIntInt32MapValue(value.(*map[int]int32))
+		return newIntInt32MapValue(value)
 	case *map[int8]int32:
-		return newInt8Int32MapValue(value.(*map[int8]int32))
+		return newInt8Int32MapValue(value)
 	case *map[int16]int32:
-		return newInt16Int32MapValue(value.(*map[int16]int32))
+		return newInt16Int32MapValue(value)
 	case *map[int32]int32:
-		return newInt32Int32MapValue(value.(*map[int32]int32))
+		return newInt32Int32MapValue(value)
 	case *map[int64]int32:
-		return newInt64Int32MapValue(value.(*map[int64]int32))
+		return newInt64Int32MapValue(value)
 	case *map[uint]int32:
-		return newUintInt32MapValue(value.(*map[uint]int32))
+		return newUintInt32MapValue(value)
 	case *map[uint8]int32:
-		return newUint8Int32MapValue(value.(*map[uint8]int32))
+		return newUint8Int32MapValue(value)
 	case *map[uint16]int32:
-		return newUint16Int32MapValue(value.(*map[uint16]int32))
+		return newUint16Int32MapValue(value)
 	case *map[uint32]int32:
-		return newUint32Int32MapValue(value.(*map[uint32]int32))
+		return newUint32Int32MapValue(value)
 	case *map[uint64]int32:
-		return newUint64Int32MapValue(value.(*map[uint64]int32))
+		return newUint64Int32MapValue(value)
 	case *map[string]int64:
-		return newStringInt64MapValue(value.(*map[string]int64))
+		return newStringInt64MapValue(value)
 	case *map[int]int64:
-		return newIntInt64MapValue(value.(*map[int]int64))
+		return newIntInt64MapValue(value)
 	case *map[int8]int64:
-		return newInt8Int64MapValue(value.(*map[int8]int64))
+		return newInt8Int64MapValue(value)
 	case *map[int16]int64:
-		return newInt16Int64MapValue(value.(*map[int16]int64))
+		return newInt16Int64MapValue(value)
 	case *map[int32]int64:
-		return newInt32Int64MapValue(value.(*map[int32]int64))
+		return newInt32Int64MapValue(value)
 	case *map[int64]int64:
-		return newInt64Int64MapValue(value.(*map[int64]int64))
+		return newInt64Int64MapValue(value)
 	case *map[uint]int64:
-		return newUintInt64MapValue(value.(*map[uint]int64))
+		return newUintInt64MapValue(value)
 	case *map[uint8]int64:
-		return newUint8Int64MapValue(value.(*map[uint8]int64))
+		return newUint8Int64MapValue(value)
 	case *map[uint16]int64:
-		return newUint16Int64MapValue(value.(*map[uint16]int64))
+		return newUint16Int64MapValue(value)
 	case *map[uint32]int64:
-		return newUint32Int64MapValue(value.(*map[uint32]int64))
+		return newUint32Int64MapValue(value)
 	case *map[uint64]int64:
-		return newUint64Int64MapValue(value.(*map[uint64]int64))
+		return newUint64Int64MapValue(value)
 	case *map[string]float64:
-		return newStringFloat64MapValue(value.(*map[string]float64))
+		return newStringFloat64MapValue(value)
 	case *map[int]float64:
-		return newIntFloat64MapValue(value.(*map[int]float64))
+		return newIntFloat64MapValue(value)
 	case *map[int8]float64:
-		return newInt8Float64MapValue(value.(*map[int8]float64))
+		return newInt8Float64MapValue(value)
 	case *map[int16]float64:
-		return newInt16Float64MapValue(value.(*map[int16]float64))
+		return newInt16Float64MapValue(value)
 	case *map[int32]float64:
-		return newInt32Float64MapValue(value.(*map[int32]float64))
+		return newInt32Float64MapValue(value)
 	case *map[int64]float64:
-		return newInt64Float64MapValue(value.(*map[int64]float64))
+		return newInt64Float64MapValue(value)
 	case *map[uint]float64:
-		return newUintFloat64MapValue(value.(*map[uint]float64))
+		return newUintFloat64MapValue(value)
 	case *map[uint8]float64:
-		return newUint8Float64MapValue(value.(*map[uint8]float64))
+		return newUint8Float64MapValue(value)
 	case *map[uint16]float64:
-		return newUint16Float64MapValue(value.(*map[uint16]float64))
+		return newUint16Float64MapValue(value)
 	case *map[uint32]float64:
-		return newUint32Float64MapValue(value.(*map[uint32]float64))
+		return newUint32Float64MapValue(value)
 	case *map[uint64]float64:
-		return newUint64Float64MapValue(value.(*map[uint64]float64))
+		return newUint64Float64MapValue(value)
 	case *map[string]float32:
-		return newStringFloat32MapValue(value.(*map[string]float32))
+		return newStringFloat32MapValue(value)
 	case *map[int]float32:
-		return newIntFloat32MapValue(value.(*map[int]float32))
+		return newIntFloat32MapValue(value)
 	case *map[int8]float32:
-		return newInt8Float32MapValue(value.(*map[int8]float32))
+		return newInt8Float32MapValue(value)
 	case *map[int16]float32:
-		return newInt16Float32MapValue(value.(*map[int16]float32))
+		return newInt16Float32MapValue(value)
 	case *map[int32]float32:
-		return newInt32Float32MapValue(value.(*map[int32]float32))
+		return newInt32Float32MapValue(value)
 	case *map[int64]float32:
-		return newInt64Float32MapValue(value.(*map[int64]float32))
+		return newInt64Float32MapValue(value)
 	case *map[uint]float32:
-		return newUintFloat32MapValue(value.(*map[uint]float32))
+		return newUintFloat32MapValue(value)
 	case *map[uint8]float32:
-		return newUint8Float32MapValue(value.(*map[uint8]float32))
+		return newUint8Float32MapValue(value)
 	case *map[uint16]float32:
-		return newUint16Float32MapValue(value.(*map[uint16]float32))
+		return newUint16Float32MapValue(value)
 	case *map[uint32]float32:
-		return newUint32Float32MapValue(value.(*map[uint32]float32))
+		return newUint32Float32MapValue(value)
 	case *map[uint64]float32:
-		return newUint64Float32MapValue(value.(*map[uint64]float32))
+		return newUint64Float32MapValue(value)
 	case *map[string]time.Duration:
-		return newStringDurationMapValue(value.(*map[string]time.Duration))
+		return newStringDurationMapValue(value)
 	case *map[int]time.Duration:
-		return newIntDurationMapValue(value.(*map[int]time.Duration))
+		return newIntDurationMapValue(value)
 	case *map[int8]time.Duration:
-		return newInt8DurationMapValue(value.(*map[int8]time.Duration))
+		return newInt8DurationMapValue(value)
 	case *map[int16]time.Duration:
-		return newInt16DurationMapValue(value.(*map[int16]time.Duration))
+		return newInt16DurationMapValue(value)
 	case *map[int32]time.Duration:
-		return newInt32DurationMapValue(value.(*map[int32]time.Duration))
+		return newInt32DurationMapValue(value)
 	case *map[int64]time.Duration:
-		return newInt64DurationMapValue(value.(*map[int64]time.Duration))
+		return newInt64DurationMapValue(value)
 	case *map[uint]time.Duration:
-		return newUintDurationMapValue(value.(*map[uint]time.Duration))
+		return newUintDurationMapValue(value)
 	case *map[uint8]time.Duration:
-		return newUint8DurationMapValue(value.(*map[uint8]time.Duration))
+		return newUint8DurationMapValue(value)
 	case *map[uint16]time.Duration:
-		return newUint16DurationMapValue(value.(*map[uint16]time.Duration))
+		return newUint16DurationMapValue(value)
 	case *map[uint32]time.Duration:
-		return newUint32DurationMapValue(value.(*map[uint32]time.Duration))
+		return newUint32DurationMapValue(value)
 	case *map[uint64]time.Duration:
-		return newUint64DurationMapValue(value.(*map[uint64]time.Duration))
+		return newUint64DurationMapValue(value)
 	case *map[string]net.IP:
-		return newStringIPMapValue(value.(*map[string]net.IP))
+		return newStringIPMapValue(value)
 	case *map[int]net.IP:
-		return newIntIPMapValue(value.(*map[int]net.IP))
+		return newIntIPMapValue(value)
 	case *map[int8]net.IP:
-		return newInt8IPMapValue(value.(*map[int8]net.IP))
+		return newInt8IPMapValue(value)
 	case *map[int16]net.IP:
-		return newInt16IPMapValue(value.(*map[int16]net.IP))
+		return newInt16IPMapValue(value)
 	case *map[int32]net.IP:
-		return newInt32IPMapValue(value.(*map[int32]net.IP))
+		return newInt32IPMapValue(value)
 	case *map[int64]net.IP:
-		return newInt64IPMapValue(value.(*map[int64]net.IP))
+		return newInt64IPMapValue(value)
 	case *map[uint]net.IP:
-		return newUintIPMapValue(value.(*map[uint]net.IP))
+		return newUintIPMapValue(value)
 	case *map[uint8]net.IP:
-		return newUint8IPMapValue(value.(*map[uint8]net.IP))
+		return newUint8IPMapValue(value)
 	case *map[uint16]net.IP:
-		return newUint16IPMapValue(value.(*map[uint16]net.IP))
+		return newUint16IPMapValue(value)
 	case *map[uint32]net.IP:
-		return newUint32IPMapValue(value.(*map[uint32]net.IP))
+		return newUint32IPMapValue(value)
 	case *map[uint64]net.IP:
-		return newUint64IPMapValue(value.(*map[uint64]net.IP))
+		return newUint64IPMapValue(value)
 	case *map[string]HexBytes:
-		return newStringHexBytesMapValue(value.(*map[string]HexBytes))
+		return newStringHexBytesMapValue(value)
 	case *map[int]HexBytes:
-		return newIntHexBytesMapValue(value.(*map[int]HexBytes))
+		return newIntHexBytesMapValue(value)
 	case *map[int8]HexBytes:
-		return newInt8HexBytesMapValue(value.(*map[int8]HexBytes))
+		return newInt8HexBytesMapValue(value)
 	case *map[int16]HexBytes:
-		return newInt16HexBytesMapValue(value.(*map[int16]HexBytes))
+		return newInt16HexBytesMapValue(value)
 	case *map[int32]HexBytes:
-		return newInt32HexBytesMapValue(value.(*map[int32]HexBytes))
+		return newInt32HexBytesMapValue(value)
 	case *map[int64]HexBytes:
-		return newInt64HexBytesMapValue(value.(*map[int64]HexBytes))
+		return newInt64HexBytesMapValue(value)
 	case *map[uint]HexBytes:
-		return newUintHexBytesMapValue(value.(*map[uint]HexBytes))
+		return newUintHexBytesMapValue(value)
 	case *map[uint8]HexBytes:
-		return newUint8HexBytesMapValue(value.(*map[uint8]HexBytes))
+		return newUint8HexBytesMapValue(value)
 	case *map[uint16]HexBytes:
-		return newUint16HexBytesMapValue(value.(*map[uint16]HexBytes))
+		return newUint16HexBytesMapValue(value)
 	case *map[uint32]HexBytes:
-		return newUint32HexBytesMapValue(value.(*map[uint32]HexBytes))
+		return newUint32HexBytesMapValue(value)
 	case *map[uint64]HexBytes:
-		return newUint64HexBytesMapValue(value.(*map[uint64]HexBytes))
+		return newUint64HexBytesMapValue(value)
 	case *map[string]*regexp.Regexp:
-		return newStringRegexpMapValue(value.(*map[string]*regexp.Regexp))
+		return newStringRegexpMapValue(value)
 	case *map[int]*regexp.Regexp:
-		return newIntRegexpMapValue(value.(*map[int]*regexp.Regexp))
+		return newIntRegexpMapValue(value)
 	case *map[int8]*regexp.Regexp:
-		return newInt8RegexpMapValue(value.(*map[int8]*regexp.Regexp))
+		return newInt8RegexpMapValue(value)
 	case *map[int16]*regexp.Regexp:
-		return newInt16RegexpMapValue(value.(*map[int16]*regexp.Regexp))
+		return newInt16RegexpMapValue(value)
 	case *map[int32]*regexp.Regexp:
-		return newInt32RegexpMapValue(value.(*map[int32]*regexp.Regexp))
+		return newInt32RegexpMapValue(value)
 	case *map[int64]*regexp.Regexp:
-		return newInt64RegexpMapValue(value.(*map[int64]*regexp.Regexp))
+		return newInt64RegexpMapValue(value)
 	case *map[uint]*regexp.Regexp:
-		return newUintRegexpMapValue(value.(*map[uint]*regexp.Regexp))
+		return newUintRegexpMapValue(value)
 	case *map[uint8]*regexp.Regexp:
-		return newUint8RegexpMapValue(value.(*map[uint8]*regexp.Regexp))
+		return newUint8RegexpMapValue(value)
 	case *map[uint16]*regexp.Regexp:
-		return newUint16RegexpMapValue(value.(*map[uint16]*regexp.Regexp))
+		return newUint16RegexpMapValue(value)
 	case *map[uint32]*regexp.Regexp:
-		return newUint32RegexpMapValue(value.(*map[uint32]*regexp.Regexp))
+		return newUint32RegexpMapValue(value)
 	case *map[uint64]*regexp.Regexp:
-		return newUint64RegexpMapValue(value.(*map[uint64]*regexp.Regexp))
+		return newUint64RegexpMapValue(value)
 	case *map[string]net.IPNet:
-		return newStringIPNetMapValue(value.(*map[string]net.IPNet))
+		return newStringIPNetMapValue(value)
 	case *map[int]net.IPNet:
-		return newIntIPNetMapValue(value.(*map[int]net.IPNet))
+		return newIntIPNetMapValue(value)
 	case *map[int8]net.IPNet:
-		return newInt8IPNetMapValue(value.(*map[int8]net.IPNet))
+		return newInt8IPNetMapValue(value)
 	case *map[int16]net.IPNet:
-		return newInt16IPNetMapValue(value.(*map[int16]net.IPNet))
+		return newInt16IPNetMapValue(value)
 	case *map[int32]net.IPNet:
-		return newInt32IPNetMapValue(value.(*map[int32]net.IPNet))
+		return newInt32IPNetMapValue(value)
 	case *map[int64]net.IPNet:
-		return newInt64IPNetMapValue(value.(*map[int64]net.IPNet))
+		return newInt64IPNetMapValue(value)
 	case *map[uint]net.IPNet:
-		return newUintIPNetMapValue(value.(*map[uint]net.IPNet))
+		return newUintIPNetMapValue(value)
 	case *map[uint8]net.IPNet:
-		return newUint8IPNetMapValue(value.(*map[uint8]net.IPNet))
+		return newUint8IPNetMapValue(value)
 	case *map[uint16]net.IPNet:
-		return newUint16IPNetMapValue(value.(*map[uint16]net.IPNet))
+		return newUint16IPNetMapValue(value)
 	case *map[uint32]net.IPNet:
-		return newUint32IPNetMapValue(value.(*map[uint32]net.IPNet))
+		return newUint32IPNetMapValue(value)
 	case *map[uint64]net.IPNet:
-		return newUint64IPNetMapValue(value.(*map[uint64]net.IPNet))
+		return newUint64IPNetMapValue(value)
 	default:
 		return nil
 	}
 }
 
-// -- string Value
+// -- string Value.
 type stringValue struct {
 	value *string
 }
@@ -565,6 +565,7 @@ func newStringValue(p *string) *stringValue {
 
 func (v *stringValue) Set(s string) error {
 	*v.value = s
+
 	return nil
 }
 
@@ -572,6 +573,7 @@ func (v *stringValue) Get() interface{} {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -579,6 +581,7 @@ func (v *stringValue) String() string {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return ""
 }
 
@@ -610,6 +613,7 @@ func (v *stringSliceValue) Set(raw string) error {
 		*v.value = append(*v.value, out...)
 	}
 	v.changed = true
+
 	return nil
 }
 
@@ -617,6 +621,7 @@ func (v *stringSliceValue) Get() interface{} {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return ([]string)(nil)
 }
 
@@ -628,6 +633,7 @@ func (v *stringSliceValue) String() string {
 	for _, elem := range *v.value {
 		out = append(out, newStringValue(&elem).String())
 	}
+
 	return "[" + strings.Join(out, ",") + "]"
 }
 
@@ -637,7 +643,7 @@ func (v *stringSliceValue) IsCumulative() bool {
 	return true
 }
 
-// -- stringStringMapValue
+// -- stringStringMapValue.
 type stringStringMapValue struct {
 	value *map[string]string
 }
@@ -679,6 +685,7 @@ func (v *stringStringMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -686,6 +693,7 @@ func (v *stringStringMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -695,7 +703,7 @@ func (v *stringStringMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- intStringMapValue
+// -- intStringMapValue.
 type intStringMapValue struct {
 	value *map[int]string
 }
@@ -742,6 +750,7 @@ func (v *intStringMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -749,6 +758,7 @@ func (v *intStringMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -758,7 +768,7 @@ func (v *intStringMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int8StringMapValue
+// -- int8StringMapValue.
 type int8StringMapValue struct {
 	value *map[int8]string
 }
@@ -805,6 +815,7 @@ func (v *int8StringMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -812,6 +823,7 @@ func (v *int8StringMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -821,7 +833,7 @@ func (v *int8StringMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int16StringMapValue
+// -- int16StringMapValue.
 type int16StringMapValue struct {
 	value *map[int16]string
 }
@@ -868,6 +880,7 @@ func (v *int16StringMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -875,6 +888,7 @@ func (v *int16StringMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -884,7 +898,7 @@ func (v *int16StringMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int32StringMapValue
+// -- int32StringMapValue.
 type int32StringMapValue struct {
 	value *map[int32]string
 }
@@ -931,6 +945,7 @@ func (v *int32StringMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -938,6 +953,7 @@ func (v *int32StringMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -947,7 +963,7 @@ func (v *int32StringMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int64StringMapValue
+// -- int64StringMapValue.
 type int64StringMapValue struct {
 	value *map[int64]string
 }
@@ -994,6 +1010,7 @@ func (v *int64StringMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -1001,6 +1018,7 @@ func (v *int64StringMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -1010,7 +1028,7 @@ func (v *int64StringMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uintStringMapValue
+// -- uintStringMapValue.
 type uintStringMapValue struct {
 	value *map[uint]string
 }
@@ -1057,6 +1075,7 @@ func (v *uintStringMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -1064,6 +1083,7 @@ func (v *uintStringMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -1073,7 +1093,7 @@ func (v *uintStringMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint8StringMapValue
+// -- uint8StringMapValue.
 type uint8StringMapValue struct {
 	value *map[uint8]string
 }
@@ -1120,6 +1140,7 @@ func (v *uint8StringMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -1127,6 +1148,7 @@ func (v *uint8StringMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -1136,7 +1158,7 @@ func (v *uint8StringMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint16StringMapValue
+// -- uint16StringMapValue.
 type uint16StringMapValue struct {
 	value *map[uint16]string
 }
@@ -1183,6 +1205,7 @@ func (v *uint16StringMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -1190,6 +1213,7 @@ func (v *uint16StringMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -1199,7 +1223,7 @@ func (v *uint16StringMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint32StringMapValue
+// -- uint32StringMapValue.
 type uint32StringMapValue struct {
 	value *map[uint32]string
 }
@@ -1246,6 +1270,7 @@ func (v *uint32StringMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -1253,6 +1278,7 @@ func (v *uint32StringMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -1262,7 +1288,7 @@ func (v *uint32StringMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint64StringMapValue
+// -- uint64StringMapValue.
 type uint64StringMapValue struct {
 	value *map[uint64]string
 }
@@ -1309,6 +1335,7 @@ func (v *uint64StringMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -1316,6 +1343,7 @@ func (v *uint64StringMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -1325,7 +1353,7 @@ func (v *uint64StringMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- bool Value
+// -- bool Value.
 type boolValue struct {
 	value *bool
 }
@@ -1341,8 +1369,10 @@ func (v *boolValue) Set(s string) error {
 	parsed, err := strconv.ParseBool(s)
 	if err == nil {
 		*v.value = parsed
+
 		return nil
 	}
+
 	return err
 }
 
@@ -1350,13 +1380,15 @@ func (v *boolValue) Get() interface{} {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
 func (v *boolValue) String() string {
 	if v != nil && v.value != nil {
-		return fmt.Sprintf("%v", *v.value)
+		return strconv.FormatBool(*v.value)
 	}
+
 	return ""
 }
 
@@ -1397,6 +1429,7 @@ func (v *boolSliceValue) Set(raw string) error {
 		*v.value = append(*v.value, out...)
 	}
 	v.changed = true
+
 	return nil
 }
 
@@ -1404,6 +1437,7 @@ func (v *boolSliceValue) Get() interface{} {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return ([]bool)(nil)
 }
 
@@ -1415,6 +1449,7 @@ func (v *boolSliceValue) String() string {
 	for _, elem := range *v.value {
 		out = append(out, newBoolValue(&elem).String())
 	}
+
 	return "[" + strings.Join(out, ",") + "]"
 }
 
@@ -1424,7 +1459,7 @@ func (v *boolSliceValue) IsCumulative() bool {
 	return true
 }
 
-// -- stringBoolMapValue
+// -- stringBoolMapValue.
 type stringBoolMapValue struct {
 	value *map[string]bool
 }
@@ -1471,6 +1506,7 @@ func (v *stringBoolMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -1478,6 +1514,7 @@ func (v *stringBoolMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -1487,7 +1524,7 @@ func (v *stringBoolMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- intBoolMapValue
+// -- intBoolMapValue.
 type intBoolMapValue struct {
 	value *map[int]bool
 }
@@ -1539,6 +1576,7 @@ func (v *intBoolMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -1546,6 +1584,7 @@ func (v *intBoolMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -1555,7 +1594,7 @@ func (v *intBoolMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int8BoolMapValue
+// -- int8BoolMapValue.
 type int8BoolMapValue struct {
 	value *map[int8]bool
 }
@@ -1607,6 +1646,7 @@ func (v *int8BoolMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -1614,6 +1654,7 @@ func (v *int8BoolMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -1623,7 +1664,7 @@ func (v *int8BoolMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int16BoolMapValue
+// -- int16BoolMapValue.
 type int16BoolMapValue struct {
 	value *map[int16]bool
 }
@@ -1675,6 +1716,7 @@ func (v *int16BoolMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -1682,6 +1724,7 @@ func (v *int16BoolMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -1691,7 +1734,7 @@ func (v *int16BoolMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int32BoolMapValue
+// -- int32BoolMapValue.
 type int32BoolMapValue struct {
 	value *map[int32]bool
 }
@@ -1743,6 +1786,7 @@ func (v *int32BoolMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -1750,6 +1794,7 @@ func (v *int32BoolMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -1759,7 +1804,7 @@ func (v *int32BoolMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int64BoolMapValue
+// -- int64BoolMapValue.
 type int64BoolMapValue struct {
 	value *map[int64]bool
 }
@@ -1811,6 +1856,7 @@ func (v *int64BoolMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -1818,6 +1864,7 @@ func (v *int64BoolMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -1827,7 +1874,7 @@ func (v *int64BoolMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uintBoolMapValue
+// -- uintBoolMapValue.
 type uintBoolMapValue struct {
 	value *map[uint]bool
 }
@@ -1879,6 +1926,7 @@ func (v *uintBoolMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -1886,6 +1934,7 @@ func (v *uintBoolMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -1895,7 +1944,7 @@ func (v *uintBoolMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint8BoolMapValue
+// -- uint8BoolMapValue.
 type uint8BoolMapValue struct {
 	value *map[uint8]bool
 }
@@ -1947,6 +1996,7 @@ func (v *uint8BoolMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -1954,6 +2004,7 @@ func (v *uint8BoolMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -1963,7 +2014,7 @@ func (v *uint8BoolMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint16BoolMapValue
+// -- uint16BoolMapValue.
 type uint16BoolMapValue struct {
 	value *map[uint16]bool
 }
@@ -2015,6 +2066,7 @@ func (v *uint16BoolMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -2022,6 +2074,7 @@ func (v *uint16BoolMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -2031,7 +2084,7 @@ func (v *uint16BoolMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint32BoolMapValue
+// -- uint32BoolMapValue.
 type uint32BoolMapValue struct {
 	value *map[uint32]bool
 }
@@ -2083,6 +2136,7 @@ func (v *uint32BoolMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -2090,6 +2144,7 @@ func (v *uint32BoolMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -2099,7 +2154,7 @@ func (v *uint32BoolMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint64BoolMapValue
+// -- uint64BoolMapValue.
 type uint64BoolMapValue struct {
 	value *map[uint64]bool
 }
@@ -2151,6 +2206,7 @@ func (v *uint64BoolMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -2158,6 +2214,7 @@ func (v *uint64BoolMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -2167,7 +2224,7 @@ func (v *uint64BoolMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint Value
+// -- uint Value.
 type uintValue struct {
 	value *uint
 }
@@ -2183,8 +2240,10 @@ func (v *uintValue) Set(s string) error {
 	parsed, err := strconv.ParseUint(s, 0, 64)
 	if err == nil {
 		*v.value = (uint)(parsed)
+
 		return nil
 	}
+
 	return err
 }
 
@@ -2192,13 +2251,15 @@ func (v *uintValue) Get() interface{} {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
 func (v *uintValue) String() string {
 	if v != nil && v.value != nil {
-		return fmt.Sprintf("%v", *v.value)
+		return strconv.FormatUint(uint64(*v.value), 10)
 	}
+
 	return ""
 }
 
@@ -2239,6 +2300,7 @@ func (v *uintSliceValue) Set(raw string) error {
 		*v.value = append(*v.value, out...)
 	}
 	v.changed = true
+
 	return nil
 }
 
@@ -2246,6 +2308,7 @@ func (v *uintSliceValue) Get() interface{} {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return ([]uint)(nil)
 }
 
@@ -2257,6 +2320,7 @@ func (v *uintSliceValue) String() string {
 	for _, elem := range *v.value {
 		out = append(out, newUintValue(&elem).String())
 	}
+
 	return "[" + strings.Join(out, ",") + "]"
 }
 
@@ -2266,7 +2330,7 @@ func (v *uintSliceValue) IsCumulative() bool {
 	return true
 }
 
-// -- stringUintMapValue
+// -- stringUintMapValue.
 type stringUintMapValue struct {
 	value *map[string]uint
 }
@@ -2313,6 +2377,7 @@ func (v *stringUintMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -2320,6 +2385,7 @@ func (v *stringUintMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -2329,7 +2395,7 @@ func (v *stringUintMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- intUintMapValue
+// -- intUintMapValue.
 type intUintMapValue struct {
 	value *map[int]uint
 }
@@ -2381,6 +2447,7 @@ func (v *intUintMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -2388,6 +2455,7 @@ func (v *intUintMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -2397,7 +2465,7 @@ func (v *intUintMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int8UintMapValue
+// -- int8UintMapValue.
 type int8UintMapValue struct {
 	value *map[int8]uint
 }
@@ -2449,6 +2517,7 @@ func (v *int8UintMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -2456,6 +2525,7 @@ func (v *int8UintMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -2465,7 +2535,7 @@ func (v *int8UintMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int16UintMapValue
+// -- int16UintMapValue.
 type int16UintMapValue struct {
 	value *map[int16]uint
 }
@@ -2517,6 +2587,7 @@ func (v *int16UintMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -2524,6 +2595,7 @@ func (v *int16UintMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -2533,7 +2605,7 @@ func (v *int16UintMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int32UintMapValue
+// -- int32UintMapValue.
 type int32UintMapValue struct {
 	value *map[int32]uint
 }
@@ -2585,6 +2657,7 @@ func (v *int32UintMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -2592,6 +2665,7 @@ func (v *int32UintMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -2601,7 +2675,7 @@ func (v *int32UintMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int64UintMapValue
+// -- int64UintMapValue.
 type int64UintMapValue struct {
 	value *map[int64]uint
 }
@@ -2653,6 +2727,7 @@ func (v *int64UintMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -2660,6 +2735,7 @@ func (v *int64UintMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -2669,7 +2745,7 @@ func (v *int64UintMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uintUintMapValue
+// -- uintUintMapValue.
 type uintUintMapValue struct {
 	value *map[uint]uint
 }
@@ -2721,6 +2797,7 @@ func (v *uintUintMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -2728,6 +2805,7 @@ func (v *uintUintMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -2737,7 +2815,7 @@ func (v *uintUintMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint8UintMapValue
+// -- uint8UintMapValue.
 type uint8UintMapValue struct {
 	value *map[uint8]uint
 }
@@ -2789,6 +2867,7 @@ func (v *uint8UintMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -2796,6 +2875,7 @@ func (v *uint8UintMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -2805,7 +2885,7 @@ func (v *uint8UintMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint16UintMapValue
+// -- uint16UintMapValue.
 type uint16UintMapValue struct {
 	value *map[uint16]uint
 }
@@ -2857,6 +2937,7 @@ func (v *uint16UintMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -2864,6 +2945,7 @@ func (v *uint16UintMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -2873,7 +2955,7 @@ func (v *uint16UintMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint32UintMapValue
+// -- uint32UintMapValue.
 type uint32UintMapValue struct {
 	value *map[uint32]uint
 }
@@ -2925,6 +3007,7 @@ func (v *uint32UintMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -2932,6 +3015,7 @@ func (v *uint32UintMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -2941,7 +3025,7 @@ func (v *uint32UintMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint64UintMapValue
+// -- uint64UintMapValue.
 type uint64UintMapValue struct {
 	value *map[uint64]uint
 }
@@ -2993,6 +3077,7 @@ func (v *uint64UintMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -3000,6 +3085,7 @@ func (v *uint64UintMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -3009,7 +3095,7 @@ func (v *uint64UintMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint8 Value
+// -- uint8 Value.
 type uint8Value struct {
 	value *uint8
 }
@@ -3025,8 +3111,10 @@ func (v *uint8Value) Set(s string) error {
 	parsed, err := strconv.ParseUint(s, 0, 8)
 	if err == nil {
 		*v.value = (uint8)(parsed)
+
 		return nil
 	}
+
 	return err
 }
 
@@ -3034,13 +3122,15 @@ func (v *uint8Value) Get() interface{} {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
 func (v *uint8Value) String() string {
 	if v != nil && v.value != nil {
-		return fmt.Sprintf("%v", *v.value)
+		return strconv.FormatUint(uint64(*v.value), 10)
 	}
+
 	return ""
 }
 
@@ -3081,6 +3171,7 @@ func (v *uint8SliceValue) Set(raw string) error {
 		*v.value = append(*v.value, out...)
 	}
 	v.changed = true
+
 	return nil
 }
 
@@ -3088,6 +3179,7 @@ func (v *uint8SliceValue) Get() interface{} {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return ([]uint8)(nil)
 }
 
@@ -3099,6 +3191,7 @@ func (v *uint8SliceValue) String() string {
 	for _, elem := range *v.value {
 		out = append(out, newUint8Value(&elem).String())
 	}
+
 	return "[" + strings.Join(out, ",") + "]"
 }
 
@@ -3108,7 +3201,7 @@ func (v *uint8SliceValue) IsCumulative() bool {
 	return true
 }
 
-// -- stringUint8MapValue
+// -- stringUint8MapValue.
 type stringUint8MapValue struct {
 	value *map[string]uint8
 }
@@ -3155,6 +3248,7 @@ func (v *stringUint8MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -3162,6 +3256,7 @@ func (v *stringUint8MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -3171,7 +3266,7 @@ func (v *stringUint8MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- intUint8MapValue
+// -- intUint8MapValue.
 type intUint8MapValue struct {
 	value *map[int]uint8
 }
@@ -3223,6 +3318,7 @@ func (v *intUint8MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -3230,6 +3326,7 @@ func (v *intUint8MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -3239,7 +3336,7 @@ func (v *intUint8MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int8Uint8MapValue
+// -- int8Uint8MapValue.
 type int8Uint8MapValue struct {
 	value *map[int8]uint8
 }
@@ -3291,6 +3388,7 @@ func (v *int8Uint8MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -3298,6 +3396,7 @@ func (v *int8Uint8MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -3307,7 +3406,7 @@ func (v *int8Uint8MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int16Uint8MapValue
+// -- int16Uint8MapValue.
 type int16Uint8MapValue struct {
 	value *map[int16]uint8
 }
@@ -3359,6 +3458,7 @@ func (v *int16Uint8MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -3366,6 +3466,7 @@ func (v *int16Uint8MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -3375,7 +3476,7 @@ func (v *int16Uint8MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int32Uint8MapValue
+// -- int32Uint8MapValue.
 type int32Uint8MapValue struct {
 	value *map[int32]uint8
 }
@@ -3427,6 +3528,7 @@ func (v *int32Uint8MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -3434,6 +3536,7 @@ func (v *int32Uint8MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -3443,7 +3546,7 @@ func (v *int32Uint8MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int64Uint8MapValue
+// -- int64Uint8MapValue.
 type int64Uint8MapValue struct {
 	value *map[int64]uint8
 }
@@ -3495,6 +3598,7 @@ func (v *int64Uint8MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -3502,6 +3606,7 @@ func (v *int64Uint8MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -3511,7 +3616,7 @@ func (v *int64Uint8MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uintUint8MapValue
+// -- uintUint8MapValue.
 type uintUint8MapValue struct {
 	value *map[uint]uint8
 }
@@ -3563,6 +3668,7 @@ func (v *uintUint8MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -3570,6 +3676,7 @@ func (v *uintUint8MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -3579,7 +3686,7 @@ func (v *uintUint8MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint8Uint8MapValue
+// -- uint8Uint8MapValue.
 type uint8Uint8MapValue struct {
 	value *map[uint8]uint8
 }
@@ -3631,6 +3738,7 @@ func (v *uint8Uint8MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -3638,6 +3746,7 @@ func (v *uint8Uint8MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -3647,7 +3756,7 @@ func (v *uint8Uint8MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint16Uint8MapValue
+// -- uint16Uint8MapValue.
 type uint16Uint8MapValue struct {
 	value *map[uint16]uint8
 }
@@ -3699,6 +3808,7 @@ func (v *uint16Uint8MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -3706,6 +3816,7 @@ func (v *uint16Uint8MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -3715,7 +3826,7 @@ func (v *uint16Uint8MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint32Uint8MapValue
+// -- uint32Uint8MapValue.
 type uint32Uint8MapValue struct {
 	value *map[uint32]uint8
 }
@@ -3767,6 +3878,7 @@ func (v *uint32Uint8MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -3774,6 +3886,7 @@ func (v *uint32Uint8MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -3783,7 +3896,7 @@ func (v *uint32Uint8MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint64Uint8MapValue
+// -- uint64Uint8MapValue.
 type uint64Uint8MapValue struct {
 	value *map[uint64]uint8
 }
@@ -3835,6 +3948,7 @@ func (v *uint64Uint8MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -3842,6 +3956,7 @@ func (v *uint64Uint8MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -3851,7 +3966,7 @@ func (v *uint64Uint8MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint16 Value
+// -- uint16 Value.
 type uint16Value struct {
 	value *uint16
 }
@@ -3867,8 +3982,10 @@ func (v *uint16Value) Set(s string) error {
 	parsed, err := strconv.ParseUint(s, 0, 16)
 	if err == nil {
 		*v.value = (uint16)(parsed)
+
 		return nil
 	}
+
 	return err
 }
 
@@ -3876,13 +3993,15 @@ func (v *uint16Value) Get() interface{} {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
 func (v *uint16Value) String() string {
 	if v != nil && v.value != nil {
-		return fmt.Sprintf("%v", *v.value)
+		return strconv.FormatUint(uint64(*v.value), 10)
 	}
+
 	return ""
 }
 
@@ -3923,6 +4042,7 @@ func (v *uint16SliceValue) Set(raw string) error {
 		*v.value = append(*v.value, out...)
 	}
 	v.changed = true
+
 	return nil
 }
 
@@ -3930,6 +4050,7 @@ func (v *uint16SliceValue) Get() interface{} {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return ([]uint16)(nil)
 }
 
@@ -3941,6 +4062,7 @@ func (v *uint16SliceValue) String() string {
 	for _, elem := range *v.value {
 		out = append(out, newUint16Value(&elem).String())
 	}
+
 	return "[" + strings.Join(out, ",") + "]"
 }
 
@@ -3950,7 +4072,7 @@ func (v *uint16SliceValue) IsCumulative() bool {
 	return true
 }
 
-// -- stringUint16MapValue
+// -- stringUint16MapValue.
 type stringUint16MapValue struct {
 	value *map[string]uint16
 }
@@ -3997,6 +4119,7 @@ func (v *stringUint16MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -4004,6 +4127,7 @@ func (v *stringUint16MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -4013,7 +4137,7 @@ func (v *stringUint16MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- intUint16MapValue
+// -- intUint16MapValue.
 type intUint16MapValue struct {
 	value *map[int]uint16
 }
@@ -4065,6 +4189,7 @@ func (v *intUint16MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -4072,6 +4197,7 @@ func (v *intUint16MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -4081,7 +4207,7 @@ func (v *intUint16MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int8Uint16MapValue
+// -- int8Uint16MapValue.
 type int8Uint16MapValue struct {
 	value *map[int8]uint16
 }
@@ -4133,6 +4259,7 @@ func (v *int8Uint16MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -4140,6 +4267,7 @@ func (v *int8Uint16MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -4149,7 +4277,7 @@ func (v *int8Uint16MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int16Uint16MapValue
+// -- int16Uint16MapValue.
 type int16Uint16MapValue struct {
 	value *map[int16]uint16
 }
@@ -4201,6 +4329,7 @@ func (v *int16Uint16MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -4208,6 +4337,7 @@ func (v *int16Uint16MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -4217,7 +4347,7 @@ func (v *int16Uint16MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int32Uint16MapValue
+// -- int32Uint16MapValue.
 type int32Uint16MapValue struct {
 	value *map[int32]uint16
 }
@@ -4269,6 +4399,7 @@ func (v *int32Uint16MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -4276,6 +4407,7 @@ func (v *int32Uint16MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -4285,7 +4417,7 @@ func (v *int32Uint16MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int64Uint16MapValue
+// -- int64Uint16MapValue.
 type int64Uint16MapValue struct {
 	value *map[int64]uint16
 }
@@ -4337,6 +4469,7 @@ func (v *int64Uint16MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -4344,6 +4477,7 @@ func (v *int64Uint16MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -4353,7 +4487,7 @@ func (v *int64Uint16MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uintUint16MapValue
+// -- uintUint16MapValue.
 type uintUint16MapValue struct {
 	value *map[uint]uint16
 }
@@ -4405,6 +4539,7 @@ func (v *uintUint16MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -4412,6 +4547,7 @@ func (v *uintUint16MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -4421,7 +4557,7 @@ func (v *uintUint16MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint8Uint16MapValue
+// -- uint8Uint16MapValue.
 type uint8Uint16MapValue struct {
 	value *map[uint8]uint16
 }
@@ -4473,6 +4609,7 @@ func (v *uint8Uint16MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -4480,6 +4617,7 @@ func (v *uint8Uint16MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -4489,7 +4627,7 @@ func (v *uint8Uint16MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint16Uint16MapValue
+// -- uint16Uint16MapValue.
 type uint16Uint16MapValue struct {
 	value *map[uint16]uint16
 }
@@ -4541,6 +4679,7 @@ func (v *uint16Uint16MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -4548,6 +4687,7 @@ func (v *uint16Uint16MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -4557,7 +4697,7 @@ func (v *uint16Uint16MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint32Uint16MapValue
+// -- uint32Uint16MapValue.
 type uint32Uint16MapValue struct {
 	value *map[uint32]uint16
 }
@@ -4609,6 +4749,7 @@ func (v *uint32Uint16MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -4616,6 +4757,7 @@ func (v *uint32Uint16MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -4625,7 +4767,7 @@ func (v *uint32Uint16MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint64Uint16MapValue
+// -- uint64Uint16MapValue.
 type uint64Uint16MapValue struct {
 	value *map[uint64]uint16
 }
@@ -4677,6 +4819,7 @@ func (v *uint64Uint16MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -4684,6 +4827,7 @@ func (v *uint64Uint16MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -4693,7 +4837,7 @@ func (v *uint64Uint16MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint32 Value
+// -- uint32 Value.
 type uint32Value struct {
 	value *uint32
 }
@@ -4709,8 +4853,10 @@ func (v *uint32Value) Set(s string) error {
 	parsed, err := strconv.ParseUint(s, 0, 32)
 	if err == nil {
 		*v.value = (uint32)(parsed)
+
 		return nil
 	}
+
 	return err
 }
 
@@ -4718,13 +4864,15 @@ func (v *uint32Value) Get() interface{} {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
 func (v *uint32Value) String() string {
 	if v != nil && v.value != nil {
-		return fmt.Sprintf("%v", *v.value)
+		return strconv.FormatUint(uint64(*v.value), 10)
 	}
+
 	return ""
 }
 
@@ -4765,6 +4913,7 @@ func (v *uint32SliceValue) Set(raw string) error {
 		*v.value = append(*v.value, out...)
 	}
 	v.changed = true
+
 	return nil
 }
 
@@ -4772,6 +4921,7 @@ func (v *uint32SliceValue) Get() interface{} {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return ([]uint32)(nil)
 }
 
@@ -4783,6 +4933,7 @@ func (v *uint32SliceValue) String() string {
 	for _, elem := range *v.value {
 		out = append(out, newUint32Value(&elem).String())
 	}
+
 	return "[" + strings.Join(out, ",") + "]"
 }
 
@@ -4792,7 +4943,7 @@ func (v *uint32SliceValue) IsCumulative() bool {
 	return true
 }
 
-// -- stringUint32MapValue
+// -- stringUint32MapValue.
 type stringUint32MapValue struct {
 	value *map[string]uint32
 }
@@ -4839,6 +4990,7 @@ func (v *stringUint32MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -4846,6 +4998,7 @@ func (v *stringUint32MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -4855,7 +5008,7 @@ func (v *stringUint32MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- intUint32MapValue
+// -- intUint32MapValue.
 type intUint32MapValue struct {
 	value *map[int]uint32
 }
@@ -4907,6 +5060,7 @@ func (v *intUint32MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -4914,6 +5068,7 @@ func (v *intUint32MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -4923,7 +5078,7 @@ func (v *intUint32MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int8Uint32MapValue
+// -- int8Uint32MapValue.
 type int8Uint32MapValue struct {
 	value *map[int8]uint32
 }
@@ -4975,6 +5130,7 @@ func (v *int8Uint32MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -4982,6 +5138,7 @@ func (v *int8Uint32MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -4991,7 +5148,7 @@ func (v *int8Uint32MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int16Uint32MapValue
+// -- int16Uint32MapValue.
 type int16Uint32MapValue struct {
 	value *map[int16]uint32
 }
@@ -5043,6 +5200,7 @@ func (v *int16Uint32MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -5050,6 +5208,7 @@ func (v *int16Uint32MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -5059,7 +5218,7 @@ func (v *int16Uint32MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int32Uint32MapValue
+// -- int32Uint32MapValue.
 type int32Uint32MapValue struct {
 	value *map[int32]uint32
 }
@@ -5111,6 +5270,7 @@ func (v *int32Uint32MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -5118,6 +5278,7 @@ func (v *int32Uint32MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -5127,7 +5288,7 @@ func (v *int32Uint32MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int64Uint32MapValue
+// -- int64Uint32MapValue.
 type int64Uint32MapValue struct {
 	value *map[int64]uint32
 }
@@ -5179,6 +5340,7 @@ func (v *int64Uint32MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -5186,6 +5348,7 @@ func (v *int64Uint32MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -5195,7 +5358,7 @@ func (v *int64Uint32MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uintUint32MapValue
+// -- uintUint32MapValue.
 type uintUint32MapValue struct {
 	value *map[uint]uint32
 }
@@ -5247,6 +5410,7 @@ func (v *uintUint32MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -5254,6 +5418,7 @@ func (v *uintUint32MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -5263,7 +5428,7 @@ func (v *uintUint32MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint8Uint32MapValue
+// -- uint8Uint32MapValue.
 type uint8Uint32MapValue struct {
 	value *map[uint8]uint32
 }
@@ -5315,6 +5480,7 @@ func (v *uint8Uint32MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -5322,6 +5488,7 @@ func (v *uint8Uint32MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -5331,7 +5498,7 @@ func (v *uint8Uint32MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint16Uint32MapValue
+// -- uint16Uint32MapValue.
 type uint16Uint32MapValue struct {
 	value *map[uint16]uint32
 }
@@ -5383,6 +5550,7 @@ func (v *uint16Uint32MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -5390,6 +5558,7 @@ func (v *uint16Uint32MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -5399,7 +5568,7 @@ func (v *uint16Uint32MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint32Uint32MapValue
+// -- uint32Uint32MapValue.
 type uint32Uint32MapValue struct {
 	value *map[uint32]uint32
 }
@@ -5451,6 +5620,7 @@ func (v *uint32Uint32MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -5458,6 +5628,7 @@ func (v *uint32Uint32MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -5467,7 +5638,7 @@ func (v *uint32Uint32MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint64Uint32MapValue
+// -- uint64Uint32MapValue.
 type uint64Uint32MapValue struct {
 	value *map[uint64]uint32
 }
@@ -5519,6 +5690,7 @@ func (v *uint64Uint32MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -5526,6 +5698,7 @@ func (v *uint64Uint32MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -5535,7 +5708,7 @@ func (v *uint64Uint32MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint64 Value
+// -- uint64 Value.
 type uint64Value struct {
 	value *uint64
 }
@@ -5551,8 +5724,10 @@ func (v *uint64Value) Set(s string) error {
 	parsed, err := strconv.ParseUint(s, 0, 64)
 	if err == nil {
 		*v.value = parsed
+
 		return nil
 	}
+
 	return err
 }
 
@@ -5560,13 +5735,15 @@ func (v *uint64Value) Get() interface{} {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
 func (v *uint64Value) String() string {
 	if v != nil && v.value != nil {
-		return fmt.Sprintf("%v", *v.value)
+		return strconv.FormatUint(*v.value, 10)
 	}
+
 	return ""
 }
 
@@ -5607,6 +5784,7 @@ func (v *uint64SliceValue) Set(raw string) error {
 		*v.value = append(*v.value, out...)
 	}
 	v.changed = true
+
 	return nil
 }
 
@@ -5614,6 +5792,7 @@ func (v *uint64SliceValue) Get() interface{} {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return ([]uint64)(nil)
 }
 
@@ -5625,6 +5804,7 @@ func (v *uint64SliceValue) String() string {
 	for _, elem := range *v.value {
 		out = append(out, newUint64Value(&elem).String())
 	}
+
 	return "[" + strings.Join(out, ",") + "]"
 }
 
@@ -5634,7 +5814,7 @@ func (v *uint64SliceValue) IsCumulative() bool {
 	return true
 }
 
-// -- stringUint64MapValue
+// -- stringUint64MapValue.
 type stringUint64MapValue struct {
 	value *map[string]uint64
 }
@@ -5681,6 +5861,7 @@ func (v *stringUint64MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -5688,6 +5869,7 @@ func (v *stringUint64MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -5697,7 +5879,7 @@ func (v *stringUint64MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- intUint64MapValue
+// -- intUint64MapValue.
 type intUint64MapValue struct {
 	value *map[int]uint64
 }
@@ -5749,6 +5931,7 @@ func (v *intUint64MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -5756,6 +5939,7 @@ func (v *intUint64MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -5765,7 +5949,7 @@ func (v *intUint64MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int8Uint64MapValue
+// -- int8Uint64MapValue.
 type int8Uint64MapValue struct {
 	value *map[int8]uint64
 }
@@ -5817,6 +6001,7 @@ func (v *int8Uint64MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -5824,6 +6009,7 @@ func (v *int8Uint64MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -5833,7 +6019,7 @@ func (v *int8Uint64MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int16Uint64MapValue
+// -- int16Uint64MapValue.
 type int16Uint64MapValue struct {
 	value *map[int16]uint64
 }
@@ -5885,6 +6071,7 @@ func (v *int16Uint64MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -5892,6 +6079,7 @@ func (v *int16Uint64MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -5901,7 +6089,7 @@ func (v *int16Uint64MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int32Uint64MapValue
+// -- int32Uint64MapValue.
 type int32Uint64MapValue struct {
 	value *map[int32]uint64
 }
@@ -5953,6 +6141,7 @@ func (v *int32Uint64MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -5960,6 +6149,7 @@ func (v *int32Uint64MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -5969,7 +6159,7 @@ func (v *int32Uint64MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int64Uint64MapValue
+// -- int64Uint64MapValue.
 type int64Uint64MapValue struct {
 	value *map[int64]uint64
 }
@@ -6021,6 +6211,7 @@ func (v *int64Uint64MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -6028,6 +6219,7 @@ func (v *int64Uint64MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -6037,7 +6229,7 @@ func (v *int64Uint64MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uintUint64MapValue
+// -- uintUint64MapValue.
 type uintUint64MapValue struct {
 	value *map[uint]uint64
 }
@@ -6089,6 +6281,7 @@ func (v *uintUint64MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -6096,6 +6289,7 @@ func (v *uintUint64MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -6105,7 +6299,7 @@ func (v *uintUint64MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint8Uint64MapValue
+// -- uint8Uint64MapValue.
 type uint8Uint64MapValue struct {
 	value *map[uint8]uint64
 }
@@ -6157,6 +6351,7 @@ func (v *uint8Uint64MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -6164,6 +6359,7 @@ func (v *uint8Uint64MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -6173,7 +6369,7 @@ func (v *uint8Uint64MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint16Uint64MapValue
+// -- uint16Uint64MapValue.
 type uint16Uint64MapValue struct {
 	value *map[uint16]uint64
 }
@@ -6225,6 +6421,7 @@ func (v *uint16Uint64MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -6232,6 +6429,7 @@ func (v *uint16Uint64MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -6241,7 +6439,7 @@ func (v *uint16Uint64MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint32Uint64MapValue
+// -- uint32Uint64MapValue.
 type uint32Uint64MapValue struct {
 	value *map[uint32]uint64
 }
@@ -6293,6 +6491,7 @@ func (v *uint32Uint64MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -6300,6 +6499,7 @@ func (v *uint32Uint64MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -6309,7 +6509,7 @@ func (v *uint32Uint64MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint64Uint64MapValue
+// -- uint64Uint64MapValue.
 type uint64Uint64MapValue struct {
 	value *map[uint64]uint64
 }
@@ -6361,6 +6561,7 @@ func (v *uint64Uint64MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -6368,6 +6569,7 @@ func (v *uint64Uint64MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -6377,7 +6579,7 @@ func (v *uint64Uint64MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int Value
+// -- int Value.
 type intValue struct {
 	value *int
 }
@@ -6393,8 +6595,10 @@ func (v *intValue) Set(s string) error {
 	parsed, err := strconv.ParseInt(s, 0, 64)
 	if err == nil {
 		*v.value = (int)(parsed)
+
 		return nil
 	}
+
 	return err
 }
 
@@ -6402,13 +6606,15 @@ func (v *intValue) Get() interface{} {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
 func (v *intValue) String() string {
 	if v != nil && v.value != nil {
-		return fmt.Sprintf("%v", *v.value)
+		return strconv.Itoa(*v.value)
 	}
+
 	return ""
 }
 
@@ -6449,6 +6655,7 @@ func (v *intSliceValue) Set(raw string) error {
 		*v.value = append(*v.value, out...)
 	}
 	v.changed = true
+
 	return nil
 }
 
@@ -6456,6 +6663,7 @@ func (v *intSliceValue) Get() interface{} {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return ([]int)(nil)
 }
 
@@ -6467,6 +6675,7 @@ func (v *intSliceValue) String() string {
 	for _, elem := range *v.value {
 		out = append(out, newIntValue(&elem).String())
 	}
+
 	return "[" + strings.Join(out, ",") + "]"
 }
 
@@ -6476,7 +6685,7 @@ func (v *intSliceValue) IsCumulative() bool {
 	return true
 }
 
-// -- stringIntMapValue
+// -- stringIntMapValue.
 type stringIntMapValue struct {
 	value *map[string]int
 }
@@ -6523,6 +6732,7 @@ func (v *stringIntMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -6530,6 +6740,7 @@ func (v *stringIntMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -6539,7 +6750,7 @@ func (v *stringIntMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- intIntMapValue
+// -- intIntMapValue.
 type intIntMapValue struct {
 	value *map[int]int
 }
@@ -6591,6 +6802,7 @@ func (v *intIntMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -6598,6 +6810,7 @@ func (v *intIntMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -6607,7 +6820,7 @@ func (v *intIntMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int8IntMapValue
+// -- int8IntMapValue.
 type int8IntMapValue struct {
 	value *map[int8]int
 }
@@ -6659,6 +6872,7 @@ func (v *int8IntMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -6666,6 +6880,7 @@ func (v *int8IntMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -6675,7 +6890,7 @@ func (v *int8IntMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int16IntMapValue
+// -- int16IntMapValue.
 type int16IntMapValue struct {
 	value *map[int16]int
 }
@@ -6727,6 +6942,7 @@ func (v *int16IntMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -6734,6 +6950,7 @@ func (v *int16IntMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -6743,7 +6960,7 @@ func (v *int16IntMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int32IntMapValue
+// -- int32IntMapValue.
 type int32IntMapValue struct {
 	value *map[int32]int
 }
@@ -6795,6 +7012,7 @@ func (v *int32IntMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -6802,6 +7020,7 @@ func (v *int32IntMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -6811,7 +7030,7 @@ func (v *int32IntMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int64IntMapValue
+// -- int64IntMapValue.
 type int64IntMapValue struct {
 	value *map[int64]int
 }
@@ -6863,6 +7082,7 @@ func (v *int64IntMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -6870,6 +7090,7 @@ func (v *int64IntMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -6879,7 +7100,7 @@ func (v *int64IntMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uintIntMapValue
+// -- uintIntMapValue.
 type uintIntMapValue struct {
 	value *map[uint]int
 }
@@ -6931,6 +7152,7 @@ func (v *uintIntMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -6938,6 +7160,7 @@ func (v *uintIntMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -6947,7 +7170,7 @@ func (v *uintIntMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint8IntMapValue
+// -- uint8IntMapValue.
 type uint8IntMapValue struct {
 	value *map[uint8]int
 }
@@ -6999,6 +7222,7 @@ func (v *uint8IntMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -7006,6 +7230,7 @@ func (v *uint8IntMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -7015,7 +7240,7 @@ func (v *uint8IntMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint16IntMapValue
+// -- uint16IntMapValue.
 type uint16IntMapValue struct {
 	value *map[uint16]int
 }
@@ -7067,6 +7292,7 @@ func (v *uint16IntMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -7074,6 +7300,7 @@ func (v *uint16IntMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -7083,7 +7310,7 @@ func (v *uint16IntMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint32IntMapValue
+// -- uint32IntMapValue.
 type uint32IntMapValue struct {
 	value *map[uint32]int
 }
@@ -7135,6 +7362,7 @@ func (v *uint32IntMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -7142,6 +7370,7 @@ func (v *uint32IntMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -7151,7 +7380,7 @@ func (v *uint32IntMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint64IntMapValue
+// -- uint64IntMapValue.
 type uint64IntMapValue struct {
 	value *map[uint64]int
 }
@@ -7203,6 +7432,7 @@ func (v *uint64IntMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -7210,6 +7440,7 @@ func (v *uint64IntMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -7219,7 +7450,7 @@ func (v *uint64IntMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int8 Value
+// -- int8 Value.
 type int8Value struct {
 	value *int8
 }
@@ -7235,8 +7466,10 @@ func (v *int8Value) Set(s string) error {
 	parsed, err := strconv.ParseInt(s, 0, 8)
 	if err == nil {
 		*v.value = (int8)(parsed)
+
 		return nil
 	}
+
 	return err
 }
 
@@ -7244,13 +7477,15 @@ func (v *int8Value) Get() interface{} {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
 func (v *int8Value) String() string {
 	if v != nil && v.value != nil {
-		return fmt.Sprintf("%v", *v.value)
+		return strconv.Itoa(int(*v.value))
 	}
+
 	return ""
 }
 
@@ -7291,6 +7526,7 @@ func (v *int8SliceValue) Set(raw string) error {
 		*v.value = append(*v.value, out...)
 	}
 	v.changed = true
+
 	return nil
 }
 
@@ -7298,6 +7534,7 @@ func (v *int8SliceValue) Get() interface{} {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return ([]int8)(nil)
 }
 
@@ -7309,6 +7546,7 @@ func (v *int8SliceValue) String() string {
 	for _, elem := range *v.value {
 		out = append(out, newInt8Value(&elem).String())
 	}
+
 	return "[" + strings.Join(out, ",") + "]"
 }
 
@@ -7318,7 +7556,7 @@ func (v *int8SliceValue) IsCumulative() bool {
 	return true
 }
 
-// -- stringInt8MapValue
+// -- stringInt8MapValue.
 type stringInt8MapValue struct {
 	value *map[string]int8
 }
@@ -7365,6 +7603,7 @@ func (v *stringInt8MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -7372,6 +7611,7 @@ func (v *stringInt8MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -7381,7 +7621,7 @@ func (v *stringInt8MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- intInt8MapValue
+// -- intInt8MapValue.
 type intInt8MapValue struct {
 	value *map[int]int8
 }
@@ -7433,6 +7673,7 @@ func (v *intInt8MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -7440,6 +7681,7 @@ func (v *intInt8MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -7449,7 +7691,7 @@ func (v *intInt8MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int8Int8MapValue
+// -- int8Int8MapValue.
 type int8Int8MapValue struct {
 	value *map[int8]int8
 }
@@ -7501,6 +7743,7 @@ func (v *int8Int8MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -7508,6 +7751,7 @@ func (v *int8Int8MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -7517,7 +7761,7 @@ func (v *int8Int8MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int16Int8MapValue
+// -- int16Int8MapValue.
 type int16Int8MapValue struct {
 	value *map[int16]int8
 }
@@ -7569,6 +7813,7 @@ func (v *int16Int8MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -7576,6 +7821,7 @@ func (v *int16Int8MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -7585,7 +7831,7 @@ func (v *int16Int8MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int32Int8MapValue
+// -- int32Int8MapValue.
 type int32Int8MapValue struct {
 	value *map[int32]int8
 }
@@ -7637,6 +7883,7 @@ func (v *int32Int8MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -7644,6 +7891,7 @@ func (v *int32Int8MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -7653,7 +7901,7 @@ func (v *int32Int8MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int64Int8MapValue
+// -- int64Int8MapValue.
 type int64Int8MapValue struct {
 	value *map[int64]int8
 }
@@ -7705,6 +7953,7 @@ func (v *int64Int8MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -7712,6 +7961,7 @@ func (v *int64Int8MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -7721,7 +7971,7 @@ func (v *int64Int8MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uintInt8MapValue
+// -- uintInt8MapValue.
 type uintInt8MapValue struct {
 	value *map[uint]int8
 }
@@ -7773,6 +8023,7 @@ func (v *uintInt8MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -7780,6 +8031,7 @@ func (v *uintInt8MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -7789,7 +8041,7 @@ func (v *uintInt8MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint8Int8MapValue
+// -- uint8Int8MapValue.
 type uint8Int8MapValue struct {
 	value *map[uint8]int8
 }
@@ -7841,6 +8093,7 @@ func (v *uint8Int8MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -7848,6 +8101,7 @@ func (v *uint8Int8MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -7857,7 +8111,7 @@ func (v *uint8Int8MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint16Int8MapValue
+// -- uint16Int8MapValue.
 type uint16Int8MapValue struct {
 	value *map[uint16]int8
 }
@@ -7909,6 +8163,7 @@ func (v *uint16Int8MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -7916,6 +8171,7 @@ func (v *uint16Int8MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -7925,7 +8181,7 @@ func (v *uint16Int8MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint32Int8MapValue
+// -- uint32Int8MapValue.
 type uint32Int8MapValue struct {
 	value *map[uint32]int8
 }
@@ -7977,6 +8233,7 @@ func (v *uint32Int8MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -7984,6 +8241,7 @@ func (v *uint32Int8MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -7993,7 +8251,7 @@ func (v *uint32Int8MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint64Int8MapValue
+// -- uint64Int8MapValue.
 type uint64Int8MapValue struct {
 	value *map[uint64]int8
 }
@@ -8045,6 +8303,7 @@ func (v *uint64Int8MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -8052,6 +8311,7 @@ func (v *uint64Int8MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -8061,7 +8321,7 @@ func (v *uint64Int8MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int16 Value
+// -- int16 Value.
 type int16Value struct {
 	value *int16
 }
@@ -8077,8 +8337,10 @@ func (v *int16Value) Set(s string) error {
 	parsed, err := strconv.ParseInt(s, 0, 16)
 	if err == nil {
 		*v.value = (int16)(parsed)
+
 		return nil
 	}
+
 	return err
 }
 
@@ -8086,13 +8348,15 @@ func (v *int16Value) Get() interface{} {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
 func (v *int16Value) String() string {
 	if v != nil && v.value != nil {
-		return fmt.Sprintf("%v", *v.value)
+		return strconv.Itoa(int(*v.value))
 	}
+
 	return ""
 }
 
@@ -8133,6 +8397,7 @@ func (v *int16SliceValue) Set(raw string) error {
 		*v.value = append(*v.value, out...)
 	}
 	v.changed = true
+
 	return nil
 }
 
@@ -8140,6 +8405,7 @@ func (v *int16SliceValue) Get() interface{} {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return ([]int16)(nil)
 }
 
@@ -8151,6 +8417,7 @@ func (v *int16SliceValue) String() string {
 	for _, elem := range *v.value {
 		out = append(out, newInt16Value(&elem).String())
 	}
+
 	return "[" + strings.Join(out, ",") + "]"
 }
 
@@ -8160,7 +8427,7 @@ func (v *int16SliceValue) IsCumulative() bool {
 	return true
 }
 
-// -- stringInt16MapValue
+// -- stringInt16MapValue.
 type stringInt16MapValue struct {
 	value *map[string]int16
 }
@@ -8207,6 +8474,7 @@ func (v *stringInt16MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -8214,6 +8482,7 @@ func (v *stringInt16MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -8223,7 +8492,7 @@ func (v *stringInt16MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- intInt16MapValue
+// -- intInt16MapValue.
 type intInt16MapValue struct {
 	value *map[int]int16
 }
@@ -8275,6 +8544,7 @@ func (v *intInt16MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -8282,6 +8552,7 @@ func (v *intInt16MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -8291,7 +8562,7 @@ func (v *intInt16MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int8Int16MapValue
+// -- int8Int16MapValue.
 type int8Int16MapValue struct {
 	value *map[int8]int16
 }
@@ -8343,6 +8614,7 @@ func (v *int8Int16MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -8350,6 +8622,7 @@ func (v *int8Int16MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -8359,7 +8632,7 @@ func (v *int8Int16MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int16Int16MapValue
+// -- int16Int16MapValue.
 type int16Int16MapValue struct {
 	value *map[int16]int16
 }
@@ -8411,6 +8684,7 @@ func (v *int16Int16MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -8418,6 +8692,7 @@ func (v *int16Int16MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -8427,7 +8702,7 @@ func (v *int16Int16MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int32Int16MapValue
+// -- int32Int16MapValue.
 type int32Int16MapValue struct {
 	value *map[int32]int16
 }
@@ -8479,6 +8754,7 @@ func (v *int32Int16MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -8486,6 +8762,7 @@ func (v *int32Int16MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -8495,7 +8772,7 @@ func (v *int32Int16MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int64Int16MapValue
+// -- int64Int16MapValue.
 type int64Int16MapValue struct {
 	value *map[int64]int16
 }
@@ -8547,6 +8824,7 @@ func (v *int64Int16MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -8554,6 +8832,7 @@ func (v *int64Int16MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -8563,7 +8842,7 @@ func (v *int64Int16MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uintInt16MapValue
+// -- uintInt16MapValue.
 type uintInt16MapValue struct {
 	value *map[uint]int16
 }
@@ -8615,6 +8894,7 @@ func (v *uintInt16MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -8622,6 +8902,7 @@ func (v *uintInt16MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -8631,7 +8912,7 @@ func (v *uintInt16MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint8Int16MapValue
+// -- uint8Int16MapValue.
 type uint8Int16MapValue struct {
 	value *map[uint8]int16
 }
@@ -8683,6 +8964,7 @@ func (v *uint8Int16MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -8690,6 +8972,7 @@ func (v *uint8Int16MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -8699,7 +8982,7 @@ func (v *uint8Int16MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint16Int16MapValue
+// -- uint16Int16MapValue.
 type uint16Int16MapValue struct {
 	value *map[uint16]int16
 }
@@ -8751,6 +9034,7 @@ func (v *uint16Int16MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -8758,6 +9042,7 @@ func (v *uint16Int16MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -8767,7 +9052,7 @@ func (v *uint16Int16MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint32Int16MapValue
+// -- uint32Int16MapValue.
 type uint32Int16MapValue struct {
 	value *map[uint32]int16
 }
@@ -8819,6 +9104,7 @@ func (v *uint32Int16MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -8826,6 +9112,7 @@ func (v *uint32Int16MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -8835,7 +9122,7 @@ func (v *uint32Int16MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint64Int16MapValue
+// -- uint64Int16MapValue.
 type uint64Int16MapValue struct {
 	value *map[uint64]int16
 }
@@ -8887,6 +9174,7 @@ func (v *uint64Int16MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -8894,6 +9182,7 @@ func (v *uint64Int16MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -8903,7 +9192,7 @@ func (v *uint64Int16MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int32 Value
+// -- int32 Value.
 type int32Value struct {
 	value *int32
 }
@@ -8919,8 +9208,10 @@ func (v *int32Value) Set(s string) error {
 	parsed, err := strconv.ParseInt(s, 0, 32)
 	if err == nil {
 		*v.value = (int32)(parsed)
+
 		return nil
 	}
+
 	return err
 }
 
@@ -8928,13 +9219,15 @@ func (v *int32Value) Get() interface{} {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
 func (v *int32Value) String() string {
 	if v != nil && v.value != nil {
-		return fmt.Sprintf("%v", *v.value)
+		return strconv.Itoa(int(*v.value))
 	}
+
 	return ""
 }
 
@@ -8975,6 +9268,7 @@ func (v *int32SliceValue) Set(raw string) error {
 		*v.value = append(*v.value, out...)
 	}
 	v.changed = true
+
 	return nil
 }
 
@@ -8982,6 +9276,7 @@ func (v *int32SliceValue) Get() interface{} {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return ([]int32)(nil)
 }
 
@@ -8993,6 +9288,7 @@ func (v *int32SliceValue) String() string {
 	for _, elem := range *v.value {
 		out = append(out, newInt32Value(&elem).String())
 	}
+
 	return "[" + strings.Join(out, ",") + "]"
 }
 
@@ -9002,7 +9298,7 @@ func (v *int32SliceValue) IsCumulative() bool {
 	return true
 }
 
-// -- stringInt32MapValue
+// -- stringInt32MapValue.
 type stringInt32MapValue struct {
 	value *map[string]int32
 }
@@ -9049,6 +9345,7 @@ func (v *stringInt32MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -9056,6 +9353,7 @@ func (v *stringInt32MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -9065,7 +9363,7 @@ func (v *stringInt32MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- intInt32MapValue
+// -- intInt32MapValue.
 type intInt32MapValue struct {
 	value *map[int]int32
 }
@@ -9117,6 +9415,7 @@ func (v *intInt32MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -9124,6 +9423,7 @@ func (v *intInt32MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -9133,7 +9433,7 @@ func (v *intInt32MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int8Int32MapValue
+// -- int8Int32MapValue.
 type int8Int32MapValue struct {
 	value *map[int8]int32
 }
@@ -9185,6 +9485,7 @@ func (v *int8Int32MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -9192,6 +9493,7 @@ func (v *int8Int32MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -9201,7 +9503,7 @@ func (v *int8Int32MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int16Int32MapValue
+// -- int16Int32MapValue.
 type int16Int32MapValue struct {
 	value *map[int16]int32
 }
@@ -9253,6 +9555,7 @@ func (v *int16Int32MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -9260,6 +9563,7 @@ func (v *int16Int32MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -9269,7 +9573,7 @@ func (v *int16Int32MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int32Int32MapValue
+// -- int32Int32MapValue.
 type int32Int32MapValue struct {
 	value *map[int32]int32
 }
@@ -9321,6 +9625,7 @@ func (v *int32Int32MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -9328,6 +9633,7 @@ func (v *int32Int32MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -9337,7 +9643,7 @@ func (v *int32Int32MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int64Int32MapValue
+// -- int64Int32MapValue.
 type int64Int32MapValue struct {
 	value *map[int64]int32
 }
@@ -9389,6 +9695,7 @@ func (v *int64Int32MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -9396,6 +9703,7 @@ func (v *int64Int32MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -9405,7 +9713,7 @@ func (v *int64Int32MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uintInt32MapValue
+// -- uintInt32MapValue.
 type uintInt32MapValue struct {
 	value *map[uint]int32
 }
@@ -9457,6 +9765,7 @@ func (v *uintInt32MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -9464,6 +9773,7 @@ func (v *uintInt32MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -9473,7 +9783,7 @@ func (v *uintInt32MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint8Int32MapValue
+// -- uint8Int32MapValue.
 type uint8Int32MapValue struct {
 	value *map[uint8]int32
 }
@@ -9525,6 +9835,7 @@ func (v *uint8Int32MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -9532,6 +9843,7 @@ func (v *uint8Int32MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -9541,7 +9853,7 @@ func (v *uint8Int32MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint16Int32MapValue
+// -- uint16Int32MapValue.
 type uint16Int32MapValue struct {
 	value *map[uint16]int32
 }
@@ -9593,6 +9905,7 @@ func (v *uint16Int32MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -9600,6 +9913,7 @@ func (v *uint16Int32MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -9609,7 +9923,7 @@ func (v *uint16Int32MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint32Int32MapValue
+// -- uint32Int32MapValue.
 type uint32Int32MapValue struct {
 	value *map[uint32]int32
 }
@@ -9661,6 +9975,7 @@ func (v *uint32Int32MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -9668,6 +9983,7 @@ func (v *uint32Int32MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -9677,7 +9993,7 @@ func (v *uint32Int32MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint64Int32MapValue
+// -- uint64Int32MapValue.
 type uint64Int32MapValue struct {
 	value *map[uint64]int32
 }
@@ -9729,6 +10045,7 @@ func (v *uint64Int32MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -9736,6 +10053,7 @@ func (v *uint64Int32MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -9745,7 +10063,7 @@ func (v *uint64Int32MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int64 Value
+// -- int64 Value.
 type int64Value struct {
 	value *int64
 }
@@ -9761,8 +10079,10 @@ func (v *int64Value) Set(s string) error {
 	parsed, err := strconv.ParseInt(s, 0, 64)
 	if err == nil {
 		*v.value = parsed
+
 		return nil
 	}
+
 	return err
 }
 
@@ -9770,13 +10090,15 @@ func (v *int64Value) Get() interface{} {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
 func (v *int64Value) String() string {
 	if v != nil && v.value != nil {
-		return fmt.Sprintf("%v", *v.value)
+		return strconv.FormatInt(*v.value, 10)
 	}
+
 	return ""
 }
 
@@ -9817,6 +10139,7 @@ func (v *int64SliceValue) Set(raw string) error {
 		*v.value = append(*v.value, out...)
 	}
 	v.changed = true
+
 	return nil
 }
 
@@ -9824,6 +10147,7 @@ func (v *int64SliceValue) Get() interface{} {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return ([]int64)(nil)
 }
 
@@ -9835,6 +10159,7 @@ func (v *int64SliceValue) String() string {
 	for _, elem := range *v.value {
 		out = append(out, newInt64Value(&elem).String())
 	}
+
 	return "[" + strings.Join(out, ",") + "]"
 }
 
@@ -9844,7 +10169,7 @@ func (v *int64SliceValue) IsCumulative() bool {
 	return true
 }
 
-// -- stringInt64MapValue
+// -- stringInt64MapValue.
 type stringInt64MapValue struct {
 	value *map[string]int64
 }
@@ -9891,6 +10216,7 @@ func (v *stringInt64MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -9898,6 +10224,7 @@ func (v *stringInt64MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -9907,7 +10234,7 @@ func (v *stringInt64MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- intInt64MapValue
+// -- intInt64MapValue.
 type intInt64MapValue struct {
 	value *map[int]int64
 }
@@ -9959,6 +10286,7 @@ func (v *intInt64MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -9966,6 +10294,7 @@ func (v *intInt64MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -9975,7 +10304,7 @@ func (v *intInt64MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int8Int64MapValue
+// -- int8Int64MapValue.
 type int8Int64MapValue struct {
 	value *map[int8]int64
 }
@@ -10027,6 +10356,7 @@ func (v *int8Int64MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -10034,6 +10364,7 @@ func (v *int8Int64MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -10043,7 +10374,7 @@ func (v *int8Int64MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int16Int64MapValue
+// -- int16Int64MapValue.
 type int16Int64MapValue struct {
 	value *map[int16]int64
 }
@@ -10095,6 +10426,7 @@ func (v *int16Int64MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -10102,6 +10434,7 @@ func (v *int16Int64MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -10111,7 +10444,7 @@ func (v *int16Int64MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int32Int64MapValue
+// -- int32Int64MapValue.
 type int32Int64MapValue struct {
 	value *map[int32]int64
 }
@@ -10163,6 +10496,7 @@ func (v *int32Int64MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -10170,6 +10504,7 @@ func (v *int32Int64MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -10179,7 +10514,7 @@ func (v *int32Int64MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int64Int64MapValue
+// -- int64Int64MapValue.
 type int64Int64MapValue struct {
 	value *map[int64]int64
 }
@@ -10231,6 +10566,7 @@ func (v *int64Int64MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -10238,6 +10574,7 @@ func (v *int64Int64MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -10247,7 +10584,7 @@ func (v *int64Int64MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uintInt64MapValue
+// -- uintInt64MapValue.
 type uintInt64MapValue struct {
 	value *map[uint]int64
 }
@@ -10299,6 +10636,7 @@ func (v *uintInt64MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -10306,6 +10644,7 @@ func (v *uintInt64MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -10315,7 +10654,7 @@ func (v *uintInt64MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint8Int64MapValue
+// -- uint8Int64MapValue.
 type uint8Int64MapValue struct {
 	value *map[uint8]int64
 }
@@ -10367,6 +10706,7 @@ func (v *uint8Int64MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -10374,6 +10714,7 @@ func (v *uint8Int64MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -10383,7 +10724,7 @@ func (v *uint8Int64MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint16Int64MapValue
+// -- uint16Int64MapValue.
 type uint16Int64MapValue struct {
 	value *map[uint16]int64
 }
@@ -10435,6 +10776,7 @@ func (v *uint16Int64MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -10442,6 +10784,7 @@ func (v *uint16Int64MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -10451,7 +10794,7 @@ func (v *uint16Int64MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint32Int64MapValue
+// -- uint32Int64MapValue.
 type uint32Int64MapValue struct {
 	value *map[uint32]int64
 }
@@ -10503,6 +10846,7 @@ func (v *uint32Int64MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -10510,6 +10854,7 @@ func (v *uint32Int64MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -10519,7 +10864,7 @@ func (v *uint32Int64MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint64Int64MapValue
+// -- uint64Int64MapValue.
 type uint64Int64MapValue struct {
 	value *map[uint64]int64
 }
@@ -10571,6 +10916,7 @@ func (v *uint64Int64MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -10578,6 +10924,7 @@ func (v *uint64Int64MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -10587,7 +10934,7 @@ func (v *uint64Int64MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- float64 Value
+// -- float64 Value.
 type float64Value struct {
 	value *float64
 }
@@ -10603,8 +10950,10 @@ func (v *float64Value) Set(s string) error {
 	parsed, err := strconv.ParseFloat(s, 64)
 	if err == nil {
 		*v.value = parsed
+
 		return nil
 	}
+
 	return err
 }
 
@@ -10612,6 +10961,7 @@ func (v *float64Value) Get() interface{} {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -10619,6 +10969,7 @@ func (v *float64Value) String() string {
 	if v != nil && v.value != nil {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -10659,6 +11010,7 @@ func (v *float64SliceValue) Set(raw string) error {
 		*v.value = append(*v.value, out...)
 	}
 	v.changed = true
+
 	return nil
 }
 
@@ -10666,6 +11018,7 @@ func (v *float64SliceValue) Get() interface{} {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return ([]float64)(nil)
 }
 
@@ -10677,6 +11030,7 @@ func (v *float64SliceValue) String() string {
 	for _, elem := range *v.value {
 		out = append(out, newFloat64Value(&elem).String())
 	}
+
 	return "[" + strings.Join(out, ",") + "]"
 }
 
@@ -10686,7 +11040,7 @@ func (v *float64SliceValue) IsCumulative() bool {
 	return true
 }
 
-// -- stringFloat64MapValue
+// -- stringFloat64MapValue.
 type stringFloat64MapValue struct {
 	value *map[string]float64
 }
@@ -10733,6 +11087,7 @@ func (v *stringFloat64MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -10740,6 +11095,7 @@ func (v *stringFloat64MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -10749,7 +11105,7 @@ func (v *stringFloat64MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- intFloat64MapValue
+// -- intFloat64MapValue.
 type intFloat64MapValue struct {
 	value *map[int]float64
 }
@@ -10801,6 +11157,7 @@ func (v *intFloat64MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -10808,6 +11165,7 @@ func (v *intFloat64MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -10817,7 +11175,7 @@ func (v *intFloat64MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int8Float64MapValue
+// -- int8Float64MapValue.
 type int8Float64MapValue struct {
 	value *map[int8]float64
 }
@@ -10869,6 +11227,7 @@ func (v *int8Float64MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -10876,6 +11235,7 @@ func (v *int8Float64MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -10885,7 +11245,7 @@ func (v *int8Float64MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int16Float64MapValue
+// -- int16Float64MapValue.
 type int16Float64MapValue struct {
 	value *map[int16]float64
 }
@@ -10937,6 +11297,7 @@ func (v *int16Float64MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -10944,6 +11305,7 @@ func (v *int16Float64MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -10953,7 +11315,7 @@ func (v *int16Float64MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int32Float64MapValue
+// -- int32Float64MapValue.
 type int32Float64MapValue struct {
 	value *map[int32]float64
 }
@@ -11005,6 +11367,7 @@ func (v *int32Float64MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -11012,6 +11375,7 @@ func (v *int32Float64MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -11021,7 +11385,7 @@ func (v *int32Float64MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int64Float64MapValue
+// -- int64Float64MapValue.
 type int64Float64MapValue struct {
 	value *map[int64]float64
 }
@@ -11073,6 +11437,7 @@ func (v *int64Float64MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -11080,6 +11445,7 @@ func (v *int64Float64MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -11089,7 +11455,7 @@ func (v *int64Float64MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uintFloat64MapValue
+// -- uintFloat64MapValue.
 type uintFloat64MapValue struct {
 	value *map[uint]float64
 }
@@ -11141,6 +11507,7 @@ func (v *uintFloat64MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -11148,6 +11515,7 @@ func (v *uintFloat64MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -11157,7 +11525,7 @@ func (v *uintFloat64MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint8Float64MapValue
+// -- uint8Float64MapValue.
 type uint8Float64MapValue struct {
 	value *map[uint8]float64
 }
@@ -11209,6 +11577,7 @@ func (v *uint8Float64MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -11216,6 +11585,7 @@ func (v *uint8Float64MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -11225,7 +11595,7 @@ func (v *uint8Float64MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint16Float64MapValue
+// -- uint16Float64MapValue.
 type uint16Float64MapValue struct {
 	value *map[uint16]float64
 }
@@ -11277,6 +11647,7 @@ func (v *uint16Float64MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -11284,6 +11655,7 @@ func (v *uint16Float64MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -11293,7 +11665,7 @@ func (v *uint16Float64MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint32Float64MapValue
+// -- uint32Float64MapValue.
 type uint32Float64MapValue struct {
 	value *map[uint32]float64
 }
@@ -11345,6 +11717,7 @@ func (v *uint32Float64MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -11352,6 +11725,7 @@ func (v *uint32Float64MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -11361,7 +11735,7 @@ func (v *uint32Float64MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint64Float64MapValue
+// -- uint64Float64MapValue.
 type uint64Float64MapValue struct {
 	value *map[uint64]float64
 }
@@ -11413,6 +11787,7 @@ func (v *uint64Float64MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -11420,6 +11795,7 @@ func (v *uint64Float64MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -11429,7 +11805,7 @@ func (v *uint64Float64MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- float32 Value
+// -- float32 Value.
 type float32Value struct {
 	value *float32
 }
@@ -11445,8 +11821,10 @@ func (v *float32Value) Set(s string) error {
 	parsed, err := strconv.ParseFloat(s, 32)
 	if err == nil {
 		*v.value = (float32)(parsed)
+
 		return nil
 	}
+
 	return err
 }
 
@@ -11454,6 +11832,7 @@ func (v *float32Value) Get() interface{} {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -11461,6 +11840,7 @@ func (v *float32Value) String() string {
 	if v != nil && v.value != nil {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -11501,6 +11881,7 @@ func (v *float32SliceValue) Set(raw string) error {
 		*v.value = append(*v.value, out...)
 	}
 	v.changed = true
+
 	return nil
 }
 
@@ -11508,6 +11889,7 @@ func (v *float32SliceValue) Get() interface{} {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return ([]float32)(nil)
 }
 
@@ -11519,6 +11901,7 @@ func (v *float32SliceValue) String() string {
 	for _, elem := range *v.value {
 		out = append(out, newFloat32Value(&elem).String())
 	}
+
 	return "[" + strings.Join(out, ",") + "]"
 }
 
@@ -11528,7 +11911,7 @@ func (v *float32SliceValue) IsCumulative() bool {
 	return true
 }
 
-// -- stringFloat32MapValue
+// -- stringFloat32MapValue.
 type stringFloat32MapValue struct {
 	value *map[string]float32
 }
@@ -11575,6 +11958,7 @@ func (v *stringFloat32MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -11582,6 +11966,7 @@ func (v *stringFloat32MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -11591,7 +11976,7 @@ func (v *stringFloat32MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- intFloat32MapValue
+// -- intFloat32MapValue.
 type intFloat32MapValue struct {
 	value *map[int]float32
 }
@@ -11643,6 +12028,7 @@ func (v *intFloat32MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -11650,6 +12036,7 @@ func (v *intFloat32MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -11659,7 +12046,7 @@ func (v *intFloat32MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int8Float32MapValue
+// -- int8Float32MapValue.
 type int8Float32MapValue struct {
 	value *map[int8]float32
 }
@@ -11711,6 +12098,7 @@ func (v *int8Float32MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -11718,6 +12106,7 @@ func (v *int8Float32MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -11727,7 +12116,7 @@ func (v *int8Float32MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int16Float32MapValue
+// -- int16Float32MapValue.
 type int16Float32MapValue struct {
 	value *map[int16]float32
 }
@@ -11779,6 +12168,7 @@ func (v *int16Float32MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -11786,6 +12176,7 @@ func (v *int16Float32MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -11795,7 +12186,7 @@ func (v *int16Float32MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int32Float32MapValue
+// -- int32Float32MapValue.
 type int32Float32MapValue struct {
 	value *map[int32]float32
 }
@@ -11847,6 +12238,7 @@ func (v *int32Float32MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -11854,6 +12246,7 @@ func (v *int32Float32MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -11863,7 +12256,7 @@ func (v *int32Float32MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int64Float32MapValue
+// -- int64Float32MapValue.
 type int64Float32MapValue struct {
 	value *map[int64]float32
 }
@@ -11915,6 +12308,7 @@ func (v *int64Float32MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -11922,6 +12316,7 @@ func (v *int64Float32MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -11931,7 +12326,7 @@ func (v *int64Float32MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uintFloat32MapValue
+// -- uintFloat32MapValue.
 type uintFloat32MapValue struct {
 	value *map[uint]float32
 }
@@ -11983,6 +12378,7 @@ func (v *uintFloat32MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -11990,6 +12386,7 @@ func (v *uintFloat32MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -11999,7 +12396,7 @@ func (v *uintFloat32MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint8Float32MapValue
+// -- uint8Float32MapValue.
 type uint8Float32MapValue struct {
 	value *map[uint8]float32
 }
@@ -12051,6 +12448,7 @@ func (v *uint8Float32MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -12058,6 +12456,7 @@ func (v *uint8Float32MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -12067,7 +12466,7 @@ func (v *uint8Float32MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint16Float32MapValue
+// -- uint16Float32MapValue.
 type uint16Float32MapValue struct {
 	value *map[uint16]float32
 }
@@ -12119,6 +12518,7 @@ func (v *uint16Float32MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -12126,6 +12526,7 @@ func (v *uint16Float32MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -12135,7 +12536,7 @@ func (v *uint16Float32MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint32Float32MapValue
+// -- uint32Float32MapValue.
 type uint32Float32MapValue struct {
 	value *map[uint32]float32
 }
@@ -12187,6 +12588,7 @@ func (v *uint32Float32MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -12194,6 +12596,7 @@ func (v *uint32Float32MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -12203,7 +12606,7 @@ func (v *uint32Float32MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint64Float32MapValue
+// -- uint64Float32MapValue.
 type uint64Float32MapValue struct {
 	value *map[uint64]float32
 }
@@ -12255,6 +12658,7 @@ func (v *uint64Float32MapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -12262,6 +12666,7 @@ func (v *uint64Float32MapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -12271,7 +12676,7 @@ func (v *uint64Float32MapValue) IsCumulative() bool {
 	return true
 }
 
-// -- time.Duration Value
+// -- time.Duration Value.
 type durationValue struct {
 	value *time.Duration
 }
@@ -12287,8 +12692,10 @@ func (v *durationValue) Set(s string) error {
 	parsed, err := time.ParseDuration(s)
 	if err == nil {
 		*v.value = parsed
+
 		return nil
 	}
+
 	return err
 }
 
@@ -12296,6 +12703,7 @@ func (v *durationValue) Get() interface{} {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -12303,6 +12711,7 @@ func (v *durationValue) String() string {
 	if v != nil && v.value != nil {
 		return (*v.value).String()
 	}
+
 	return ""
 }
 
@@ -12343,6 +12752,7 @@ func (v *durationSliceValue) Set(raw string) error {
 		*v.value = append(*v.value, out...)
 	}
 	v.changed = true
+
 	return nil
 }
 
@@ -12350,6 +12760,7 @@ func (v *durationSliceValue) Get() interface{} {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return ([]time.Duration)(nil)
 }
 
@@ -12361,6 +12772,7 @@ func (v *durationSliceValue) String() string {
 	for _, elem := range *v.value {
 		out = append(out, newDurationValue(&elem).String())
 	}
+
 	return "[" + strings.Join(out, ",") + "]"
 }
 
@@ -12370,7 +12782,7 @@ func (v *durationSliceValue) IsCumulative() bool {
 	return true
 }
 
-// -- stringDurationMapValue
+// -- stringDurationMapValue.
 type stringDurationMapValue struct {
 	value *map[string]time.Duration
 }
@@ -12417,6 +12829,7 @@ func (v *stringDurationMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -12424,6 +12837,7 @@ func (v *stringDurationMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -12433,7 +12847,7 @@ func (v *stringDurationMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- intDurationMapValue
+// -- intDurationMapValue.
 type intDurationMapValue struct {
 	value *map[int]time.Duration
 }
@@ -12485,6 +12899,7 @@ func (v *intDurationMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -12492,6 +12907,7 @@ func (v *intDurationMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -12501,7 +12917,7 @@ func (v *intDurationMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int8DurationMapValue
+// -- int8DurationMapValue.
 type int8DurationMapValue struct {
 	value *map[int8]time.Duration
 }
@@ -12553,6 +12969,7 @@ func (v *int8DurationMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -12560,6 +12977,7 @@ func (v *int8DurationMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -12569,7 +12987,7 @@ func (v *int8DurationMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int16DurationMapValue
+// -- int16DurationMapValue.
 type int16DurationMapValue struct {
 	value *map[int16]time.Duration
 }
@@ -12621,6 +13039,7 @@ func (v *int16DurationMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -12628,6 +13047,7 @@ func (v *int16DurationMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -12637,7 +13057,7 @@ func (v *int16DurationMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int32DurationMapValue
+// -- int32DurationMapValue.
 type int32DurationMapValue struct {
 	value *map[int32]time.Duration
 }
@@ -12689,6 +13109,7 @@ func (v *int32DurationMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -12696,6 +13117,7 @@ func (v *int32DurationMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -12705,7 +13127,7 @@ func (v *int32DurationMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int64DurationMapValue
+// -- int64DurationMapValue.
 type int64DurationMapValue struct {
 	value *map[int64]time.Duration
 }
@@ -12757,6 +13179,7 @@ func (v *int64DurationMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -12764,6 +13187,7 @@ func (v *int64DurationMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -12773,7 +13197,7 @@ func (v *int64DurationMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uintDurationMapValue
+// -- uintDurationMapValue.
 type uintDurationMapValue struct {
 	value *map[uint]time.Duration
 }
@@ -12825,6 +13249,7 @@ func (v *uintDurationMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -12832,6 +13257,7 @@ func (v *uintDurationMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -12841,7 +13267,7 @@ func (v *uintDurationMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint8DurationMapValue
+// -- uint8DurationMapValue.
 type uint8DurationMapValue struct {
 	value *map[uint8]time.Duration
 }
@@ -12893,6 +13319,7 @@ func (v *uint8DurationMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -12900,6 +13327,7 @@ func (v *uint8DurationMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -12909,7 +13337,7 @@ func (v *uint8DurationMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint16DurationMapValue
+// -- uint16DurationMapValue.
 type uint16DurationMapValue struct {
 	value *map[uint16]time.Duration
 }
@@ -12961,6 +13389,7 @@ func (v *uint16DurationMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -12968,6 +13397,7 @@ func (v *uint16DurationMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -12977,7 +13407,7 @@ func (v *uint16DurationMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint32DurationMapValue
+// -- uint32DurationMapValue.
 type uint32DurationMapValue struct {
 	value *map[uint32]time.Duration
 }
@@ -13029,6 +13459,7 @@ func (v *uint32DurationMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -13036,6 +13467,7 @@ func (v *uint32DurationMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -13045,7 +13477,7 @@ func (v *uint32DurationMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint64DurationMapValue
+// -- uint64DurationMapValue.
 type uint64DurationMapValue struct {
 	value *map[uint64]time.Duration
 }
@@ -13097,6 +13529,7 @@ func (v *uint64DurationMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -13104,6 +13537,7 @@ func (v *uint64DurationMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -13113,7 +13547,7 @@ func (v *uint64DurationMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- net.IP Value
+// -- net.IP Value.
 type ipValue struct {
 	value *net.IP
 }
@@ -13129,8 +13563,10 @@ func (v *ipValue) Set(s string) error {
 	parsed, err := parseIP(s)
 	if err == nil {
 		*v.value = parsed
+
 		return nil
 	}
+
 	return err
 }
 
@@ -13138,6 +13574,7 @@ func (v *ipValue) Get() interface{} {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -13145,6 +13582,7 @@ func (v *ipValue) String() string {
 	if v != nil && v.value != nil {
 		return v.value.String()
 	}
+
 	return ""
 }
 
@@ -13185,6 +13623,7 @@ func (v *ipSliceValue) Set(raw string) error {
 		*v.value = append(*v.value, out...)
 	}
 	v.changed = true
+
 	return nil
 }
 
@@ -13192,6 +13631,7 @@ func (v *ipSliceValue) Get() interface{} {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return ([]net.IP)(nil)
 }
 
@@ -13203,6 +13643,7 @@ func (v *ipSliceValue) String() string {
 	for _, elem := range *v.value {
 		out = append(out, newIPValue(&elem).String())
 	}
+
 	return "[" + strings.Join(out, ",") + "]"
 }
 
@@ -13212,7 +13653,7 @@ func (v *ipSliceValue) IsCumulative() bool {
 	return true
 }
 
-// -- stringIPMapValue
+// -- stringIPMapValue.
 type stringIPMapValue struct {
 	value *map[string]net.IP
 }
@@ -13259,6 +13700,7 @@ func (v *stringIPMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -13266,6 +13708,7 @@ func (v *stringIPMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -13275,7 +13718,7 @@ func (v *stringIPMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- intIPMapValue
+// -- intIPMapValue.
 type intIPMapValue struct {
 	value *map[int]net.IP
 }
@@ -13327,6 +13770,7 @@ func (v *intIPMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -13334,6 +13778,7 @@ func (v *intIPMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -13343,7 +13788,7 @@ func (v *intIPMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int8IPMapValue
+// -- int8IPMapValue.
 type int8IPMapValue struct {
 	value *map[int8]net.IP
 }
@@ -13395,6 +13840,7 @@ func (v *int8IPMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -13402,6 +13848,7 @@ func (v *int8IPMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -13411,7 +13858,7 @@ func (v *int8IPMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int16IPMapValue
+// -- int16IPMapValue.
 type int16IPMapValue struct {
 	value *map[int16]net.IP
 }
@@ -13463,6 +13910,7 @@ func (v *int16IPMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -13470,6 +13918,7 @@ func (v *int16IPMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -13479,7 +13928,7 @@ func (v *int16IPMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int32IPMapValue
+// -- int32IPMapValue.
 type int32IPMapValue struct {
 	value *map[int32]net.IP
 }
@@ -13531,6 +13980,7 @@ func (v *int32IPMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -13538,6 +13988,7 @@ func (v *int32IPMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -13547,7 +13998,7 @@ func (v *int32IPMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int64IPMapValue
+// -- int64IPMapValue.
 type int64IPMapValue struct {
 	value *map[int64]net.IP
 }
@@ -13599,6 +14050,7 @@ func (v *int64IPMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -13606,6 +14058,7 @@ func (v *int64IPMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -13615,7 +14068,7 @@ func (v *int64IPMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uintIPMapValue
+// -- uintIPMapValue.
 type uintIPMapValue struct {
 	value *map[uint]net.IP
 }
@@ -13667,6 +14120,7 @@ func (v *uintIPMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -13674,6 +14128,7 @@ func (v *uintIPMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -13683,7 +14138,7 @@ func (v *uintIPMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint8IPMapValue
+// -- uint8IPMapValue.
 type uint8IPMapValue struct {
 	value *map[uint8]net.IP
 }
@@ -13735,6 +14190,7 @@ func (v *uint8IPMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -13742,6 +14198,7 @@ func (v *uint8IPMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -13751,7 +14208,7 @@ func (v *uint8IPMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint16IPMapValue
+// -- uint16IPMapValue.
 type uint16IPMapValue struct {
 	value *map[uint16]net.IP
 }
@@ -13803,6 +14260,7 @@ func (v *uint16IPMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -13810,6 +14268,7 @@ func (v *uint16IPMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -13819,7 +14278,7 @@ func (v *uint16IPMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint32IPMapValue
+// -- uint32IPMapValue.
 type uint32IPMapValue struct {
 	value *map[uint32]net.IP
 }
@@ -13871,6 +14330,7 @@ func (v *uint32IPMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -13878,6 +14338,7 @@ func (v *uint32IPMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -13887,7 +14348,7 @@ func (v *uint32IPMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint64IPMapValue
+// -- uint64IPMapValue.
 type uint64IPMapValue struct {
 	value *map[uint64]net.IP
 }
@@ -13939,6 +14400,7 @@ func (v *uint64IPMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -13946,6 +14408,7 @@ func (v *uint64IPMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -13955,7 +14418,7 @@ func (v *uint64IPMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- HexBytes Value
+// -- HexBytes Value.
 type hexBytesValue struct {
 	value *HexBytes
 }
@@ -13971,8 +14434,10 @@ func (v *hexBytesValue) Set(s string) error {
 	parsed, err := hex.DecodeString(s)
 	if err == nil {
 		*v.value = parsed
+
 		return nil
 	}
+
 	return err
 }
 
@@ -13980,6 +14445,7 @@ func (v *hexBytesValue) Get() interface{} {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -13987,6 +14453,7 @@ func (v *hexBytesValue) String() string {
 	if v != nil && v.value != nil {
 		return fmt.Sprintf("%x", *v.value)
 	}
+
 	return ""
 }
 
@@ -14027,6 +14494,7 @@ func (v *hexBytesSliceValue) Set(raw string) error {
 		*v.value = append(*v.value, out...)
 	}
 	v.changed = true
+
 	return nil
 }
 
@@ -14034,6 +14502,7 @@ func (v *hexBytesSliceValue) Get() interface{} {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return ([]HexBytes)(nil)
 }
 
@@ -14045,6 +14514,7 @@ func (v *hexBytesSliceValue) String() string {
 	for _, elem := range *v.value {
 		out = append(out, newHexBytesValue(&elem).String())
 	}
+
 	return "[" + strings.Join(out, ",") + "]"
 }
 
@@ -14054,7 +14524,7 @@ func (v *hexBytesSliceValue) IsCumulative() bool {
 	return true
 }
 
-// -- stringHexBytesMapValue
+// -- stringHexBytesMapValue.
 type stringHexBytesMapValue struct {
 	value *map[string]HexBytes
 }
@@ -14101,6 +14571,7 @@ func (v *stringHexBytesMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -14108,6 +14579,7 @@ func (v *stringHexBytesMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -14117,7 +14589,7 @@ func (v *stringHexBytesMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- intHexBytesMapValue
+// -- intHexBytesMapValue.
 type intHexBytesMapValue struct {
 	value *map[int]HexBytes
 }
@@ -14169,6 +14641,7 @@ func (v *intHexBytesMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -14176,6 +14649,7 @@ func (v *intHexBytesMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -14185,7 +14659,7 @@ func (v *intHexBytesMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int8HexBytesMapValue
+// -- int8HexBytesMapValue.
 type int8HexBytesMapValue struct {
 	value *map[int8]HexBytes
 }
@@ -14237,6 +14711,7 @@ func (v *int8HexBytesMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -14244,6 +14719,7 @@ func (v *int8HexBytesMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -14253,7 +14729,7 @@ func (v *int8HexBytesMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int16HexBytesMapValue
+// -- int16HexBytesMapValue.
 type int16HexBytesMapValue struct {
 	value *map[int16]HexBytes
 }
@@ -14305,6 +14781,7 @@ func (v *int16HexBytesMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -14312,6 +14789,7 @@ func (v *int16HexBytesMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -14321,7 +14799,7 @@ func (v *int16HexBytesMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int32HexBytesMapValue
+// -- int32HexBytesMapValue.
 type int32HexBytesMapValue struct {
 	value *map[int32]HexBytes
 }
@@ -14373,6 +14851,7 @@ func (v *int32HexBytesMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -14380,6 +14859,7 @@ func (v *int32HexBytesMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -14389,7 +14869,7 @@ func (v *int32HexBytesMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int64HexBytesMapValue
+// -- int64HexBytesMapValue.
 type int64HexBytesMapValue struct {
 	value *map[int64]HexBytes
 }
@@ -14441,6 +14921,7 @@ func (v *int64HexBytesMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -14448,6 +14929,7 @@ func (v *int64HexBytesMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -14457,7 +14939,7 @@ func (v *int64HexBytesMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uintHexBytesMapValue
+// -- uintHexBytesMapValue.
 type uintHexBytesMapValue struct {
 	value *map[uint]HexBytes
 }
@@ -14509,6 +14991,7 @@ func (v *uintHexBytesMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -14516,6 +14999,7 @@ func (v *uintHexBytesMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -14525,7 +15009,7 @@ func (v *uintHexBytesMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint8HexBytesMapValue
+// -- uint8HexBytesMapValue.
 type uint8HexBytesMapValue struct {
 	value *map[uint8]HexBytes
 }
@@ -14577,6 +15061,7 @@ func (v *uint8HexBytesMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -14584,6 +15069,7 @@ func (v *uint8HexBytesMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -14593,7 +15079,7 @@ func (v *uint8HexBytesMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint16HexBytesMapValue
+// -- uint16HexBytesMapValue.
 type uint16HexBytesMapValue struct {
 	value *map[uint16]HexBytes
 }
@@ -14645,6 +15131,7 @@ func (v *uint16HexBytesMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -14652,6 +15139,7 @@ func (v *uint16HexBytesMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -14661,7 +15149,7 @@ func (v *uint16HexBytesMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint32HexBytesMapValue
+// -- uint32HexBytesMapValue.
 type uint32HexBytesMapValue struct {
 	value *map[uint32]HexBytes
 }
@@ -14713,6 +15201,7 @@ func (v *uint32HexBytesMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -14720,6 +15209,7 @@ func (v *uint32HexBytesMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -14729,7 +15219,7 @@ func (v *uint32HexBytesMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint64HexBytesMapValue
+// -- uint64HexBytesMapValue.
 type uint64HexBytesMapValue struct {
 	value *map[uint64]HexBytes
 }
@@ -14781,6 +15271,7 @@ func (v *uint64HexBytesMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -14788,6 +15279,7 @@ func (v *uint64HexBytesMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -14797,7 +15289,7 @@ func (v *uint64HexBytesMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- *regexp.Regexp Value
+// -- *regexp.Regexp Value.
 type regexpValue struct {
 	value **regexp.Regexp
 }
@@ -14813,8 +15305,10 @@ func (v *regexpValue) Set(s string) error {
 	parsed, err := regexp.Compile(s)
 	if err == nil {
 		*v.value = parsed
+
 		return nil
 	}
+
 	return err
 }
 
@@ -14822,6 +15316,7 @@ func (v *regexpValue) Get() interface{} {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -14829,6 +15324,7 @@ func (v *regexpValue) String() string {
 	if v != nil && v.value != nil {
 		return (**v.value).String()
 	}
+
 	return ""
 }
 
@@ -14869,6 +15365,7 @@ func (v *regexpSliceValue) Set(raw string) error {
 		*v.value = append(*v.value, out...)
 	}
 	v.changed = true
+
 	return nil
 }
 
@@ -14876,6 +15373,7 @@ func (v *regexpSliceValue) Get() interface{} {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return ([]*regexp.Regexp)(nil)
 }
 
@@ -14887,6 +15385,7 @@ func (v *regexpSliceValue) String() string {
 	for _, elem := range *v.value {
 		out = append(out, newRegexpValue(&elem).String())
 	}
+
 	return "[" + strings.Join(out, ",") + "]"
 }
 
@@ -14896,7 +15395,7 @@ func (v *regexpSliceValue) IsCumulative() bool {
 	return true
 }
 
-// -- stringRegexpMapValue
+// -- stringRegexpMapValue.
 type stringRegexpMapValue struct {
 	value *map[string]*regexp.Regexp
 }
@@ -14943,6 +15442,7 @@ func (v *stringRegexpMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -14950,6 +15450,7 @@ func (v *stringRegexpMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -14959,7 +15460,7 @@ func (v *stringRegexpMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- intRegexpMapValue
+// -- intRegexpMapValue.
 type intRegexpMapValue struct {
 	value *map[int]*regexp.Regexp
 }
@@ -15011,6 +15512,7 @@ func (v *intRegexpMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -15018,6 +15520,7 @@ func (v *intRegexpMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -15027,7 +15530,7 @@ func (v *intRegexpMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int8RegexpMapValue
+// -- int8RegexpMapValue.
 type int8RegexpMapValue struct {
 	value *map[int8]*regexp.Regexp
 }
@@ -15079,6 +15582,7 @@ func (v *int8RegexpMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -15086,6 +15590,7 @@ func (v *int8RegexpMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -15095,7 +15600,7 @@ func (v *int8RegexpMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int16RegexpMapValue
+// -- int16RegexpMapValue.
 type int16RegexpMapValue struct {
 	value *map[int16]*regexp.Regexp
 }
@@ -15147,6 +15652,7 @@ func (v *int16RegexpMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -15154,6 +15660,7 @@ func (v *int16RegexpMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -15163,7 +15670,7 @@ func (v *int16RegexpMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int32RegexpMapValue
+// -- int32RegexpMapValue.
 type int32RegexpMapValue struct {
 	value *map[int32]*regexp.Regexp
 }
@@ -15215,6 +15722,7 @@ func (v *int32RegexpMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -15222,6 +15730,7 @@ func (v *int32RegexpMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -15231,7 +15740,7 @@ func (v *int32RegexpMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int64RegexpMapValue
+// -- int64RegexpMapValue.
 type int64RegexpMapValue struct {
 	value *map[int64]*regexp.Regexp
 }
@@ -15283,6 +15792,7 @@ func (v *int64RegexpMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -15290,6 +15800,7 @@ func (v *int64RegexpMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -15299,7 +15810,7 @@ func (v *int64RegexpMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uintRegexpMapValue
+// -- uintRegexpMapValue.
 type uintRegexpMapValue struct {
 	value *map[uint]*regexp.Regexp
 }
@@ -15351,6 +15862,7 @@ func (v *uintRegexpMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -15358,6 +15870,7 @@ func (v *uintRegexpMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -15367,7 +15880,7 @@ func (v *uintRegexpMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint8RegexpMapValue
+// -- uint8RegexpMapValue.
 type uint8RegexpMapValue struct {
 	value *map[uint8]*regexp.Regexp
 }
@@ -15419,6 +15932,7 @@ func (v *uint8RegexpMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -15426,6 +15940,7 @@ func (v *uint8RegexpMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -15435,7 +15950,7 @@ func (v *uint8RegexpMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint16RegexpMapValue
+// -- uint16RegexpMapValue.
 type uint16RegexpMapValue struct {
 	value *map[uint16]*regexp.Regexp
 }
@@ -15487,6 +16002,7 @@ func (v *uint16RegexpMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -15494,6 +16010,7 @@ func (v *uint16RegexpMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -15503,7 +16020,7 @@ func (v *uint16RegexpMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint32RegexpMapValue
+// -- uint32RegexpMapValue.
 type uint32RegexpMapValue struct {
 	value *map[uint32]*regexp.Regexp
 }
@@ -15555,6 +16072,7 @@ func (v *uint32RegexpMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -15562,6 +16080,7 @@ func (v *uint32RegexpMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -15571,7 +16090,7 @@ func (v *uint32RegexpMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint64RegexpMapValue
+// -- uint64RegexpMapValue.
 type uint64RegexpMapValue struct {
 	value *map[uint64]*regexp.Regexp
 }
@@ -15623,6 +16142,7 @@ func (v *uint64RegexpMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -15630,6 +16150,7 @@ func (v *uint64RegexpMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -15639,7 +16160,7 @@ func (v *uint64RegexpMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- net.TCPAddr Value
+// -- net.TCPAddr Value.
 type tcpAddrValue struct {
 	value *net.TCPAddr
 }
@@ -15655,8 +16176,10 @@ func (v *tcpAddrValue) Set(s string) error {
 	parsed, err := parseTCPAddr(s)
 	if err == nil {
 		*v.value = parsed
+
 		return nil
 	}
+
 	return err
 }
 
@@ -15664,6 +16187,7 @@ func (v *tcpAddrValue) Get() interface{} {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -15671,6 +16195,7 @@ func (v *tcpAddrValue) String() string {
 	if v != nil && v.value != nil {
 		return v.value.String()
 	}
+
 	return ""
 }
 
@@ -15711,6 +16236,7 @@ func (v *tcpAddrSliceValue) Set(raw string) error {
 		*v.value = append(*v.value, out...)
 	}
 	v.changed = true
+
 	return nil
 }
 
@@ -15718,6 +16244,7 @@ func (v *tcpAddrSliceValue) Get() interface{} {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return ([]net.TCPAddr)(nil)
 }
 
@@ -15729,6 +16256,7 @@ func (v *tcpAddrSliceValue) String() string {
 	for _, elem := range *v.value {
 		out = append(out, newTCPAddrValue(&elem).String())
 	}
+
 	return "[" + strings.Join(out, ",") + "]"
 }
 
@@ -15738,7 +16266,7 @@ func (v *tcpAddrSliceValue) IsCumulative() bool {
 	return true
 }
 
-// -- net.IPNet Value
+// -- net.IPNet Value.
 type ipNetValue struct {
 	value *net.IPNet
 }
@@ -15754,8 +16282,10 @@ func (v *ipNetValue) Set(s string) error {
 	parsed, err := parseIPNet(s)
 	if err == nil {
 		*v.value = parsed
+
 		return nil
 	}
+
 	return err
 }
 
@@ -15763,6 +16293,7 @@ func (v *ipNetValue) Get() interface{} {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -15770,6 +16301,7 @@ func (v *ipNetValue) String() string {
 	if v != nil && v.value != nil {
 		return v.value.String()
 	}
+
 	return ""
 }
 
@@ -15810,6 +16342,7 @@ func (v *ipNetSliceValue) Set(raw string) error {
 		*v.value = append(*v.value, out...)
 	}
 	v.changed = true
+
 	return nil
 }
 
@@ -15817,6 +16350,7 @@ func (v *ipNetSliceValue) Get() interface{} {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return ([]net.IPNet)(nil)
 }
 
@@ -15828,6 +16362,7 @@ func (v *ipNetSliceValue) String() string {
 	for _, elem := range *v.value {
 		out = append(out, newIPNetValue(&elem).String())
 	}
+
 	return "[" + strings.Join(out, ",") + "]"
 }
 
@@ -15837,7 +16372,7 @@ func (v *ipNetSliceValue) IsCumulative() bool {
 	return true
 }
 
-// -- stringIPNetMapValue
+// -- stringIPNetMapValue.
 type stringIPNetMapValue struct {
 	value *map[string]net.IPNet
 }
@@ -15884,6 +16419,7 @@ func (v *stringIPNetMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -15891,6 +16427,7 @@ func (v *stringIPNetMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -15900,7 +16437,7 @@ func (v *stringIPNetMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- intIPNetMapValue
+// -- intIPNetMapValue.
 type intIPNetMapValue struct {
 	value *map[int]net.IPNet
 }
@@ -15952,6 +16489,7 @@ func (v *intIPNetMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -15959,6 +16497,7 @@ func (v *intIPNetMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -15968,7 +16507,7 @@ func (v *intIPNetMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int8IPNetMapValue
+// -- int8IPNetMapValue.
 type int8IPNetMapValue struct {
 	value *map[int8]net.IPNet
 }
@@ -16020,6 +16559,7 @@ func (v *int8IPNetMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -16027,6 +16567,7 @@ func (v *int8IPNetMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -16036,7 +16577,7 @@ func (v *int8IPNetMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int16IPNetMapValue
+// -- int16IPNetMapValue.
 type int16IPNetMapValue struct {
 	value *map[int16]net.IPNet
 }
@@ -16088,6 +16629,7 @@ func (v *int16IPNetMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -16095,6 +16637,7 @@ func (v *int16IPNetMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -16104,7 +16647,7 @@ func (v *int16IPNetMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int32IPNetMapValue
+// -- int32IPNetMapValue.
 type int32IPNetMapValue struct {
 	value *map[int32]net.IPNet
 }
@@ -16156,6 +16699,7 @@ func (v *int32IPNetMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -16163,6 +16707,7 @@ func (v *int32IPNetMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -16172,7 +16717,7 @@ func (v *int32IPNetMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- int64IPNetMapValue
+// -- int64IPNetMapValue.
 type int64IPNetMapValue struct {
 	value *map[int64]net.IPNet
 }
@@ -16224,6 +16769,7 @@ func (v *int64IPNetMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -16231,6 +16777,7 @@ func (v *int64IPNetMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -16240,7 +16787,7 @@ func (v *int64IPNetMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uintIPNetMapValue
+// -- uintIPNetMapValue.
 type uintIPNetMapValue struct {
 	value *map[uint]net.IPNet
 }
@@ -16292,6 +16839,7 @@ func (v *uintIPNetMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -16299,6 +16847,7 @@ func (v *uintIPNetMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -16308,7 +16857,7 @@ func (v *uintIPNetMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint8IPNetMapValue
+// -- uint8IPNetMapValue.
 type uint8IPNetMapValue struct {
 	value *map[uint8]net.IPNet
 }
@@ -16360,6 +16909,7 @@ func (v *uint8IPNetMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -16367,6 +16917,7 @@ func (v *uint8IPNetMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -16376,7 +16927,7 @@ func (v *uint8IPNetMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint16IPNetMapValue
+// -- uint16IPNetMapValue.
 type uint16IPNetMapValue struct {
 	value *map[uint16]net.IPNet
 }
@@ -16428,6 +16979,7 @@ func (v *uint16IPNetMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -16435,6 +16987,7 @@ func (v *uint16IPNetMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -16444,7 +16997,7 @@ func (v *uint16IPNetMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint32IPNetMapValue
+// -- uint32IPNetMapValue.
 type uint32IPNetMapValue struct {
 	value *map[uint32]net.IPNet
 }
@@ -16496,6 +17049,7 @@ func (v *uint32IPNetMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -16503,6 +17057,7 @@ func (v *uint32IPNetMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 
@@ -16512,7 +17067,7 @@ func (v *uint32IPNetMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- uint64IPNetMapValue
+// -- uint64IPNetMapValue.
 type uint64IPNetMapValue struct {
 	value *map[uint64]net.IPNet
 }
@@ -16564,6 +17119,7 @@ func (v *uint64IPNetMapValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
+
 	return nil
 }
 
@@ -16571,6 +17127,7 @@ func (v *uint64IPNetMapValue) String() string {
 	if v != nil && v.value != nil && len(*v.value) > 0 {
 		return fmt.Sprintf("%v", *v.value)
 	}
+
 	return ""
 }
 

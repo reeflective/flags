@@ -1,6 +1,7 @@
 package values
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -20,6 +21,7 @@ func newReflectiveValue(val reflect.Value) Value {
 	if val.Kind() == reflect.Map && val.IsNil() {
 		val.Set(reflect.MakeMap(val.Type()))
 	}
+
 	return &reflectiveValue{value: val}
 }
 
@@ -42,6 +44,7 @@ func (v *reflectiveValue) Set(s string) error {
 				return err
 			}
 			v.value.SetInt(int64(d))
+
 			return nil
 		}
 		n, err := strconv.ParseInt(s, 10, v.value.Type().Bits())
@@ -94,7 +97,7 @@ func (v *reflectiveValue) Set(s string) error {
 		keyParser := NewValue(key)
 		valParser := NewValue(val)
 		if keyParser == nil || valParser == nil {
-			return fmt.Errorf("unsupported map key or value type")
+			return errors.New("unsupported map key or value type")
 		}
 
 		// Set their values and update the map.
@@ -109,6 +112,7 @@ func (v *reflectiveValue) Set(s string) error {
 	default:
 		return fmt.Errorf("unsupported type for conversion: %v", v.value.Type())
 	}
+
 	return nil
 }
 
