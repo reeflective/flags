@@ -1,4 +1,4 @@
-package values
+package parser
 
 import (
 	"net"
@@ -113,13 +113,13 @@ func NewDescCfg() *struct {
 // NewAnonymousCfg returns a test configuration for anonymous structs.
 func NewAnonymousCfg() *struct {
 	Name1 string
-	simple
+	Simple
 } {
 	return &struct {
 		Name1 string
-		simple
+		Simple
 	}{
-		simple: simple{
+		Simple: Simple{
 			Name: "name_value",
 		},
 	}
@@ -139,7 +139,7 @@ type Sub struct {
 	}
 }
 
-type simple struct {
+type Simple struct {
 	Name string
 }
 

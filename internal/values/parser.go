@@ -20,14 +20,14 @@ func NewValue(val reflect.Value) Value {
 			return v
 		}
 	}
-	if val.CanAddr() {
+	if val.CanAddr() && val.Addr().CanInterface() {
 		if v, ok := val.Addr().Interface().(Value); ok {
 			return v
 		}
 	}
 
 	// 2. `go-flags` interfaces:
-	if val.CanAddr() {
+	if val.CanAddr() && val.Addr().CanInterface() {
 		ptr := val.Addr().Interface()
 		if _, ok := ptr.(interfaces.Unmarshaler); ok {
 			return newGoFlagsValue(ptr)
@@ -35,12 +35,33 @@ func NewValue(val reflect.Value) Value {
 	}
 
 	// 3. Known Go types (using generated parsers):
-	if val.CanAddr() {
+	if val.CanAddr() && val.Addr().CanInterface() {
 		addr := val.Addr().Interface()
 		if v := ParseGenerated(addr); v != nil {
 			return v
 		}
 		if v := ParseGeneratedPtrs(addr); v != nil {
+			return v
+
+		}
+	}
+
+	// 4. Maps must be treated differently
+	if val.Kind() == reflect.Map {
+		mapType := val.Type()
+		keyKind := val.Type().Key().Kind()
+
+		// check that map key is string or integer
+		if !anyOf(mapAllowedKinds, keyKind) {
+			return nil
+		}
+
+		if val.IsNil() {
+			val.Set(reflect.MakeMap(mapType))
+		}
+
+		addr := val.Addr().Interface()
+		if v := ParseGeneratedMap(addr); v != nil {
 			return v
 		}
 	}
@@ -52,4 +73,5 @@ func NewValue(val reflect.Value) Value {
 
 	// 5. Reflective Parser Fallback:
 	return newReflectiveValue(val)
+	// return nil
 }

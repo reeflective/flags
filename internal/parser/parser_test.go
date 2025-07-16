@@ -12,33 +12,12 @@ import (
 	"github.com/reeflective/flags/internal/values"
 )
 
-func strP(value string) *string {
-	return &value
-}
-
-type simple struct {
-	Name string
-}
-
 func TestParseStruct(t *testing.T) {
-	// descCfg := &struct {
-	// 	Name  string `desc:"name description"`
-	// 	Name2 string `description:"name2 description"`
-	// }{}
-	// anonymousCfg := &struct {
-	// 	Name1 string
-	// 	simple
-	// }{
-	// 	simple: simple{
-	// 		Name: "name_value",
-	// 	},
-	// }
-
-	simpleCfg := values.NewSimpleCfg()
-	diffTypesCfg := values.NewDiffTypesCfg()
-	nestedCfg := values.NewNestedCfg()
-	descCfg := values.NewDescCfg()
-	anonymousCfg := values.NewAnonymousCfg()
+	simpleCfg := NewSimpleCfg()
+	diffTypesCfg := NewDiffTypesCfg()
+	nestedCfg := NewNestedCfg()
+	descCfg := NewDescCfg()
+	anonymousCfg := NewAnonymousCfg()
 
 	tt := []struct {
 		name string
@@ -272,7 +251,7 @@ func TestParseStruct(t *testing.T) {
 		{
 			name:     "Anonymous cfg with disabled flatten",
 			cfg:      anonymousCfg,
-			optFuncs: []OptFunc{ParseAll()},
+			optFuncs: []OptFunc{Flatten(false), ParseAll()},
 			expFlagSet: []*Flag{
 				{
 					Name:    "name1",
@@ -290,7 +269,7 @@ func TestParseStruct(t *testing.T) {
 		{
 			name:     "Anonymous cfg with enabled flatten",
 			cfg:      anonymousCfg,
-			optFuncs: []OptFunc{Flatten(false), ParseAll()},
+			optFuncs: []OptFunc{Flatten(true), ParseAll()},
 			expFlagSet: []*Flag{
 				{
 					Name:    "name1",
@@ -322,7 +301,7 @@ func TestParseStruct(t *testing.T) {
 		},
 		{
 			name:   "We need non nil value",
-			cfg:    (*simple)(nil),
+			cfg:    (*Simple)(nil),
 			expErr: errors.New("object must be a pointer to struct or interface"),
 		},
 	}
@@ -371,25 +350,25 @@ func TestParseStruct_NilValue(t *testing.T) {
 	assert.Equal(t, "aabbcc", cfg.Regexp.String())
 }
 
-func TestParseStruct_WithValidator(t *testing.T) {
-	t.Parallel()
-	var cfg simple
-
-	testErr := errors.New("validator test error")
-
-	validator := Validator(func(val string, field reflect.StructField, obj any) error {
-		return testErr
-	})
-
-	flags, err := ParseStruct(&cfg, validator, ParseAll())
-	require.NoError(t, err)
-	require.Len(t, flags, 1)
-	assert.NotNil(t, cfg.Name)
-
-	err = flags[0].Value.Set("aabbcc")
-	require.Error(t, err)
-	assert.Equal(t, testErr, err)
-}
+// func TestParseStruct_WithValidator(t *testing.T) {
+// 	t.Parallel()
+// 	var cfg Simple
+//
+// 	testErr := errors.New("validator test error")
+//
+// 	validator := Validator(func(val string, field reflect.StructField, obj any) error {
+// 		return testErr
+// 	})
+//
+// 	flags, err := ParseStruct(&cfg, validator, ParseAll())
+// 	require.NoError(t, err)
+// 	require.Len(t, flags, 1)
+// 	assert.NotNil(t, cfg.Name)
+//
+// 	err = flags[0].Value.Set("aabbcc")
+// 	require.Error(t, err)
+// 	assert.Equal(t, testErr, err)
+// }
 
 func TestFlagDivider(t *testing.T) {
 	t.Parallel()

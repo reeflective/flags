@@ -70,6 +70,13 @@ func (o *Opts) Apply(optFuncs ...OptFunc) *Opts {
 	return o
 }
 
+// Copy returns a copy of the options.
+func (o *Opts) Copy() *Opts {
+	cpy := *o
+
+	return &cpy
+}
+
 // CopyOpts returns a copy of the given options.
 func CopyOpts(opts *Opts) OptFunc {
 	return func(opt *Opts) {
