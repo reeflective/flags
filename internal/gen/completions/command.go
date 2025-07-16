@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/reeflective/flags/internal/interfaces"
-	"github.com/reeflective/flags/internal/parser"
 	"github.com/carapace-sh/carapace"
 	"github.com/spf13/cobra"
+
+	"github.com/reeflective/flags/internal/errors"
+	"github.com/reeflective/flags/internal/interfaces"
+	"github.com/reeflective/flags/internal/parser"
 )
 
 // Generate uses a carapace completion builder to register various completions to its underlying
@@ -66,7 +68,7 @@ func completionScanner(cmd *cobra.Command, comps *carapace.Carapace, flags *flag
 
 		// Else, try scanning the field as a group of commands/options,
 		// and only use the completion stuff we find on them.
-		if found, err := groupComps(comps, cmd, val, sfield); found || err != nil {
+		if found, err := group(comps, cmd, val, sfield); found || err != nil {
 			return found, err
 		}
 
@@ -101,7 +103,7 @@ func command(cmd *cobra.Command, tag *parser.MultiTag, val reflect.Value) (bool,
 	}
 
 	if subc == nil {
-		return false, fmt.Errorf("%w: %s", errCommandNotFound, name)
+		return false, fmt.Errorf("%w: %s", errors.ErrUnknownSubcommand, name)
 	}
 
 	// Simply generate a new carapace around this command,

@@ -11,8 +11,8 @@ import (
 	"github.com/reeflective/flags/internal/parser"
 )
 
-// groupComps finds if a field is marked as a subgroup of options, and if yes, scans it recursively.
-func groupComps(comps *carapace.Carapace, cmd *cobra.Command, val reflect.Value, field *reflect.StructField) (bool, error) {
+// group finds if a field is marked as a subgroup of options, and if yes, scans it recursively.
+func group(comps *carapace.Carapace, cmd *cobra.Command, val reflect.Value, field *reflect.StructField) (bool, error) {
 	mtag, skip, err := parser.GetFieldTag(*field)
 	if err != nil {
 		return true, fmt.Errorf("%w: %s", errors.ErrInvalidTag, err.Error())

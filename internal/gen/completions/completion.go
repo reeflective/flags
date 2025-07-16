@@ -1,21 +1,14 @@
 package completions
 
 import (
-	"errors"
 	"reflect"
 	"strings"
 
 	"github.com/carapace-sh/carapace"
 
+	"github.com/reeflective/flags/internal/interfaces"
 	"github.com/reeflective/flags/internal/parser"
 )
-
-// Completer represents a type that is able to return some completions based on the current carapace Context.
-type Completer interface {
-	Complete(ctx carapace.Context) carapace.Action
-}
-
-var errCommandNotFound = errors.New("command not found")
 
 const (
 	completeTagName     = "complete"
@@ -55,14 +48,14 @@ func getCompletionAction(name, value, desc string) carapace.Action {
 	case "nofiles":
 	case "filterext":
 		filterExts := strings.Split(value, ",")
-		action = carapace.ActionFiles(filterExts...).Tag("filtered extensions").NoSpace('/').FilterArgs()
+		action = carapace.ActionFiles(filterExts...).Tag("filtered extensions").FilterArgs()
 	case "filterdirs":
-		action = carapace.ActionDirectories().NoSpace('/').Tag("filtered directories").FilterArgs() // TODO change this
+		action = carapace.ActionDirectories().Tag("filtered directories").FilterArgs() // TODO change this
 	case "files":
 		files := strings.Split(value, ",")
-		action = carapace.ActionFiles(files...).NoSpace('/').FilterArgs()
+		action = carapace.ActionFiles(files...).FilterArgs()
 	case "dirs":
-		action = carapace.ActionDirectories().NoSpace('/').FilterArgs()
+		action = carapace.ActionDirectories().FilterArgs()
 	case "default":
 		return action
 	}
@@ -70,51 +63,57 @@ func getCompletionAction(name, value, desc string) carapace.Action {
 	return action
 }
 
-// typeCompleter checks for completer implementations on the type, checks
-// if the implementations are on the type of its elements (if slice/map), and
-// returns the results.
+// typeCompleter checks for completer implementations on a type.
+// It first checks the type itself, and if it's a slice and has no implementation,
+// it then checks the slice's element type.
 func typeCompleter(val reflect.Value) (carapace.CompletionCallback, bool, bool) {
-	isRepeatable := false
+	var callback carapace.CompletionCallback
+	isRepeatable := (val.Type().Kind() == reflect.Slice)
 	itemsImplement := false
-
-	var completer carapace.CompletionCallback
 
 	// Always check that the type itself does implement, even if
 	// it's a list of type X that implements the completer as well.
 	// If yes, we return this implementation, since it has priority.
-	if val.Type().Kind() == reflect.Slice {
-		isRepeatable = true
-
-		i := val.Interface()
-		if impl, ok := i.(Completer); ok {
-			completer = impl.Complete
-		} else if val.CanAddr() {
-			if impl, ok := val.Addr().Interface().(Completer); ok {
-				completer = impl.Complete
-			}
+	if isRepeatable {
+		if callback = getCompleter(val); callback != nil {
+			return callback, isRepeatable, itemsImplement
 		}
 
 		// Else we reassign the value to the list type.
 		val = reflect.New(val.Type().Elem())
 	}
 
-	// If we did NOT find an implementation on the compound type,
-	// check for one on the items.
-	if completer == nil {
-		i := val.Interface()
-		if impl, ok := i.(Completer); ok && impl != nil {
+	// If we did NOT find an implementation on the
+	// compound type, check for one on the items.
+	i := val.Interface()
+	if impl, ok := i.(interfaces.Completer); ok && impl != nil {
+		itemsImplement = true
+		callback = impl.Complete
+	} else if val.CanAddr() {
+		isRepeatable = true
+		if impl, ok := val.Addr().Interface().(interfaces.Completer); ok && impl != nil {
 			itemsImplement = true
-			completer = impl.Complete
-		} else if val.CanAddr() {
-			isRepeatable = true
-			if impl, ok := val.Addr().Interface().(Completer); ok && impl != nil {
-				itemsImplement = true
-				completer = impl.Complete
-			}
+			callback = impl.Complete
 		}
 	}
 
-	return completer, isRepeatable, itemsImplement
+	return callback, isRepeatable, itemsImplement
+}
+
+// getCompleter checks if a value (or a pointer to it) implements the Completer interface.
+func getCompleter(val reflect.Value) carapace.CompletionCallback {
+	if val.CanInterface() {
+		if impl, ok := val.Interface().(interfaces.Completer); ok && impl != nil {
+			return impl.Complete
+		}
+	}
+	if val.CanAddr() {
+		if impl, ok := val.Addr().Interface().(interfaces.Completer); ok && impl != nil {
+			return impl.Complete
+		}
+	}
+
+	return nil
 }
 
 func getTaggedCompletionAction(tag parser.MultiTag) (carapace.CompletionCallback, bool, bool) {
@@ -154,7 +153,7 @@ func getTaggedCompletionAction(tag parser.MultiTag) (carapace.CompletionCallback
 		actions = append(actions, tagAction)
 	}
 
-	callback := func(ctx carapace.Context) carapace.Action {
+	callback := func(_ carapace.Context) carapace.Action {
 		return carapace.Batch(actions...).ToA()
 	}
 
@@ -199,7 +198,7 @@ func choiceCompletions(tag parser.MultiTag, val reflect.Value) carapace.Completi
 		allChoices = choices
 	}
 
-	callback := func(ctx carapace.Context) carapace.Action {
+	callback := func(_ carapace.Context) carapace.Action {
 		return carapace.ActionValues(allChoices...)
 	}
 
