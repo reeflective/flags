@@ -5,13 +5,14 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/spf13/cobra"
+
 	"github.com/reeflective/flags/internal/parser"
 	"github.com/reeflective/flags/internal/positional"
-	"github.com/spf13/cobra"
 )
 
 // positionals finds a struct tagged as containing positionals arguments and scans them.
-func positionals(cmd *cobra.Command, stag *parser.MultiTag, val reflect.Value, opts *parser.Opts) (bool, error) {
+func positionals(ctx *context, stag *parser.MultiTag, val reflect.Value) (bool, error) {
 	// We need the struct to be marked as such
 	if pargs, _ := stag.Get("positional-args"); len(pargs) == 0 {
 		return false, nil
@@ -19,13 +20,13 @@ func positionals(cmd *cobra.Command, stag *parser.MultiTag, val reflect.Value, o
 
 	// Scan all the fields on the struct and build the list of arguments
 	// with their own requirements, and references to their values.
-	positionals, err := positional.ScanArgs(val, stag, parser.CopyOpts(opts))
+	positionals, err := positional.ScanArgs(val, stag, parser.CopyOpts(ctx.opts))
 	if err != nil || positionals == nil {
 		return true, fmt.Errorf("failed to scan positional arguments: %w", err)
 	}
 
 	// Finally, assemble all the parsers into our cobra Args function.
-	cmd.Args = func(cmd *cobra.Command, args []string) error {
+	ctx.cmd.Args = func(cmd *cobra.Command, args []string) error {
 		// Apply the words on the all/some of the positional fields,
 		// returning any words that have not been parsed in fields,
 		// and an error if one of the positionals has failed.

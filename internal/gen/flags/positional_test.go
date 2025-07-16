@@ -506,8 +506,8 @@ func TestPositionalDoubleDashFail(t *testing.T) {
 //
 
 func newCommandWithArgs(data any, args []string) *cobra.Command {
-	cmd, _ := ParseCommands(data) // Generate the command
-	cmd.SetArgs(args)             // And use our args for execution
+	cmd, _ := Generate(data) // Generate the command
+	cmd.SetArgs(args)        // And use our args for execution
 
 	// We don't want the errors to be printed to stdout.
 	cmd.SilenceErrors = true

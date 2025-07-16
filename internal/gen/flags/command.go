@@ -13,8 +13,10 @@ import (
 	"github.com/reeflective/flags/internal/parser"
 )
 
-// ParseCommands returns a root cobra Command to be used directly as an entry-point.
-func ParseCommands(data any, opts ...parser.OptFunc) (*cobra.Command, error) {
+// Generate returns a root cobra Command to be used directly as an entry-point.
+// If any error arises in the scanning process, this function will return a nil
+// command and the error.
+func Generate(data any, opts ...parser.OptFunc) (*cobra.Command, error) {
 	cmd := &cobra.Command{
 		Use:              os.Args[0],
 		Annotations:      map[string]string{},
@@ -23,8 +25,7 @@ func ParseCommands(data any, opts ...parser.OptFunc) (*cobra.Command, error) {
 
 	// Scan the struct and bind all commands to this root.
 	if err := Bind(cmd, data, opts...); err != nil {
-		panic(err)
-
+		return nil, err
 	}
 
 	return cmd, nil
@@ -33,11 +34,14 @@ func ParseCommands(data any, opts ...parser.OptFunc) (*cobra.Command, error) {
 // Bind scans the struct and binds all commands/flags to the command given in parameter.
 func Bind(cmd *cobra.Command, data any, opts ...parser.OptFunc) error {
 	// Create the initial options from the functions provided.
-	options := parser.DefOpts().Apply(opts...)
+	ctx := &context{
+		cmd:  cmd,
+		opts: parser.DefOpts().Apply(opts...),
+	}
 
 	// Make a scan handler that will run various scans on all
 	// the struct fields, with arbitrary levels of nesting.
-	scanner := scanRoot(cmd, nil, options)
+	scanner := scanRoot(ctx)
 
 	// And scan the struct recursively, for arg/option groups and subcommands
 	if err := parser.Scan(data, scanner); err != nil {
@@ -56,7 +60,7 @@ func Bind(cmd *cobra.Command, data any, opts ...parser.OptFunc) error {
 
 // scanRoot is in charge of building a recursive scanner, working on a given struct field at a time,
 // checking for arguments, subcommands and option groups.
-func scanRoot(cmd *cobra.Command, group *cobra.Group, opts *parser.Opts) parser.Handler {
+func scanRoot(ctx *context) parser.Handler {
 	handler := func(val reflect.Value, sfield *reflect.StructField) (bool, error) {
 		// Parse the tag or die tryin. We should find one, or we're not interested.
 		mtag, _, err := parser.GetFieldTag(*sfield)
@@ -66,30 +70,30 @@ func scanRoot(cmd *cobra.Command, group *cobra.Group, opts *parser.Opts) parser.
 
 		// If the field is marked as -one or more- positional arguments, we
 		// return either on a successful scan of them, or with an error doing so.
-		if found, err := positionals(cmd, mtag, val, opts); found || err != nil {
+		if found, err := positionals(ctx, mtag, val); found || err != nil {
 			return found, err
 		}
 
 		// Else, if the field is marked as a subcommand, we either return on
 		// a successful scan of the subcommand, or with an error doing so.
-		if found, err := command(cmd, group, mtag, val, opts); found || err != nil {
+		if found, err := command(ctx, mtag, val); found || err != nil {
 			return found, err
 		}
 
 		// Else, if the field is a struct group of options
-		if found, err := flagsGroup(cmd, val, sfield, opts); found || err != nil {
+		if found, err := flagsGroup(ctx, val, sfield); found || err != nil {
 			return found, err
 		}
 
 		// Else, try scanning the field as a simple option flag
-		return flagScan(cmd, opts)(val, sfield)
+		return flags(ctx)(val, sfield)
 	}
 
 	return handler
 }
 
 // command finds if a field is marked as a subcommand, and if yes, scans it.
-func command(cmd *cobra.Command, grp *cobra.Group, tag *parser.MultiTag, val reflect.Value, opts *parser.Opts) (bool, error) {
+func command(parentCtx *context, tag *parser.MultiTag, val reflect.Value) (bool, error) {
 	// Parse the command name on struct tag...
 	name, _ := tag.Get("command")
 	if len(name) == 0 {
@@ -107,10 +111,15 @@ func command(cmd *cobra.Command, grp *cobra.Group, tag *parser.MultiTag, val ref
 
 	// Set the group to which the subcommand belongs
 	tagged, _ := tag.Get("group")
-	setGroup(cmd, subc, grp, tagged)
+	setGroup(parentCtx.cmd, subc, parentCtx.group, tagged)
 
 	// Scan the struct recursively, for arg/option groups and subcommands
-	scanner := scanRoot(subc, grp, opts)
+	subCtx := &context{
+		cmd:   subc,
+		group: parentCtx.group,
+		opts:  parentCtx.opts,
+	}
+	scanner := scanRoot(subCtx)
 	if err := parser.Scan(data, scanner); err != nil {
 		return true, fmt.Errorf("failed to scan subcommand %s: %w", name, err)
 	}
@@ -123,7 +132,7 @@ func command(cmd *cobra.Command, grp *cobra.Group, tag *parser.MultiTag, val ref
 	}
 
 	// And bind this subcommand back to us
-	cmd.AddCommand(subc)
+	parentCtx.cmd.AddCommand(subc)
 
 	return true, nil
 }
@@ -253,23 +262,4 @@ func setPostRuns(cmd *cobra.Command, data any) {
 			return runner.PostRunE(getRemainingArgs(c))
 		}
 	}
-}
-
-func ensureAddr(val reflect.Value) reflect.Value {
-	// Initialize if needed
-	var ptrval reflect.Value
-
-	// We just want to get interface, even if nil
-	if val.Kind() == reflect.Ptr {
-		ptrval = val
-	} else {
-		ptrval = val.Addr()
-	}
-
-	// Once we're sure it's a command, initialize the field if needed.
-	if ptrval.IsNil() {
-		ptrval.Set(reflect.New(ptrval.Type().Elem()))
-	}
-
-	return ptrval
 }

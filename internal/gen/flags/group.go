@@ -11,12 +11,12 @@ import (
 	"github.com/reeflective/flags/internal/parser"
 )
 
-// flagScan builds a small struct field handler so that we can scan
+// flags builds a small struct field handler so that we can scan
 // it as an option and add it to our current command flags.
-func flagScan(cmd *cobra.Command, opts *parser.Opts) parser.Handler {
+func flags(ctx *context) parser.Handler {
 	flagScanner := func(val reflect.Value, sfield *reflect.StructField) (bool, error) {
 		// Parse a single field, returning one or more generic Flags
-		flagSet, found, err := parser.ParseField(val, *sfield, opts)
+		flagSet, found, err := parser.ParseField(val, *sfield, ctx.opts)
 		if err != nil {
 			return found, fmt.Errorf("failed to parse flag field: %w", err)
 		}
@@ -26,7 +26,7 @@ func flagScan(cmd *cobra.Command, opts *parser.Opts) parser.Handler {
 		}
 
 		// Put these flags into the command's flagset.
-		generateTo(flagSet, cmd.Flags())
+		generateTo(flagSet, ctx.cmd.Flags())
 
 		return true, nil
 	}
@@ -36,7 +36,7 @@ func flagScan(cmd *cobra.Command, opts *parser.Opts) parser.Handler {
 
 // flagsGroup finds if a field is marked as a subgroup of options or commands,
 // and if so, dispatches to the appropriate handler.
-func flagsGroup(cmd *cobra.Command, val reflect.Value, field *reflect.StructField, opts *parser.Opts) (bool, error) {
+func flagsGroup(ctx *context, val reflect.Value, field *reflect.StructField) (bool, error) {
 	mtag, skip, err := parser.GetFieldTag(*field)
 	if err != nil {
 		return true, fmt.Errorf("%w: %s", flagerrors.ErrParse, err.Error())
@@ -47,29 +47,29 @@ func flagsGroup(cmd *cobra.Command, val reflect.Value, field *reflect.StructFiel
 
 	// Check for a standard flag group first.
 	if _, isSet := mtag.Get("group"); isSet {
-		return true, handleFlagGroup(cmd, val, mtag, opts)
+		return true, handleFlagGroup(ctx, val, mtag)
 	}
 	if _, isSet := mtag.Get("options"); isSet {
-		return true, handleFlagGroup(cmd, val, mtag, opts)
+		return true, handleFlagGroup(ctx, val, mtag)
 	}
 
 	// Check for a command group.
 	if commandGroup, isSet := mtag.Get("commands"); isSet {
-		return true, handleCommandGroup(cmd, val, commandGroup, opts)
+		return true, handleCommandGroup(ctx, val, commandGroup)
 	}
 
 	return false, nil
 }
 
 // handleFlagGroup handles the scanning of a struct field that is a group of flags.
-func handleFlagGroup(cmd *cobra.Command, val reflect.Value, mtag *parser.MultiTag, opts *parser.Opts) error {
+func handleFlagGroup(ctx *context, val reflect.Value, mtag *parser.MultiTag) error {
 	ptrval := ensureAddr(val)
 
-	return addFlagSet(cmd, mtag, ptrval.Interface(), opts)
+	return addFlagSet(ctx.cmd, mtag, ptrval.Interface(), ctx.opts)
 }
 
 // handleCommandGroup handles the scanning of a struct field that is a group of commands.
-func handleCommandGroup(cmd *cobra.Command, val reflect.Value, commandGroup string, opts *parser.Opts) error {
+func handleCommandGroup(ctx *context, val reflect.Value, commandGroup string) error {
 	ptrval := ensureAddr(val)
 
 	var group *cobra.Group
@@ -78,11 +78,16 @@ func handleCommandGroup(cmd *cobra.Command, val reflect.Value, commandGroup stri
 			ID:    commandGroup,
 			Title: commandGroup,
 		}
-		cmd.AddGroup(group)
+		ctx.cmd.AddGroup(group)
 	}
 
 	// Parse for commands within the group.
-	scannerCommand := scanRoot(cmd, group, opts)
+	subCtx := &context{
+		cmd:   ctx.cmd,
+		group: group,
+		opts:  ctx.opts,
+	}
+	scannerCommand := scanRoot(subCtx)
 
 	if err := parser.Scan(ptrval.Interface(), scannerCommand); err != nil {
 		return fmt.Errorf("failed to scan command group: %w", err)
@@ -147,8 +152,4 @@ func buildFlagSet(data any, cmdName string, opts *parser.Opts) (*pflag.FlagSet, 
 	}
 
 	return flagSet, nil
-}
-
-func isStringFalsy(s string) bool {
-	return s == "" || s == "false" || s == "no" || s == "0"
 }

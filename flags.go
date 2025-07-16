@@ -39,7 +39,7 @@ import (
 // This is the primary entry point for creating a new CLI application.
 func ParseCommands(data any, opts ...Option) (*cobra.Command, error) {
 	// 1. Generate the command structure
-	cmd, err := flags.ParseCommands(data, toInternalOpts(opts)...)
+	cmd, err := flags.Generate(data, toInternalOpts(opts)...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate command: %w", err)
 	}
