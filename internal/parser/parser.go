@@ -13,7 +13,7 @@ import (
 type Handler func(val reflect.Value, field *reflect.StructField) (bool, error)
 
 // Scan scans a struct and applies a handler to each field.
-func Scan(data any, handler Handler) error {
+func ScanT(data any, handler Handler) error {
 	v := reflect.ValueOf(data)
 	if v.Kind() != reflect.Ptr || v.IsNil() {
 		return errors.ErrNotPointerToStruct
@@ -24,6 +24,30 @@ func Scan(data any, handler Handler) error {
 	}
 
 	return scan(v, handler)
+}
+
+// Type actually scans the type, recursively if needed.
+func Scan(data interface{}, handler Handler) error {
+	// Get all the public fields in the data struct
+	ptrval := reflect.ValueOf(data)
+
+	if ptrval.Type().Kind() != reflect.Ptr {
+		return errors.ErrNotPointerToStruct
+	}
+
+	stype := ptrval.Type().Elem()
+
+	if stype.Kind() != reflect.Struct {
+		return errors.ErrNotPointerToStruct
+	}
+
+	realval := reflect.Indirect(ptrval)
+
+	if err := scan(realval, handler); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func scan(v reflect.Value, handler Handler) error {

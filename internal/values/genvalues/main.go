@@ -36,7 +36,7 @@ var mapAllowedKinds = []reflect.Kind{ \nn
 }
 
 // ParseGenerated generates a flag with underlying interface type.
-func ParseGenerated(value interface{}) Value {
+func ParseGenerated(value any) Value {
 	switch value.(type) {
 	{{range .Values}}{{ if eq (.|InterfereType) (.Type) }}\nn
 	case *{{.Type}}:
@@ -52,7 +52,7 @@ func ParseGenerated(value interface{}) Value {
 }
 
 // ParseGenerated generates a flag with underlying ptr type.
-func ParseGeneratedPtrs(value interface{}) Value {
+func ParseGeneratedPtrs(value any) Value {
 	switch value.(type) {
 	{{range .Values}}{{ if ne (.|InterfereType) (.Type) }}\nn
 	case *{{.Type}}:
@@ -64,7 +64,7 @@ func ParseGeneratedPtrs(value interface{}) Value {
 }
 
 // ParseGenerated generates a flag with underlying map type.
-func ParseGeneratedMap(value interface{}) Value {
+func ParseGeneratedMap(value any) Value {
 	switch value.(type) {
 	{{range .Values}}{{ if not .NoMap }}\nn
 	{{ $value := . }}{{range $mapKeyTypes}}\nn
@@ -108,7 +108,7 @@ func (v *{{.|ValueName}}) Set(s string) error {
 	{{end}}\nn
 }
 
-func (v *{{.|ValueName}}) Get() interface{} {
+func (v *{{.|ValueName}}) Get() any {
  	if v != nil && v.value != nil {
 {{/* flag package create zero Value and compares it to actual Value */}}\nn
  		return *v.value
@@ -170,7 +170,7 @@ func (v *{{.|SliceValueName}}) Set(raw string) error {
 	return nil
 }
 
-func (v *{{.|SliceValueName}}) Get() interface{} {
+func (v *{{.|SliceValueName}}) Get() any {
  	if v != nil && v.value != nil {
 {{/* flag package create zero Value and compares it to actual Value */}}\nn
  		return *v.value
@@ -592,7 +592,7 @@ func main() {
 
 			return value{}
 		},
-		"KindTest": func(kind string) interface{} {
+		"KindTest": func(kind string) any {
 			if kind == "string" {
 				return randStr(5)
 			}

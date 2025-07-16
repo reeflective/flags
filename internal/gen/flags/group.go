@@ -18,7 +18,7 @@ func flagScan(cmd *cobra.Command, opts *parser.Opts) parser.Handler {
 		// Parse a single field, returning one or more generic Flags
 		flagSet, found, err := parser.ParseField(val, *sfield, opts)
 		if err != nil {
-			return found, err
+			return found, fmt.Errorf("failed to parse flag field: %w", err)
 		}
 
 		if !found {
@@ -34,93 +34,104 @@ func flagScan(cmd *cobra.Command, opts *parser.Opts) parser.Handler {
 	return flagScanner
 }
 
-// flagsGroup finds if a field is marked as a subgroup of options, and if yes, scans it recursively.
+// flagsGroup finds if a field is marked as a subgroup of options or commands,
+// and if so, dispatches to the appropriate handler.
 func flagsGroup(cmd *cobra.Command, val reflect.Value, field *reflect.StructField, opts *parser.Opts) (bool, error) {
 	mtag, skip, err := parser.GetFieldTag(*field)
 	if err != nil {
 		return true, fmt.Errorf("%w: %s", flagerrors.ErrParse, err.Error())
-	} else if skip {
+	}
+	if skip {
 		return false, nil
 	}
 
-	legacyGroup, legacyIsSet := mtag.Get("group")
-	newGroup, newIsSet := mtag.Get("options")
-	commandGroup, commandsIsSet := mtag.Get("commands")
-
-	if !legacyIsSet && !newIsSet && !commandsIsSet {
-		return false, nil
+	// Check for a standard flag group first.
+	if _, isSet := mtag.Get("group"); isSet {
+		return true, handleFlagGroup(cmd, val, mtag, opts)
+	}
+	if _, isSet := mtag.Get("options"); isSet {
+		return true, handleFlagGroup(cmd, val, mtag, opts)
 	}
 
-	// If we have to work on this struct, check pointers n stuff
-	var ptrval reflect.Value
-
-	if val.Kind() == reflect.Ptr {
-		ptrval = val
-		if ptrval.IsNil() {
-			ptrval.Set(reflect.New(ptrval.Type().Elem()))
-		}
-	} else {
-		ptrval = val.Addr()
+	// Check for a command group.
+	if commandGroup, isSet := mtag.Get("commands"); isSet {
+		return true, handleCommandGroup(cmd, val, commandGroup, opts)
 	}
 
-	// A group of options ("group" is the legacy name)
-	if (legacyIsSet && legacyGroup != "") || (newIsSet && newGroup != "") {
-		err := addFlagSet(cmd, mtag, ptrval.Interface(), opts)
-
-		return true, err
-	}
-
-	// Or a group of commands and options
-	if commandsIsSet {
-		var group *cobra.Group
-		if !isStringFalsy(commandGroup) {
-			group = &cobra.Group{
-				Title: commandGroup,
-				ID:    commandGroup,
-			}
-			cmd.AddGroup(group)
-		}
-
-		// Parse for commands
-		scannerCommand := scanRoot(cmd, group, opts)
-		if err := parser.Scan(ptrval.Interface(), scannerCommand); err != nil {
-			return true, err
-		}
-
-		return true, nil
-	}
-
-	// If we are here, we didn't find a command or a group.
 	return false, nil
 }
 
-// addFlagSet scans a struct (potentially nested) for flag sets to bind to the command.
-func addFlagSet(cmd *cobra.Command, mtag *parser.MultiTag, data interface{}, parentOpts *parser.Opts) error {
-	// Create a new set of options for this group, inheriting from the parent.
-	opts := parser.DefOpts().Apply(parser.CopyOpts(parentOpts))
+// handleFlagGroup handles the scanning of a struct field that is a group of flags.
+func handleFlagGroup(cmd *cobra.Command, val reflect.Value, mtag *parser.MultiTag, opts *parser.Opts) error {
+	ptrval := ensureAddr(val)
 
-	// New change, in order to easily propagate parent namespaces
-	// in heavily/specially nested option groups at bind time.
-	delim, _ := mtag.Get("namespace-delimiter")
+	return addFlagSet(cmd, mtag, ptrval.Interface(), opts)
+}
 
-	namespace, _ := mtag.Get("namespace")
-	if namespace != "" {
-		opts.Prefix = namespace + delim
+// handleCommandGroup handles the scanning of a struct field that is a group of commands.
+func handleCommandGroup(cmd *cobra.Command, val reflect.Value, commandGroup string, opts *parser.Opts) error {
+	ptrval := ensureAddr(val)
+
+	var group *cobra.Group
+	if !isStringFalsy(commandGroup) {
+		group = &cobra.Group{
+			ID:    commandGroup,
+			Title: commandGroup,
+		}
+		cmd.AddGroup(group)
 	}
 
-	envNamespace, _ := mtag.Get("env-namespace")
-	if envNamespace != "" {
+	// Parse for commands within the group.
+	scannerCommand := scanRoot(cmd, group, opts)
+
+	if err := parser.Scan(ptrval.Interface(), scannerCommand); err != nil {
+		return fmt.Errorf("failed to scan command group: %w", err)
+	}
+
+	return nil
+}
+
+// addFlagSet prepares parsing options for a group and adds its generated
+// flag set to the command.
+func addFlagSet(cmd *cobra.Command, mtag *parser.MultiTag, data any, parentOpts *parser.Opts) error {
+	// 1. Prepare the options for this specific group.
+	opts := parser.DefOpts().Apply(parser.CopyOpts(parentOpts))
+
+	if delim, ok := mtag.Get("namespace-delimiter"); ok {
+		if namespace, ok := mtag.Get("namespace"); ok {
+			opts.Prefix = namespace + delim
+		}
+	}
+	if envNamespace, ok := mtag.Get("env-namespace"); ok {
 		opts.EnvPrefix = envNamespace
 	}
 
-	// Create a new set of flags in which we will put our options
-	flagSet := pflag.NewFlagSet(cmd.Name(), pflag.ExitOnError)
+	// 2. Build the flag set from the struct.
+	flagSet, err := buildFlagSet(data, cmd.Name(), opts)
+	if err != nil {
+		return err
+	}
 
-	// Define a scanner that will add flags to the flagSet
+	// 3. Add the new flag set to the command.
+	flagSet.SetInterspersed(true)
+	if persistent, _ := mtag.Get("persistent"); persistent != "" {
+		cmd.PersistentFlags().AddFlagSet(flagSet)
+	} else {
+		cmd.Flags().AddFlagSet(flagSet)
+	}
+
+	return nil
+}
+
+// buildFlagSet scans a struct and populates a new pflag.FlagSet with its fields.
+func buildFlagSet(data any, cmdName string, opts *parser.Opts) (*pflag.FlagSet, error) {
+	flagSet := pflag.NewFlagSet(cmdName, pflag.ExitOnError)
+
+	// Define a scanner that will add flags to the flagSet.
 	flagAdder := func(val reflect.Value, sfield *reflect.StructField) (bool, error) {
 		fieldFlags, found, err := parser.ParseField(val, *sfield, opts)
 		if err != nil {
-			return found, err
+			return found, fmt.Errorf("failed to parse flag field: %w", err)
 		}
 		if !found {
 			return false, nil
@@ -130,21 +141,12 @@ func addFlagSet(cmd *cobra.Command, mtag *parser.MultiTag, data interface{}, par
 		return true, nil
 	}
 
-	// Scan the data and add flags to the flagSet
+	// Scan the data and add flags to the flagSet.
 	if err := parser.Scan(data, flagAdder); err != nil {
-		return err
+		return nil, fmt.Errorf("failed to scan flag set: %w", err)
 	}
 
-	flagSet.SetInterspersed(true)
-
-	persistent, _ := mtag.Get("persistent")
-	if persistent != "" {
-		cmd.PersistentFlags().AddFlagSet(flagSet)
-	} else {
-		cmd.Flags().AddFlagSet(flagSet)
-	}
-
-	return nil
+	return flagSet, nil
 }
 
 func isStringFalsy(s string) bool {

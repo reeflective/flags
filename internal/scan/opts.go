@@ -18,7 +18,7 @@ const (
 // ValidateFunc describes a validation func, that takes string val for flag from command line,
 // field that's associated with this flag in structure cfg. Also works for positional arguments.
 // Should return error if validation fails.
-type ValidateFunc func(val string, field reflect.StructField, cfg interface{}) error
+type ValidateFunc func(val string, field reflect.StructField, cfg any) error
 
 // FlagFunc is a generic function that can be applied to each
 // value that will end up being a flags *Flag, so that users

@@ -1,7 +1,6 @@
 package flags
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"reflect"
@@ -9,13 +8,13 @@ import (
 
 	"github.com/spf13/cobra"
 
-	flagerrors "github.com/reeflective/flags/internal/errors"
+	"github.com/reeflective/flags/internal/errors"
 	"github.com/reeflective/flags/internal/interfaces"
 	"github.com/reeflective/flags/internal/parser"
 )
 
 // ParseCommands returns a root cobra Command to be used directly as an entry-point.
-func ParseCommands(data interface{}, opts ...parser.OptFunc) (*cobra.Command, error) {
+func ParseCommands(data any, opts ...parser.OptFunc) (*cobra.Command, error) {
 	cmd := &cobra.Command{
 		Use:              os.Args[0],
 		Annotations:      map[string]string{},
@@ -24,14 +23,15 @@ func ParseCommands(data interface{}, opts ...parser.OptFunc) (*cobra.Command, er
 
 	// Scan the struct and bind all commands to this root.
 	if err := Bind(cmd, data, opts...); err != nil {
-		return nil, err
+		panic(err)
+
 	}
 
 	return cmd, nil
 }
 
 // Bind scans the struct and binds all commands/flags to the command given in parameter.
-func Bind(cmd *cobra.Command, data interface{}, opts ...parser.OptFunc) error {
+func Bind(cmd *cobra.Command, data any, opts ...parser.OptFunc) error {
 	// Create the initial options from the functions provided.
 	options := parser.DefOpts().Apply(opts...)
 
@@ -41,7 +41,7 @@ func Bind(cmd *cobra.Command, data interface{}, opts ...parser.OptFunc) error {
 
 	// And scan the struct recursively, for arg/option groups and subcommands
 	if err := parser.Scan(data, scanner); err != nil {
-		return err
+		return fmt.Errorf("failed to scan command struct: %w", err)
 	}
 
 	// Subcommands, optional or not
@@ -54,14 +54,14 @@ func Bind(cmd *cobra.Command, data interface{}, opts ...parser.OptFunc) error {
 	return nil
 }
 
-// scan is in charge of building a recursive scanner, working on a given struct field at a time,
+// scanRoot is in charge of building a recursive scanner, working on a given struct field at a time,
 // checking for arguments, subcommands and option groups.
 func scanRoot(cmd *cobra.Command, group *cobra.Group, opts *parser.Opts) parser.Handler {
 	handler := func(val reflect.Value, sfield *reflect.StructField) (bool, error) {
 		// Parse the tag or die tryin. We should find one, or we're not interested.
 		mtag, _, err := parser.GetFieldTag(*sfield)
 		if err != nil {
-			return true, fmt.Errorf("%w: %s", flagerrors.ErrInvalidTag, err.Error())
+			return true, fmt.Errorf("%w: %s", errors.ErrInvalidTag, err.Error())
 		}
 
 		// If the field is marked as -one or more- positional arguments, we
@@ -96,13 +96,14 @@ func command(cmd *cobra.Command, grp *cobra.Group, tag *parser.MultiTag, val ref
 		return false, nil
 	}
 
-	// Initialize the field if nil
-	data := initialize(val)
+	// Get a guaranteed non-nil pointer to the struct value.
+	ptrVal := ensureAddr(val)
+	data := ptrVal.Interface()
 
 	// Always populate the maximum amount of information
 	// in the new subcommand, so that when it scans recursively,
 	// we can have a more granular context.
-	subc := newCommand(name, tag, grp)
+	subc := newCommand(name, tag)
 
 	// Set the group to which the subcommand belongs
 	tagged, _ := tag.Get("group")
@@ -111,14 +112,13 @@ func command(cmd *cobra.Command, grp *cobra.Group, tag *parser.MultiTag, val ref
 	// Scan the struct recursively, for arg/option groups and subcommands
 	scanner := scanRoot(subc, grp, opts)
 	if err := parser.Scan(data, scanner); err != nil {
-		return true, err
+		return true, fmt.Errorf("failed to scan subcommand %s: %w", name, err)
 	}
 
 	// Bind the various pre/run/post implementations of our command.
 	if _, isSet := tag.Get("subcommands-optional"); !isSet && subc.HasSubCommands() {
 		subc.RunE = unknownSubcommandAction
 	} else {
-		data := initialize(val)
 		setRuns(subc, data)
 	}
 
@@ -128,8 +128,8 @@ func command(cmd *cobra.Command, grp *cobra.Group, tag *parser.MultiTag, val ref
 	return true, nil
 }
 
-// builds a quick command template based on what has been specified through tags, and in context.
-func newCommand(name string, mtag *parser.MultiTag, parent *cobra.Group) *cobra.Command {
+// newCommand builds a quick command template based on what has been specified through tags, and in context.
+func newCommand(name string, mtag *parser.MultiTag) *cobra.Command {
 	subc := &cobra.Command{
 		Use:         name,
 		Annotations: map[string]string{},
@@ -148,6 +148,7 @@ func newCommand(name string, mtag *parser.MultiTag, parent *cobra.Group) *cobra.
 	return subc
 }
 
+// setGroup sets the command group for a subcommand.
 func setGroup(parent, subc *cobra.Command, parentGroup *cobra.Group, tagged string) {
 	var group *cobra.Group
 
@@ -173,12 +174,14 @@ func setGroup(parent, subc *cobra.Command, parentGroup *cobra.Group, tagged stri
 	}
 }
 
+// unknownSubcommandAction is the action taken when a subcommand is not recognized.
 func unknownSubcommandAction(cmd *cobra.Command, args []string) error {
 	if len(args) == 0 {
+		//nolint:wrapcheck
 		return cmd.Help()
 	}
 
-	err := fmt.Sprintf("unknown subcommand %q for %q", args[0], cmd.Name())
+	err := fmt.Sprintf("%q for %q", args[0], cmd.Name())
 
 	if suggestions := cmd.SuggestionsFor(args[0]); len(suggestions) > 0 {
 		err += "\n\nDid you mean this?\n"
@@ -189,10 +192,11 @@ func unknownSubcommandAction(cmd *cobra.Command, args []string) error {
 		err = strings.TrimSuffix(err, "\n")
 	}
 
-	return errors.New(err)
+	return fmt.Errorf("%w %s", errors.ErrUnknownSubcommand, err)
 }
 
-func setRuns(cmd *cobra.Command, data interface{}) {
+// setRuns sets the run functions for a command, based on the interfaces implemented by the command struct.
+func setRuns(cmd *cobra.Command, data any) {
 	if data == nil {
 		return
 	}
@@ -205,6 +209,13 @@ func setRuns(cmd *cobra.Command, data interface{}) {
 		}
 	}
 
+	setPreRuns(cmd, data)
+	setMainRuns(cmd, data)
+	setPostRuns(cmd, data)
+}
+
+// setPreRuns sets the pre-run functions for a command.
+func setPreRuns(cmd *cobra.Command, data any) {
 	if runner, ok := data.(interfaces.PreRunner); ok && runner != nil {
 		cmd.PreRun = func(c *cobra.Command, _ []string) {
 			runner.PreRun(getRemainingArgs(c))
@@ -215,7 +226,10 @@ func setRuns(cmd *cobra.Command, data interface{}) {
 			return runner.PreRunE(getRemainingArgs(c))
 		}
 	}
+}
 
+// setMainRuns sets the main run functions for a command.
+func setMainRuns(cmd *cobra.Command, data any) {
 	if commander, ok := data.(interfaces.Commander); ok && commander != nil {
 		cmd.RunE = func(c *cobra.Command, _ []string) error {
 			return commander.Execute(getRemainingArgs(c))
@@ -225,7 +239,10 @@ func setRuns(cmd *cobra.Command, data interface{}) {
 			runner.Run(getRemainingArgs(c))
 		}
 	}
+}
 
+// setPostRuns sets the post-run functions for a command.
+func setPostRuns(cmd *cobra.Command, data any) {
 	if runner, ok := data.(interfaces.PostRunner); ok && runner != nil {
 		cmd.PostRun = func(c *cobra.Command, _ []string) {
 			runner.PostRun(getRemainingArgs(c))
@@ -238,17 +255,21 @@ func setRuns(cmd *cobra.Command, data interface{}) {
 	}
 }
 
-func initialize(val reflect.Value) interface{} {
+func ensureAddr(val reflect.Value) reflect.Value {
+	// Initialize if needed
 	var ptrval reflect.Value
+
+	// We just want to get interface, even if nil
 	if val.Kind() == reflect.Ptr {
 		ptrval = val
 	} else {
 		ptrval = val.Addr()
 	}
 
+	// Once we're sure it's a command, initialize the field if needed.
 	if ptrval.IsNil() {
 		ptrval.Set(reflect.New(ptrval.Type().Elem()))
 	}
 
-	return ptrval.Interface()
+	return ptrval
 }

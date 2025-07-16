@@ -10,11 +10,11 @@ import (
 // goFlagsValue is a generic Value adapter for any type that implements
 // the Unmarshaler and/or Marshaler interfaces from go-flags.
 type goFlagsValue struct {
-	value interface{} // This will hold a pointer to the user's type.
+	value any // This will hold a pointer to the user's type.
 }
 
 // newGoFlagsValue creates a new value that wraps a type implementing go-flags interfaces.
-func newGoFlagsValue(val interface{}) Value {
+func newGoFlagsValue(val any) Value {
 	return &goFlagsValue{value: val}
 }
 

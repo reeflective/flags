@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // Test only partially ported from github.com/jessevdk/go-flags, since we are
@@ -36,7 +37,7 @@ type root struct {
 }
 
 // Execute - The root command implementation.
-func (*root) Execute(args []string) error {
+func (*root) Execute(_ []string) error {
 	return nil
 }
 
@@ -51,7 +52,7 @@ type testCommand struct {
 }
 
 // Execute - Generic command that is used as child command to programs.
-func (t *testCommand) Execute(args []string) error {
+func (t *testCommand) Execute(_ []string) error {
 	return nil
 }
 
@@ -203,7 +204,7 @@ func TestCommandFlagPersistentFail(t *testing.T) {
 	root := newCommandWithArgs(&cmdData, []string{"-p", "cmd", "-v", "-g"})
 	cmd, err := root.ExecuteC()
 
-	pt := assert.New(t)
+	pt := require.New(t)
 	pt.NotNil(cmd)
 	pt.Error(err, "Command should have raised an unknown flag error")
 	pt.ErrorContains(err, "unknown shorthand flag: 'p' in -p")

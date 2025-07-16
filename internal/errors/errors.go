@@ -23,4 +23,7 @@ var (
 
 	// ErrNilObject indicates that an object is nil although it should not.
 	ErrNilObject = errors.New("object cannot be nil")
+
+	// ErrUnknownSubcommand indicates that the invoked subcommand has not been found.
+	ErrUnknownSubcommand = errors.New("unknown subcommand")
 )

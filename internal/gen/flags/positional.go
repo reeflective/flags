@@ -37,7 +37,11 @@ func positionals(cmd *cobra.Command, stag *parser.MultiTag, val reflect.Value, o
 		defer setRemainingArgs(cmd, retargs)
 
 		// Directly return the error, which might be non-nil.
-		return err
+		if err != nil {
+			return fmt.Errorf("failed to parse positional arguments: %w", err)
+		}
+
+		return nil
 	}
 
 	return true, nil

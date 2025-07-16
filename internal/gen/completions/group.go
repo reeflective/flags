@@ -76,7 +76,7 @@ func groupComps(comps *carapace.Carapace, cmd *cobra.Command, val reflect.Value,
 
 // addFlagComps scans a struct (potentially nested), for a set of flags, and without
 // binding them to the command, parses them for any completions specified/implemented.
-func addFlagComps(comps *carapace.Carapace, mtag *parser.MultiTag, data interface{}) error {
+func addFlagComps(comps *carapace.Carapace, mtag *parser.MultiTag, data any) error {
 	opts := parser.DefOpts()
 
 	// New change, in order to easily propagate parent namespaces

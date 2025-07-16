@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"os"
 	"testing"
 	"time"
 
@@ -26,11 +25,11 @@ import (
 // This is different from flagsConfig, which is the CLI
 // structure to be parsed and used.
 type testConfig struct {
-	cfg     interface{} // Initial state of the struct before parsing arguments
-	expCfg  interface{} // Expected state of the struct after parsing arguments.
-	args    []string    // Command-line args
-	expErr1 error       // flags Parse error
-	expErr2 error       // pflag Parse error
+	cfg     any      // Initial state of the struct before parsing arguments
+	expCfg  any      // Expected state of the struct after parsing arguments.
+	args    []string // Command-line args
+	expErr1 error    // flags Parse error
+	expErr2 error    // pflag Parse error
 }
 
 // flagsConfig is an example structure to be used to produce CLI flags.
@@ -244,31 +243,6 @@ func TestParseBadConfig(t *testing.T) {
 	}
 
 	run(t, test)
-}
-
-func TestParseToDef(t *testing.T) {
-	t.Parallel()
-
-	oldCommandLine := pflag.CommandLine
-
-	defer func() {
-		pflag.CommandLine = oldCommandLine
-	}()
-
-	cfg := &flagsConfig{StringValue1: "value1"}
-	pflag.CommandLine = pflag.NewFlagSet(os.Args[0], pflag.ContinueOnError)
-
-	parseOptions := parser.ParseAll()
-
-	err := parseToDef(cfg, parseOptions)
-	require.NoError(t, err)
-
-	err = pflag.CommandLine.Parse([]string{"--string-value1", "value2"})
-	require.NoError(t, err)
-	assert.Equal(t, "value2", cfg.StringValue1)
-
-	err = parseToDef("bad string", parseOptions)
-	assert.Error(t, err)
 }
 
 // Test that pflag getter functions like GetInt work as expected.

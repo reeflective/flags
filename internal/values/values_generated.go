@@ -30,7 +30,7 @@ var mapAllowedKinds = []reflect.Kind{
 }
 
 // ParseGenerated generates a flag with underlying interface type.
-func ParseGenerated(value interface{}) Value {
+func ParseGenerated(value any) Value {
 	switch value := value.(type) {
 	case *string:
 		return newStringValue(value)
@@ -116,7 +116,7 @@ func ParseGenerated(value interface{}) Value {
 }
 
 // ParseGenerated generates a flag with underlying ptr type.
-func ParseGeneratedPtrs(value interface{}) Value {
+func ParseGeneratedPtrs(value any) Value {
 	switch value := value.(type) {
 	case **regexp.Regexp:
 		return newRegexpValue(value)
@@ -126,7 +126,7 @@ func ParseGeneratedPtrs(value interface{}) Value {
 }
 
 // ParseGenerated generates a flag with underlying map type.
-func ParseGeneratedMap(value interface{}) Value {
+func ParseGeneratedMap(value any) Value {
 	switch value := value.(type) {
 	case *map[string]string:
 		return newStringStringMapValue(value)
@@ -570,7 +570,7 @@ func (v *stringValue) Set(s string) error {
 	return nil
 }
 
-func (v *stringValue) Get() interface{} {
+func (v *stringValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
@@ -620,7 +620,7 @@ func (v *stringSliceValue) Set(raw string) error {
 	return nil
 }
 
-func (v *stringSliceValue) Get() interface{} {
+func (v *stringSliceValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
@@ -1402,7 +1402,7 @@ func (v *boolValue) Set(s string) error {
 	return err
 }
 
-func (v *boolValue) Get() interface{} {
+func (v *boolValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
@@ -1461,7 +1461,7 @@ func (v *boolSliceValue) Set(raw string) error {
 	return nil
 }
 
-func (v *boolSliceValue) Get() interface{} {
+func (v *boolSliceValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
@@ -2298,7 +2298,7 @@ func (v *uintValue) Set(s string) error {
 	return err
 }
 
-func (v *uintValue) Get() interface{} {
+func (v *uintValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
@@ -2357,7 +2357,7 @@ func (v *uintSliceValue) Set(raw string) error {
 	return nil
 }
 
-func (v *uintSliceValue) Get() interface{} {
+func (v *uintSliceValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
@@ -3194,7 +3194,7 @@ func (v *uint8Value) Set(s string) error {
 	return err
 }
 
-func (v *uint8Value) Get() interface{} {
+func (v *uint8Value) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
@@ -3253,7 +3253,7 @@ func (v *uint8SliceValue) Set(raw string) error {
 	return nil
 }
 
-func (v *uint8SliceValue) Get() interface{} {
+func (v *uint8SliceValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
@@ -4090,7 +4090,7 @@ func (v *uint16Value) Set(s string) error {
 	return err
 }
 
-func (v *uint16Value) Get() interface{} {
+func (v *uint16Value) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
@@ -4149,7 +4149,7 @@ func (v *uint16SliceValue) Set(raw string) error {
 	return nil
 }
 
-func (v *uint16SliceValue) Get() interface{} {
+func (v *uint16SliceValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
@@ -4986,7 +4986,7 @@ func (v *uint32Value) Set(s string) error {
 	return err
 }
 
-func (v *uint32Value) Get() interface{} {
+func (v *uint32Value) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
@@ -5045,7 +5045,7 @@ func (v *uint32SliceValue) Set(raw string) error {
 	return nil
 }
 
-func (v *uint32SliceValue) Get() interface{} {
+func (v *uint32SliceValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
@@ -5882,7 +5882,7 @@ func (v *uint64Value) Set(s string) error {
 	return err
 }
 
-func (v *uint64Value) Get() interface{} {
+func (v *uint64Value) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
@@ -5941,7 +5941,7 @@ func (v *uint64SliceValue) Set(raw string) error {
 	return nil
 }
 
-func (v *uint64SliceValue) Get() interface{} {
+func (v *uint64SliceValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
@@ -6778,7 +6778,7 @@ func (v *intValue) Set(s string) error {
 	return err
 }
 
-func (v *intValue) Get() interface{} {
+func (v *intValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
@@ -6837,7 +6837,7 @@ func (v *intSliceValue) Set(raw string) error {
 	return nil
 }
 
-func (v *intSliceValue) Get() interface{} {
+func (v *intSliceValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
@@ -7674,7 +7674,7 @@ func (v *int8Value) Set(s string) error {
 	return err
 }
 
-func (v *int8Value) Get() interface{} {
+func (v *int8Value) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
@@ -7733,7 +7733,7 @@ func (v *int8SliceValue) Set(raw string) error {
 	return nil
 }
 
-func (v *int8SliceValue) Get() interface{} {
+func (v *int8SliceValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
@@ -8570,7 +8570,7 @@ func (v *int16Value) Set(s string) error {
 	return err
 }
 
-func (v *int16Value) Get() interface{} {
+func (v *int16Value) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
@@ -8629,7 +8629,7 @@ func (v *int16SliceValue) Set(raw string) error {
 	return nil
 }
 
-func (v *int16SliceValue) Get() interface{} {
+func (v *int16SliceValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
@@ -9466,7 +9466,7 @@ func (v *int32Value) Set(s string) error {
 	return err
 }
 
-func (v *int32Value) Get() interface{} {
+func (v *int32Value) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
@@ -9525,7 +9525,7 @@ func (v *int32SliceValue) Set(raw string) error {
 	return nil
 }
 
-func (v *int32SliceValue) Get() interface{} {
+func (v *int32SliceValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
@@ -10362,7 +10362,7 @@ func (v *int64Value) Set(s string) error {
 	return err
 }
 
-func (v *int64Value) Get() interface{} {
+func (v *int64Value) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
@@ -10421,7 +10421,7 @@ func (v *int64SliceValue) Set(raw string) error {
 	return nil
 }
 
-func (v *int64SliceValue) Get() interface{} {
+func (v *int64SliceValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
@@ -11258,7 +11258,7 @@ func (v *float64Value) Set(s string) error {
 	return err
 }
 
-func (v *float64Value) Get() interface{} {
+func (v *float64Value) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
@@ -11317,7 +11317,7 @@ func (v *float64SliceValue) Set(raw string) error {
 	return nil
 }
 
-func (v *float64SliceValue) Get() interface{} {
+func (v *float64SliceValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
@@ -12154,7 +12154,7 @@ func (v *float32Value) Set(s string) error {
 	return err
 }
 
-func (v *float32Value) Get() interface{} {
+func (v *float32Value) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
@@ -12213,7 +12213,7 @@ func (v *float32SliceValue) Set(raw string) error {
 	return nil
 }
 
-func (v *float32SliceValue) Get() interface{} {
+func (v *float32SliceValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
@@ -13050,7 +13050,7 @@ func (v *durationValue) Set(s string) error {
 	return err
 }
 
-func (v *durationValue) Get() interface{} {
+func (v *durationValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
@@ -13109,7 +13109,7 @@ func (v *durationSliceValue) Set(raw string) error {
 	return nil
 }
 
-func (v *durationSliceValue) Get() interface{} {
+func (v *durationSliceValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
@@ -13946,7 +13946,7 @@ func (v *ipValue) Set(s string) error {
 	return err
 }
 
-func (v *ipValue) Get() interface{} {
+func (v *ipValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
@@ -14005,7 +14005,7 @@ func (v *ipSliceValue) Set(raw string) error {
 	return nil
 }
 
-func (v *ipSliceValue) Get() interface{} {
+func (v *ipSliceValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
@@ -14842,7 +14842,7 @@ func (v *hexBytesValue) Set(s string) error {
 	return err
 }
 
-func (v *hexBytesValue) Get() interface{} {
+func (v *hexBytesValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
@@ -14901,7 +14901,7 @@ func (v *hexBytesSliceValue) Set(raw string) error {
 	return nil
 }
 
-func (v *hexBytesSliceValue) Get() interface{} {
+func (v *hexBytesSliceValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
@@ -15738,7 +15738,7 @@ func (v *regexpValue) Set(s string) error {
 	return err
 }
 
-func (v *regexpValue) Get() interface{} {
+func (v *regexpValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
@@ -15797,7 +15797,7 @@ func (v *regexpSliceValue) Set(raw string) error {
 	return nil
 }
 
-func (v *regexpSliceValue) Get() interface{} {
+func (v *regexpSliceValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
@@ -16634,7 +16634,7 @@ func (v *tcpAddrValue) Set(s string) error {
 	return err
 }
 
-func (v *tcpAddrValue) Get() interface{} {
+func (v *tcpAddrValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
@@ -16693,7 +16693,7 @@ func (v *tcpAddrSliceValue) Set(raw string) error {
 	return nil
 }
 
-func (v *tcpAddrSliceValue) Get() interface{} {
+func (v *tcpAddrSliceValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
@@ -16743,7 +16743,7 @@ func (v *ipNetValue) Set(s string) error {
 	return err
 }
 
-func (v *ipNetValue) Get() interface{} {
+func (v *ipNetValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}
@@ -16802,7 +16802,7 @@ func (v *ipNetSliceValue) Set(raw string) error {
 	return nil
 }
 
-func (v *ipNetSliceValue) Get() interface{} {
+func (v *ipNetSliceValue) Get() any {
 	if v != nil && v.value != nil {
 		return *v.value
 	}

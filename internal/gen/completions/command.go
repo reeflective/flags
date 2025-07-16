@@ -12,7 +12,7 @@ import (
 
 // Generate uses a carapace completion builder to register various completions to its underlying
 // cobra command, parsing again the native struct for type and struct tags' information.
-func Generate(cmd *cobra.Command, data interface{}, comps *carapace.Carapace) (*carapace.Carapace, error) {
+func Generate(cmd *cobra.Command, data any, comps *carapace.Carapace) (*carapace.Carapace, error) {
 	// Generate the completions a first time.
 	completions, err := parseCommands(cmd.Root(), data, comps)
 	if err != nil {
@@ -23,7 +23,7 @@ func Generate(cmd *cobra.Command, data interface{}, comps *carapace.Carapace) (*
 }
 
 // generate wraps all main steps' invocations, to be reused in various cases.
-func parseCommands(cmd *cobra.Command, data interface{}, comps *carapace.Carapace) (*carapace.Carapace, error) {
+func parseCommands(cmd *cobra.Command, data any, comps *carapace.Carapace) (*carapace.Carapace, error) {
 	if comps == nil {
 		comps = carapace.Gen(cmd)
 	}

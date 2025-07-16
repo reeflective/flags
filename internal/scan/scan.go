@@ -19,7 +19,7 @@ var ErrScan = errors.New("scan error")
 type Handler func(reflect.Value, *reflect.StructField) (bool, error)
 
 // Type actually scans the type, recursively if needed.
-func Type(data interface{}, handler Handler) error {
+func Type(data any, handler Handler) error {
 	// Get all the public fields in the data struct
 	ptrval := reflect.ValueOf(data)
 
