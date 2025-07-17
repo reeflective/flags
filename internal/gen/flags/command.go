@@ -45,7 +45,7 @@ func Bind(cmd *cobra.Command, data any, opts ...parser.OptFunc) error {
 
 	// And scan the struct recursively, for arg/option groups and subcommands
 	if err := parser.Scan(data, scanner); err != nil {
-		return fmt.Errorf("failed to scan command struct: %w", err)
+		return fmt.Errorf("%w: %w", errors.ErrParse, err)
 	}
 
 	// Subcommands, optional or not

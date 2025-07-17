@@ -20,21 +20,21 @@ func split(src string) (entries []string) {
 	var runes [][]rune
 	var class int
 	lastClass := 0
-	for _, r := range src {
-		switch true {
-		case unicode.IsLower(r):
+	for _, char := range src {
+		switch {
+		case unicode.IsLower(char):
 			class = classLower
-		case unicode.IsUpper(r):
+		case unicode.IsUpper(char):
 			class = classUpper
-		case unicode.IsDigit(r):
+		case unicode.IsDigit(char):
 			class = classDigit
 		default:
 			class = classOther
 		}
 		if lastClass != 0 && (class == lastClass || class == classDigit) {
-			runes[len(runes)-1] = append(runes[len(runes)-1], r)
+			runes[len(runes)-1] = append(runes[len(runes)-1], char)
 		} else {
-			runes = append(runes, []rune{r})
+			runes = append(runes, []rune{char})
 		}
 		lastClass = class
 	}

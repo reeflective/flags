@@ -1,13 +1,10 @@
 package flags
 
 import (
-	"fmt"
-	"os"
 	"strings"
 
 	"github.com/spf13/pflag"
 
-	flagerrors "github.com/reeflective/flags/internal/errors"
 	"github.com/reeflective/flags/internal/parser"
 	"github.com/reeflective/flags/internal/values"
 )
@@ -50,31 +47,3 @@ func generateTo(src []*parser.Flag, dst flagSet) {
 		}
 	}
 }
-
-// ParseFlags parses cfg, that is a pointer to some structure, puts it to the new
-// pflag.FlagSet and returns it.
-func ParseFlags(cfg any, optFuncs ...parser.OptFunc) (*pflag.FlagSet, error) {
-	flagSet := pflag.NewFlagSet(os.Args[0], pflag.ExitOnError)
-
-	err := parseTo(cfg, flagSet, optFuncs...)
-	if err != nil {
-		return nil, err
-	}
-
-	return flagSet, nil
-}
-
-// parseTo parses cfg, that is a pointer to some structure,
-// and puts it to dst.
-func parseTo(cfg any, dst flagSet, optFuncs ...parser.OptFunc) error {
-	flagSet, err := parser.ParseStruct(cfg, optFuncs...)
-	if err != nil {
-		return fmt.Errorf("%w: %s", flagerrors.ErrParse, err.Error())
-	}
-
-	generateTo(flagSet, dst)
-
-	return nil
-}
-
-

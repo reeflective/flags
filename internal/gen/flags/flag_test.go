@@ -79,7 +79,7 @@ func run(t *testing.T, test *testConfig) {
 	// We must parse all struct fields regardless of them being tagged.
 	parseOptions := parser.ParseAll()
 
-	flagSet, err := ParseFlags(test.cfg, parseOptions)
+	cmd, err := Generate(test.cfg, parseOptions)
 
 	if test.expErr1 != nil {
 		require.Error(t, err)
@@ -92,12 +92,13 @@ func run(t *testing.T, test *testConfig) {
 		return
 	}
 
+	flagSet := cmd.Flags()
 	flagSet.Init("pflagTest", pflag.ContinueOnError)
 	flagSet.SetOutput(io.Discard)
 
 	err = flagSet.Parse(test.args)
 	if test.expErr2 != nil {
-		require.Error(t, err)
+		assert.Error(t, err)
 		require.Equal(t, test.expErr2, err)
 	} else {
 		require.NoError(t, err)
@@ -236,7 +237,7 @@ func TestParseNoDefaultValues(t *testing.T) {
 func TestParseBadConfig(t *testing.T) {
 	t.Parallel()
 
-	pointerErr := fmt.Errorf("%w: %s", flagerrors.ErrParse, flagerrors.ErrNotPointerToStruct.Error())
+	pointerErr := fmt.Errorf("%w: %w", flagerrors.ErrParse, flagerrors.ErrNotPointerToStruct)
 	test := &testConfig{
 		cfg:     "bad config",
 		expErr1: pointerErr,
@@ -279,7 +280,8 @@ func TestPFlagGetters(t *testing.T) {
 
 	parseOptions := parser.ParseAll()
 
-	flagSet, err := ParseFlags(cfg, parseOptions)
+	cmd, err := Generate(cfg, parseOptions)
+	flagSet := cmd.Flags()
 	require.NoError(t, err)
 
 	intValue, err := flagSet.GetInt("int-value")

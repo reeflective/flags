@@ -1,12 +1,12 @@
 package parser
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
+	"slices"
 	"strings"
 
-	flagerrors "github.com/reeflective/flags/internal/errors"
+	"github.com/reeflective/flags/internal/errors"
 )
 
 const (
@@ -52,44 +52,44 @@ func (t *MultiTag) GetMany(key string) []string {
 func (t *MultiTag) parse(tag string) error {
 	for tag != "" {
 		// Skip leading space.
-		i := 0
-		for i < len(tag) && tag[i] == ' ' {
-			i++
+		pos := 0
+		for pos < len(tag) && tag[pos] == ' ' {
+			pos++
 		}
-		tag = tag[i:]
+		tag = tag[pos:]
 		if tag == "" {
 			break
 		}
 
 		// Scan to colon. A space, a quote or a control character is a syntax error.
 		// Strictly speaking, control chars include the space character.
-		i = 0
-		for i < len(tag) && tag[i] > ' ' && tag[i] != ':' && tag[i] != '"' && tag[i] != 0x7f {
-			i++
+		pos = 0
+		for pos < len(tag) && tag[pos] > ' ' && tag[pos] != ':' && tag[pos] != '"' && tag[pos] != 0x7f {
+			pos++
 		}
-		if i == 0 || i+1 >= len(tag) || tag[i] != ':' || tag[i+1] != '"' {
-			return errors.New("invalid tag syntax")
+		if pos == 0 || pos+1 >= len(tag) || tag[pos] != ':' || tag[pos+1] != '"' {
+			return fmt.Errorf("%w: invalid syntax", errors.ErrInvalidTag)
 		}
-		name := string(tag[:i])
-		tag = tag[i+1:]
+		name := tag[:pos]
+		tag = tag[pos+1:]
 
 		// Scan quoted string to find value.
-		i = 1
-		for i < len(tag) && tag[i] != '"' {
-			if tag[i] == '\\' {
-				i++
+		pos = 1
+		for pos < len(tag) && tag[pos] != '"' {
+			if tag[pos] == '\\' {
+				pos++
 			}
-			i++
+			pos++
 		}
-		if i >= len(tag) {
-			return errors.New("invalid tag syntax")
+		if pos >= len(tag) {
+			return fmt.Errorf("%w: invalid syntax", errors.ErrInvalidTag)
 		}
-		qvalue := string(tag[:i+1])
-		tag = tag[i+1:]
+		qvalue := tag[:pos+1]
+		tag = tag[pos+1:]
 
 		value, ok := reflect.StructTag(name + ":" + qvalue).Lookup(name)
 		if !ok {
-			return errors.New("did not find tag value")
+			return fmt.Errorf("%w: tag value not found", errors.ErrInvalidTag)
 		}
 		(*t)[name] = append((*t)[name], value)
 	}
@@ -280,13 +280,7 @@ func setFlagOptionalValues(flag *Flag, choices []string) {
 }
 
 func hasOption(options []string, option string) bool {
-	for _, opt := range options {
-		if opt == option {
-			return true
-		}
-	}
-
-	return false
+	return slices.Contains(options, option)
 }
 
 func isStringFalsy(s string) bool {
@@ -300,7 +294,7 @@ func getShortName(name string) (rune, error) {
 	if runeCount > 1 {
 		msg := fmt.Sprintf("flag `%s'", name)
 
-		return short, fmt.Errorf("%w: %s", flagerrors.ErrInvalidTag, msg)
+		return short, fmt.Errorf("%w: %s", errors.ErrInvalidTag, msg)
 	}
 
 	if runeCount == 1 {
