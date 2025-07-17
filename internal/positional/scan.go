@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/reeflective/flags/internal/errors"
 	"github.com/reeflective/flags/internal/parser"
-	"github.com/reeflective/flags/internal/scan"
 	"github.com/reeflective/flags/internal/validation"
 	"github.com/reeflective/flags/internal/values"
 )
@@ -29,7 +29,7 @@ func ScanArgs(val reflect.Value, stag *parser.MultiTag, opts ...parser.OptFunc) 
 
 	// Each positional field is scanned for its number requirements,
 	// and underlying value to be used by the command's arg handlers/converters.
-	for fieldCount := 0; fieldCount < stype.NumField(); fieldCount++ {
+	for fieldCount := range stype.NumField() {
 		field := stype.Field(fieldCount)
 		fieldValue := val.Field(fieldCount)
 
@@ -43,11 +43,8 @@ func ScanArgs(val reflect.Value, stag *parser.MultiTag, opts ...parser.OptFunc) 
 
 	// Depending on our position and type, we reset the maximum
 	// number of words allowed for this argument, and update the
-	// counter that will be used by handlers to sync their use
-	// of words
-	if err := args.adjustMaximums(); err != nil {
-		return args, err
-	}
+	// counter that will be used by handlers to sync their use of words.
+	args.adjustMaximums()
 
 	// Last minute internal counters adjustments
 	args.needed = args.totalMin
@@ -70,16 +67,16 @@ func (args *Args) scanArg(field reflect.StructField, value reflect.Value, reqAll
 		args.noTags = false
 	}
 
-	// Set min/max requirements depending on the tag, the overall
+	// Set minArgs/maxArgs requirements depending on the tag, the overall
 	// requirement settings (at struct level), also taking into
 	// account the kind of field we are considering (slice or not)
-	min, max := positionalReqs(value, *ptag, reqAll)
+	minArgs, maxArgs := positionalReqs(value, *ptag, reqAll)
 
 	arg := &Arg{
 		Index:    len(args.slots),
 		Name:     name,
-		Minimum:  min,
-		Maximum:  max,
+		Minimum:  minArgs,
+		Maximum:  maxArgs,
 		Tag:      *ptag,
 		StartMin: args.totalMin,
 		StartMax: args.totalMax,
@@ -88,7 +85,7 @@ func (args *Args) scanArg(field reflect.StructField, value reflect.Value, reqAll
 	}
 
 	args.slots = append(args.slots, arg)
-	args.totalMin += min // min is never < 0
+	args.totalMin += minArgs // min is never < 0
 
 	// The total maximum number of arguments is used
 	// by completers to know precisely when they should
@@ -117,7 +114,7 @@ func (args *Args) scanArg(field reflect.StructField, value reflect.Value, reqAll
 func parsePositionalTag(field reflect.StructField) (*parser.MultiTag, string, error) {
 	tag, _, err := parser.GetFieldTag(field)
 	if err != nil {
-		return tag, field.Name, fmt.Errorf("%w: %w", scan.ErrScan, err)
+		return tag, field.Name, fmt.Errorf("%w: %w", errors.ErrInvalidTag, err)
 	}
 
 	name, _ := tag.Get("positional-arg-name")
@@ -131,35 +128,35 @@ func parsePositionalTag(field reflect.StructField) (*parser.MultiTag, string, er
 
 // positionalReqs determines the correct quantity requirements for a positional field,
 // depending on its parsed struct tag values, and the underlying type of the field.
-func positionalReqs(val reflect.Value, mtag parser.MultiTag, all bool) (min, max int) {
-	required, max, set := parseArgsNumRequired(mtag)
+func positionalReqs(val reflect.Value, mtag parser.MultiTag, all bool) (minWords, maxWords int) {
+	required, maxWords, set := parseArgsNumRequired(mtag)
 
 	// At least for each requirements are global
 	if all && required == 0 {
-		min = 1
+		minWords = 1
 	}
 
 	// When the argument field is not a slice, we have to adjust for some defaults
 	isSlice := val.Type().Kind() == reflect.Slice || val.Type().Kind() == reflect.Map
 	if !isSlice {
-		max = 1
+		maxWords = 1
 	}
 
 	switch {
 	case !isSlice && required > 0:
 		// Individual fields cannot have more than one required
-		min = 1
+		minWords = 1
 	case !set && !isSlice && all:
 		// If we have a struct of untagged fields, but all required,
 		// we automatically set min/max to one if the field is individual.
-		min = 1
+		minWords = 1
 	case set && isSlice && required > 0:
 		// If a slice has at least one required, add this minimum
 		// Increase the total number of positional args wanted.
-		min += required
+		minWords += required
 	}
 
-	return min, max
+	return minWords, maxWords
 }
 
 // parseArgsNumRequired sets the minimum/maximum requirements for an argument field.
@@ -197,7 +194,7 @@ func parseArgsNumRequired(fieldTag parser.MultiTag) (required, maximum int, set 
 
 // adjustMaximums analyzes the position of a positional argument field,
 // and adjusts its maximum so that handlers can work on them correctly.
-func (args *Args) adjustMaximums() error {
+func (args *Args) adjustMaximums() {
 	for _, arg := range args.slots {
 		val := arg.Value
 		isSlice := val.Type().Kind() == reflect.Slice ||
@@ -224,48 +221,7 @@ func (args *Args) adjustMaximums() error {
 			arg.Minimum = 1
 		}
 	}
-
-	return nil
 }
-
-// func (args *Args) adjustMaximums() error {
-// 	// hasSliceNoMax := false
-//
-// 	for _, arg := range args.slots {
-// 		val := arg.Value
-// 		isSlice := val.Type().Kind() == reflect.Slice ||
-// 			val.Type().Kind() == reflect.Map
-//
-// 		// First, the maximum index at which we should start
-// 		// parsing words can never be smaller than the minimum one
-// 		if arg.StartMax < arg.StartMin {
-// 			arg.StartMax = arg.StartMin
-// 		}
-//
-// 		// If we have a slice with no maximum before, it's always
-// 		// going to shadow all remaining positional slots.
-// 		// if hasSliceNoMax && args.allRequired {
-// 		// 	return args.errorSliceShadowing(arg.Name, arg.Index)
-// 		// }
-//
-// 		// The maximum is not left to -1 if the field is unique.
-// 		if arg.Maximum == -1 && !isSlice {
-// 			arg.Maximum = 1
-//
-// 			continue
-// 		}
-//
-// 		if isSlice && args.allRequired && args.noTags {
-// 			arg.Minimum = 1
-// 		}
-//
-// 		// if isSlice && arg.Maximum == -1 {
-// 		// 	hasSliceNoMax = true
-// 		// }
-// 	}
-//
-// 	return nil
-// }
 
 func (args *Args) errorSliceShadowing(arg string, index int) error {
 	shadowed := ""
@@ -274,6 +230,7 @@ func (args *Args) errorSliceShadowing(arg string, index int) error {
 	}
 
 	shadowed = strings.TrimSuffix(shadowed, ",")
+	details := fmt.Sprintf("positional `%s` is a slice with no maximum, which will shadow %s", arg, shadowed)
 
-	return fmt.Errorf("Positional `%s` is a slice with no maximum: will shadow %s positionals", arg, shadowed)
+	return fmt.Errorf("%w: %s", errors.ErrPositionalShadowing, details)
 }

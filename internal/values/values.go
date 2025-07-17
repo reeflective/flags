@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"reflect"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -164,12 +165,12 @@ func (v *boolValue) IsBoolFlag() bool { return true }
 
 // === Custom parsers
 
-func ParseMap(value reflect.Value) Value {
+func parseMap(value reflect.Value) Value {
 	mapType := value.Type()
 	keyKind := value.Type().Key().Kind()
 
 	// check that map key is string or integer
-	if !anyOf(mapAllowedKinds, keyKind) {
+	if !slices.Contains(mapAllowedKinds, keyKind) {
 		return nil
 	}
 
@@ -208,14 +209,4 @@ func parseIPNet(s string) (net.IPNet, error) {
 	}
 
 	return *ipNet, nil
-}
-
-func anyOf(kinds []reflect.Kind, needle reflect.Kind) bool {
-	for _, kind := range kinds {
-		if kind == needle {
-			return true
-		}
-	}
-
-	return false
 }

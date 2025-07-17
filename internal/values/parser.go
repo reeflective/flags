@@ -2,6 +2,7 @@ package values
 
 import (
 	"reflect"
+	"slices"
 
 	"github.com/reeflective/flags/internal/interfaces"
 )
@@ -14,7 +15,30 @@ func NewValue(val reflect.Value) Value {
 		val.Set(reflect.New(val.Type().Elem()))
 	}
 
-	// 1. Direct `flags.Value` implementation:
+	if v := fromDirectInterfaces(val); v != nil {
+		return v
+	}
+	if v := fromGoFlagsInterfaces(val); v != nil {
+		return v
+	}
+	if v := fromGenerated(val); v != nil {
+		return v
+	}
+	if v := fromMap(val); v != nil {
+		return v
+	}
+
+	// Dereference pointers if we need to.
+	if val.Kind() == reflect.Ptr {
+		return NewValue(val.Elem())
+	}
+
+	// Fallback to a reflective parser.
+	return newReflectiveValue(val)
+}
+
+// fromDirectInterfaces checks for direct implementations of the Value interface.
+func fromDirectInterfaces(val reflect.Value) Value {
 	if val.CanInterface() {
 		if v, ok := val.Interface().(Value); ok {
 			return v
@@ -26,7 +50,11 @@ func NewValue(val reflect.Value) Value {
 		}
 	}
 
-	// 2. `go-flags` interfaces:
+	return nil
+}
+
+// fromGoFlagsInterfaces checks for implementations of go-flags interfaces.
+func fromGoFlagsInterfaces(val reflect.Value) Value {
 	if val.CanAddr() && val.Addr().CanInterface() {
 		ptr := val.Addr().Interface()
 		if _, ok := ptr.(interfaces.Unmarshaler); ok {
@@ -34,7 +62,11 @@ func NewValue(val reflect.Value) Value {
 		}
 	}
 
-	// 3. Known Go types (using generated parsers):
+	return nil
+}
+
+// fromGenerated checks for types with auto-generated parsers.
+func fromGenerated(val reflect.Value) Value {
 	if val.CanAddr() && val.Addr().CanInterface() {
 		addr := val.Addr().Interface()
 		if v := ParseGenerated(addr); v != nil {
@@ -42,36 +74,33 @@ func NewValue(val reflect.Value) Value {
 		}
 		if v := ParseGeneratedPtrs(addr); v != nil {
 			return v
-
 		}
 	}
 
-	// 4. Maps must be treated differently
-	if val.Kind() == reflect.Map {
-		mapType := val.Type()
-		keyKind := val.Type().Key().Kind()
+	return nil
+}
 
-		// check that map key is string or integer
-		if !anyOf(mapAllowedKinds, keyKind) {
-			return nil
-		}
+// fromMap handles map types.
+func fromMap(val reflect.Value) Value {
+	if val.Kind() != reflect.Map {
+		return nil
+	}
 
-		if val.IsNil() {
-			val.Set(reflect.MakeMap(mapType))
-		}
+	// Check that the map key is a supported type.
+	if !slices.Contains(mapAllowedKinds, val.Type().Key().Kind()) {
+		return nil
+	}
 
+	if val.IsNil() {
+		val.Set(reflect.MakeMap(val.Type()))
+	}
+
+	if val.CanAddr() && val.Addr().CanInterface() {
 		addr := val.Addr().Interface()
 		if v := ParseGeneratedMap(addr); v != nil {
 			return v
 		}
 	}
 
-	// 4 - Dereference pointers if we need.
-	if val.Kind() == reflect.Ptr {
-		return NewValue(val.Elem())
-	}
-
-	// 5. Reflective Parser Fallback:
-	return newReflectiveValue(val)
-	// return nil
+	return nil
 }

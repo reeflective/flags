@@ -417,11 +417,3 @@ func (args *Args) Pop() string {
 
 	return arg
 }
-
-func (args *Args) peek() string {
-	if args.Empty() {
-		return ""
-	}
-
-	return args.words[0]
-}

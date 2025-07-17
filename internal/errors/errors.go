@@ -26,4 +26,28 @@ var (
 
 	// ErrUnknownSubcommand indicates that the invoked subcommand has not been found.
 	ErrUnknownSubcommand = errors.New("unknown subcommand")
+
+	// ErrPositionalShadowing indicates that a positional argument with an unbounded
+	// maximum number of values is followed by other positional arguments, which
+	// it will shadow.
+	ErrPositionalShadowing = errors.New("positional argument shadows subsequent arguments")
+
+	// ErrTypeAssertion indicates that a type assertion failed unexpectedly.
+	// This typically points to an internal logic error in the library.
+	ErrTypeAssertion = errors.New("internal type assertion error")
+
+	// ErrInvalidDuration indicates that a string could not be parsed as a time.Duration.
+	ErrInvalidDuration = errors.New("invalid duration value")
+
+	// ErrInvalidInteger indicates that a string could not be parsed as an integer.
+	ErrInvalidInteger = errors.New("invalid integer value")
+
+	// ErrInvalidUint indicates that a string could not be parsed as an unsigned integer.
+	ErrInvalidUint = errors.New("invalid unsigned integer value")
+
+	// ErrInvalidFloat indicates that a string could not be parsed as a float.
+	ErrInvalidFloat = errors.New("invalid float value")
+
+	// ErrUnsupportedType indicates that a type is not supported for a given operation.
+	ErrUnsupportedType = errors.New("unsupported type")
 )

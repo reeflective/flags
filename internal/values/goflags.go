@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/reeflective/flags/internal/errors"
 	"github.com/reeflective/flags/internal/interfaces"
 )
 
@@ -22,10 +23,15 @@ func (v *goFlagsValue) Set(s string) error {
 	unmarshaler, ok := v.value.(interfaces.Unmarshaler)
 	if !ok {
 		// This should not happen if NewValue is constructed correctly.
-		return fmt.Errorf("internal error: type %T does not implement flags.Unmarshaler", v.value)
+		return fmt.Errorf("%w: type %T does not implement flags.Unmarshaler",
+			errors.ErrTypeAssertion, v.value)
 	}
 
-	return unmarshaler.UnmarshalFlag(s)
+	if err := unmarshaler.UnmarshalFlag(s); err != nil {
+		return fmt.Errorf("failed to unmarshal value: %w", err)
+	}
+
+	return nil
 }
 
 func (v *goFlagsValue) String() string {
