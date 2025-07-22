@@ -39,7 +39,7 @@ func positionals(ctx *context, stag *parser.MultiTag, val reflect.Value) (bool, 
 
 		// Directly return the error, which might be non-nil.
 		if err != nil {
-			return fmt.Errorf("failed to parse positional arguments: %w", err)
+			return fmt.Errorf("positional arguments: %w", err)
 		}
 
 		return nil

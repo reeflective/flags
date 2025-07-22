@@ -49,6 +49,14 @@ type RepeatableFlag interface {
 	IsCumulative() bool
 }
 
+// NewValidator returns a new value that wraps another value and adds a validation function.
+func NewValidator(val Value, validator func(string) error) Value {
+	return &validateValue{
+		Value:        val,
+		validateFunc: validator,
+	}
+}
+
 // === Custom values
 
 type validateValue struct {

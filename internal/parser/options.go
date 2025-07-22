@@ -2,12 +2,9 @@ package parser
 
 import (
 	"reflect"
-)
 
-// ValidateFunc describes a validation func, that takes string val for flag from command line,
-// field that's associated with this flag in structure cfg. Also works for positional arguments.
-// Should return error if validation fails.
-type ValidateFunc func(val string, field reflect.StructField, data any) error
+	"github.com/reeflective/flags/internal/validation"
+)
 
 // FlagFunc is a generic function that can be applied to each
 // value that will end up being a flags *Flag, so that users
@@ -44,7 +41,7 @@ type Opts struct {
 	ParseAll bool
 
 	// Validator is the validation function for flags.
-	Validator ValidateFunc
+	Validator validation.ValidateFunc
 
 	// FlagFunc is a generic function that can be applied to each flag.
 	FlagFunc FlagFunc
@@ -109,7 +106,7 @@ func Flatten(val bool) OptFunc { return func(opt *Opts) { opt.Flatten = val } }
 func ParseAll() OptFunc { return func(opt *Opts) { opt.ParseAll = true } }
 
 // Validator sets validator function for flags.
-func Validator(val ValidateFunc) OptFunc {
+func Validator(val validation.ValidateFunc) OptFunc {
 	return func(opt *Opts) { opt.Validator = val }
 }
 

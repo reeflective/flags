@@ -50,4 +50,10 @@ var (
 
 	// ErrUnsupportedType indicates that a type is not supported for a given operation.
 	ErrUnsupportedType = errors.New("unsupported type")
+
+	// ErrInvalidChoice indicates that the provided flag argument is not among the valid choices.
+	ErrInvalidChoice = errors.New("invalid choice")
+
+	// ErrInvalidValue indicates that the provided flag argument is not a valid value for the flag type.
+	ErrInvalidValue = errors.New("invalid value")
 )

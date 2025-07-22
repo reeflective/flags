@@ -103,8 +103,10 @@ func (args *Args) scanArg(field reflect.StructField, value reflect.Value, reqAll
 		choices = append(choices, strings.Split(choice, " ")...)
 	}
 
-	if validator := validation.Bind(value, field, choices, opt); validator != nil {
+	// Set up any validations.
+	if validator := validation.Setup(value, field, choices, opt.Validator); validator != nil {
 		arg.Validator = validator
+		// val = values.NewValidator(val, validator)
 	}
 
 	return nil

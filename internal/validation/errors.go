@@ -39,6 +39,3 @@ func (err *invalidVarError) Error() string {
 	// Or simply replace the empty key with the field name.
 	return strings.ReplaceAll(err.validatorErr.Error(), "''", fmt.Sprintf("'%s'", err.fieldName))
 }
-
-// noOpValidator is a validation no-op function.
-func noOpValidator(_ any, _ string, _ string) error { return nil }
