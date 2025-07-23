@@ -46,10 +46,10 @@ func flagsGroup(ctx *context, val reflect.Value, field *reflect.StructField) (bo
 
 	// Check for a standard flag group first.
 	if _, isSet := mtag.Get("group"); isSet {
-		return true, handleFlagGroup(ctx, val, mtag)
+		return true, handleFlagGroup(ctx, val, field, mtag)
 	}
 	if _, isSet := mtag.Get("options"); isSet {
-		return true, handleFlagGroup(ctx, val, mtag)
+		return true, handleFlagGroup(ctx, val, field, mtag)
 	}
 
 	// Check for a command group.
@@ -62,19 +62,16 @@ func flagsGroup(ctx *context, val reflect.Value, field *reflect.StructField) (bo
 
 // handleFlagGroup handles the scanning of a struct field that is a group of flags.
 // It uses the parser to get a list of flags and then generates them to the command's flag set.
-func handleFlagGroup(ctx *context, val reflect.Value, mtag *parser.MultiTag) error {
-	// 1. Ensure we have a non-nil pointer to the struct.
-	ptrval := parser.EnsureAddr(val)
-
-	// 2. Call the new parser.ParseGroup to get the list of flags.
-	flags, err := parser.ParseGroup(ptrval.Interface(), ctx.opts, mtag)
+func handleFlagGroup(ctx *context, val reflect.Value, fld *reflect.StructField, tag *parser.MultiTag) error {
+	// 1. Call the new parser.ParseGroup to get the list of flags.
+	flags, err := parser.ParseGroup(val, *fld, ctx.opts)
 	if err != nil {
 		return err // The error is already wrapped by ParseGroup.
 	}
 
-	// 3. Generate the parsed flags into the command's flag set.
+	// 2. Generate the parsed flags into the command's flag set.
 	// The 'persistent' tag is handled here, in the generation step.
-	if persistent, _ := mtag.Get("persistent"); persistent != "" {
+	if persistent, _ := tag.Get("persistent"); persistent != "" {
 		generateTo(flags, ctx.cmd.PersistentFlags())
 	} else {
 		generateTo(flags, ctx.cmd.Flags())
