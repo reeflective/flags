@@ -61,12 +61,7 @@ func ParseField(value reflect.Value, field reflect.StructField, opts *Opts) ([]*
 	}
 
 	// Check if the field is a struct group and parse it recursively if so.
-	isGroup := (value.Kind() == reflect.Struct ||
-		(value.Kind() == reflect.Ptr &&
-			value.Type().Elem().Kind() == reflect.Struct)) &&
-		!isSingleValue(value)
-
-	if isGroup {
+	if isOptionGroup(value) && opts.ParseAll {
 		flags, err := ParseGroup(value, field, opts)
 
 		return flags, true, err
@@ -169,4 +164,10 @@ func markedFlagNotImplementing(tag MultiTag, val values.Value) bool {
 	_, long := tag.Get("long")
 
 	return (flagOld || short || long) && val == nil
+}
+
+func isOptionGroup(value reflect.Value) bool {
+	return (value.Kind() == reflect.Struct ||
+		(value.Kind() == reflect.Ptr && value.Type().Elem().Kind() == reflect.Struct)) &&
+		!isSingleValue(value)
 }
