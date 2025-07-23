@@ -4,6 +4,8 @@ import (
 	"reflect"
 
 	"github.com/reeflective/flags/internal/errors"
+	"github.com/reeflective/flags/internal/interfaces"
+	"github.com/reeflective/flags/internal/values"
 )
 
 // Handler is a function that can be applied to a struct field.
@@ -49,4 +51,71 @@ func scan(v reflect.Value, handler Handler) error {
 	}
 
 	return nil
+}
+
+// isSingleValue checks if a reflect.Value can be handled as a single flag value,
+// as opposed to a group of flags. This is the case if the type implements
+// a value interface, a text unmarshaling interface, or is a known primitive
+// type supported by the generated parsers.
+func isSingleValue(val reflect.Value) bool {
+	// 1. Check for direct interface implementations on the value itself or a pointer to it.
+	if val.CanInterface() {
+		if _, ok := val.Interface().(values.Value); ok {
+			return true
+		}
+	}
+	if val.CanAddr() {
+		ptr := val.Addr().Interface()
+		if _, ok := ptr.(values.Value); ok {
+			return true
+		}
+		if _, ok := ptr.(interfaces.Unmarshaler); ok {
+			return true
+		}
+	}
+
+	// 2. Check if the type is one of the built-in, generated value types.
+	if val.CanAddr() {
+		addr := val.Addr().Interface()
+		if values.ParseGenerated(addr) != nil {
+			return true
+		}
+		if values.ParseGeneratedPtrs(addr) != nil {
+			return true
+		}
+	}
+
+	// 3. Handle pointers: if the value is a pointer, check the type it points to.
+	if val.Kind() == reflect.Ptr {
+		// If the pointer is nil, we can't check the pointed-to value directly.
+		// Instead, we create a new zero value of the underlying type and check that.
+		if val.IsNil() {
+			return isSingleValue(reflect.New(val.Type().Elem()).Elem())
+		}
+		// If the pointer is not nil, recurse on the element it points to.
+		return isSingleValue(val.Elem())
+	}
+
+	// If none of the above, it's not a type we can handle as a single value.
+	return false
+}
+
+// EnsureAddr we get the address of a given value.
+func EnsureAddr(val reflect.Value) reflect.Value {
+	// Initialize if needed
+	var ptrval reflect.Value
+
+	// We just want to get interface, even if nil
+	if val.Kind() == reflect.Ptr {
+		ptrval = val
+	} else {
+		ptrval = val.Addr()
+	}
+
+	// Once we're sure it's a command, initialize the field if needed.
+	if ptrval.IsNil() {
+		ptrval.Set(reflect.New(ptrval.Type().Elem()))
+	}
+
+	return ptrval
 }

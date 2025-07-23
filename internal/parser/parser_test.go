@@ -2,14 +2,25 @@ package parser
 
 import (
 	"errors"
+	"fmt"
+	"net"
 	"reflect"
+	"regexp"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
+	flagerrors "github.com/reeflective/flags/internal/errors"
 	"github.com/reeflective/flags/internal/values"
+	"github.com/reeflective/flags/types"
 )
 
+//
+// Tests -----------------------------------------------------------------------------------
+//
+
+// TestParseStruct is a table-driven test that checks various struct parsing scenarios.
 func TestParseStruct(t *testing.T) {
 	simpleCfg := NewSimpleCfg()
 	diffTypesCfg := NewDiffTypesCfg()
@@ -300,74 +311,77 @@ func TestParseStruct(t *testing.T) {
 		{
 			name:   "We need non nil value",
 			cfg:    (*Simple)(nil),
-			expErr: errors.New("object must be a pointer to struct or interface"),
+			expErr: errors.New("object cannot be nil"),
 		},
 	}
 	for _, test := range tt {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
-			// flagSet, err := ParseStruct(test.cfg, test.optFuncs...)
-			// if test.expErr == nil {
-			// 	require.NoError(t, err)
-			// } else {
-			// 	require.Equal(t, test.expErr, err)
-			// }
-			// require.Equal(t, test.expFlagSet, flagSet)
+			flagSet, err := parse(test.cfg, test.optFuncs...)
+			if test.expErr == nil {
+				require.NoError(t, err)
+			} else {
+				require.Equal(t, test.expErr, err)
+			}
+			require.Equal(t, test.expFlagSet, flagSet)
 		})
 	}
 }
 
-// func TestParseStruct_NilValue(t *testing.T) {
-// 	t.Parallel()
-// 	name2Value := "name2_value"
-// 	cfg := struct {
-// 		Name1  *string
-// 		Name2  *string
-// 		Regexp *regexp.Regexp
-// 	}{
-// 		Name2: &name2Value,
-// 	}
-// 	assert.Nil(t, cfg.Name1)
-// 	assert.Nil(t, cfg.Regexp)
-// 	assert.NotNil(t, cfg.Name2)
-//
-// 	flags, err := ParseStruct(&cfg, ParseAll())
-// 	require.NoError(t, err)
-// 	require.Len(t, flags, 3)
-// 	assert.NotNil(t, cfg.Name1)
-// 	assert.NotNil(t, cfg.Name2)
-// 	assert.NotNil(t, cfg.Regexp)
-// 	assert.Equal(t, name2Value, flags[1].Value.(values.Getter).Get())
-//
-// 	err = flags[0].Value.Set("name1value")
-// 	require.NoError(t, err)
-// 	assert.Equal(t, "name1value", *cfg.Name1)
-//
-// 	err = flags[2].Value.Set("aabbcc")
-// 	require.NoError(t, err)
-// 	assert.Equal(t, "aabbcc", cfg.Regexp.String())
-// }
+// TestParseStruct_NilValue tests that nil pointers in a struct are correctly initialized.
+func TestParseStruct_NilValue(t *testing.T) {
+	t.Parallel()
+	name2Value := "name2_value"
+	cfg := struct {
+		Name1  *string
+		Name2  *string
+		Regexp *regexp.Regexp
+	}{
+		Name2: &name2Value,
+	}
+	assert.Nil(t, cfg.Name1)
+	assert.Nil(t, cfg.Regexp)
+	assert.NotNil(t, cfg.Name2)
 
-// func TestParseStruct_WithValidator(t *testing.T) {
-// 	t.Parallel()
-// 	var cfg Simple
-//
-// 	testErr := errors.New("validator test error")
-//
-// 	validator := Validator(func(val string, field reflect.StructField, obj any) error {
-// 		return testErr
-// 	})
-//
-// 	flags, err := ParseStruct(&cfg, validator, ParseAll())
-// 	require.NoError(t, err)
-// 	require.Len(t, flags, 1)
-// 	assert.NotNil(t, cfg.Name)
-//
-// 	err = flags[0].Value.Set("aabbcc")
-// 	require.Error(t, err)
-// 	assert.Equal(t, testErr, err)
-// }
+	flags, err := parse(&cfg, ParseAll())
+	require.NoError(t, err)
+	require.Len(t, flags, 3)
+	assert.NotNil(t, cfg.Name1)
+	assert.NotNil(t, cfg.Name2)
+	assert.NotNil(t, cfg.Regexp)
+	assert.Equal(t, name2Value, flags[1].Value.(values.Getter).Get())
 
+	err = flags[0].Value.Set("name1value")
+	require.NoError(t, err)
+	assert.Equal(t, "name1value", *cfg.Name1)
+
+	err = flags[2].Value.Set("aabbcc")
+	require.NoError(t, err)
+	assert.Equal(t, "aabbcc", cfg.Regexp.String())
+}
+
+// TestParseStruct_WithValidator tests that a custom validator is correctly called.
+func TestParseStruct_WithValidator(t *testing.T) {
+	t.Parallel()
+	var cfg Simple
+
+	testErr := fmt.Errorf("%w: %w", flagerrors.ErrInvalidValue, errors.New("validator test error"))
+
+	validator := Validator(func(val string, field reflect.StructField, obj any) error {
+		return errors.New("validator test error")
+	})
+
+	flags, err := parse(&cfg, validator, ParseAll())
+	require.NoError(t, err)
+	require.Len(t, flags, 1)
+	assert.NotNil(t, cfg.Name)
+
+	err = flags[0].Value.Set("aabbcc")
+	require.Error(t, err)
+	assert.Equal(t, testErr, err)
+}
+
+// TestFlagDivider tests that the FlagDivider option is correctly applied.
 func TestFlagDivider(t *testing.T) {
 	t.Parallel()
 	opt := Opts{
@@ -377,6 +391,7 @@ func TestFlagDivider(t *testing.T) {
 	assert.Equal(t, "_", opt.FlagDivider)
 }
 
+// TestFlagTag tests that the FlagTag option is correctly applied.
 func TestFlagTag(t *testing.T) {
 	t.Parallel()
 	opt := Opts{
@@ -386,6 +401,7 @@ func TestFlagTag(t *testing.T) {
 	assert.Equal(t, "superflag", opt.FlagTag)
 }
 
+// TestValidator tests that the Validator option is correctly applied.
 func TestValidator(t *testing.T) {
 	t.Parallel()
 	opt := Opts{
@@ -397,6 +413,7 @@ func TestValidator(t *testing.T) {
 	assert.NotNil(t, opt.Validator)
 }
 
+// TestFlatten tests that the Flatten option is correctly applied.
 func TestFlatten(t *testing.T) {
 	t.Parallel()
 	opt := Opts{
@@ -404,4 +421,187 @@ func TestFlatten(t *testing.T) {
 	}
 	Flatten(false)(&opt)
 	assert.False(t, opt.Flatten)
+}
+
+// parse is the single, intelligent entry point for parsing a struct into flags.
+// It uses a unified recursive approach to correctly handle nested groups and
+// avoid the double-parsing of anonymous fields that plagued the previous implementation.
+func parse(cfg any, optFuncs ...OptFunc) ([]*Flag, error) {
+	if cfg == nil {
+		return nil, flagerrors.ErrNilObject
+	}
+	v := reflect.ValueOf(cfg)
+	if v.Kind() != reflect.Ptr {
+		return nil, flagerrors.ErrNotPointerToStruct
+	}
+	if v.IsNil() {
+		return nil, flagerrors.ErrNilObject
+	}
+	e := v.Elem()
+	if e.Kind() != reflect.Struct {
+		return nil, flagerrors.ErrNotPointerToStruct
+	}
+
+	opts := DefOpts().Apply(optFuncs...)
+
+	var flags []*Flag
+	scanner := func(val reflect.Value, sfield *reflect.StructField) (bool, error) {
+		fieldFlags, found, err := ParseField(val, *sfield, opts)
+		if err != nil {
+			return false, err
+		}
+		if found {
+			flags = append(flags, fieldFlags...)
+		}
+
+		return true, nil
+	}
+
+	if err := Scan(cfg, scanner); err != nil {
+		return nil, err
+	}
+
+	return flags, nil
+}
+
+//
+// Data ------------------------------------------------------------------------------------
+//
+
+// NewSimpleCfg returns a test configuration for simple struct parsing.
+func NewSimpleCfg() *struct {
+	Name  string `desc:"name description"             env:"-"`
+	Name2 string `flag:"name_two t,hidden,deprecated"`
+	Name3 string `env:"NAME_THREE"`
+	Name4 *string
+	Name5 string `flag:"-"`
+	name6 string
+
+	Addr *net.TCPAddr
+
+	Map map[string]int
+} {
+	return &struct {
+		Name  string `desc:"name description"             env:"-"`
+		Name2 string `flag:"name_two t,hidden,deprecated"`
+		Name3 string `env:"NAME_THREE"`
+		Name4 *string
+		Name5 string `flag:"-"`
+		name6 string
+
+		Addr *net.TCPAddr
+
+		Map map[string]int
+	}{
+		Name:  "name_value",
+		Name2: "name2_value",
+		Name4: strP("name_value4"),
+		Addr: &net.TCPAddr{
+			IP: net.ParseIP("127.0.0.1"),
+		},
+		name6: "name6_value",
+		Map:   map[string]int{"test": 15},
+	}
+}
+
+// NewDiffTypesCfg returns a test configuration for different types parsing.
+func NewDiffTypesCfg() *struct {
+	StringValue      string
+	ByteValue        byte
+	StringSliceValue []string
+	BoolSliceValue   []bool
+	CounterValue     types.Counter
+	RegexpValue      *regexp.Regexp
+	FuncValue        func() // will be ignored
+	MapInt8Bool      map[int8]bool
+	MapInt16Int8     map[int16]int8
+	MapStringInt64   map[string]int64
+	MapStringString  map[string]string
+} {
+	return &struct {
+		StringValue      string
+		ByteValue        byte
+		StringSliceValue []string
+		BoolSliceValue   []bool
+		CounterValue     types.Counter
+		RegexpValue      *regexp.Regexp
+		FuncValue        func() // will be ignored
+		MapInt8Bool      map[int8]bool
+		MapInt16Int8     map[int16]int8
+		MapStringInt64   map[string]int64
+		MapStringString  map[string]string
+	}{
+		StringValue:      "string",
+		ByteValue:        10,
+		StringSliceValue: []string{},
+		BoolSliceValue:   []bool{},
+		CounterValue:     10,
+		RegexpValue:      &regexp.Regexp{},
+		MapStringInt64:   map[string]int64{"test": 888},
+		MapStringString:  map[string]string{"test": "test-val"},
+	}
+}
+
+// NewNestedCfg returns a test configuration for nested structs parsing.
+func NewNestedCfg() *NestedCfg {
+	return &NestedCfg{
+		Sub: Sub{
+			Name:  "name_value",
+			Name2: "name2_value",
+			SUB2: &struct {
+				Name4 string
+				Name5 string `env:"name_five"`
+			}{
+				Name4: "name4_value",
+			},
+		},
+	}
+}
+
+// NewDescCfg returns a test configuration for description tags.
+func NewDescCfg() *struct {
+	Name  string `desc:"name description"`
+	Name2 string `description:"name2 description"`
+} {
+	return &struct {
+		Name  string `desc:"name description"`
+		Name2 string `description:"name2 description"`
+	}{}
+}
+
+// NewAnonymousCfg returns a test configuration for anonymous structs.
+func NewAnonymousCfg() *struct {
+	Name1 string
+	Simple
+} {
+	return &struct {
+		Name1 string
+		Simple
+	}{
+		Simple: Simple{
+			Name: "name_value",
+		},
+	}
+}
+
+type NestedCfg struct {
+	Sub Sub
+}
+
+type Sub struct {
+	Name  string `desc:"name description"`
+	Name2 string `env:"NAME_TWO"`
+	Name3 string `env:"~NAME_THREE"       flag:"~name3"`
+	SUB2  *struct {
+		Name4 string
+		Name5 string `env:"name_five"`
+	}
+}
+
+type Simple struct {
+	Name string
+}
+
+func strP(value string) *string {
+	return &value
 }

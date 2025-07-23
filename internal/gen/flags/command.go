@@ -101,7 +101,7 @@ func command(parentCtx *context, tag *parser.MultiTag, val reflect.Value) (bool,
 	}
 
 	// Get a guaranteed non-nil pointer to the struct value.
-	ptrVal := ensureAddr(val)
+	ptrVal := parser.EnsureAddr(val)
 	data := ptrVal.Interface()
 
 	// Always populate the maximum amount of information

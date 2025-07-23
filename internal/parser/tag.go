@@ -160,7 +160,7 @@ func parseBaseAttributes(flagTags *MultiTag, flag *Flag, options *Opts) (skip, i
 	}
 
 	// Requirements
-	if required, _ := flagTags.Get("required"); !isStringFalsy(required) {
+	if required, _ := flagTags.Get("required"); !IsStringFalsy(required) {
 		flag.Required = true
 	}
 
@@ -283,7 +283,8 @@ func hasOption(options []string, option string) bool {
 	return slices.Contains(options, option)
 }
 
-func isStringFalsy(s string) bool {
+// IsStringFalsy returns true if a string is considered "falsy" (empty, "false", "no", or "0").
+func IsStringFalsy(s string) bool {
 	return s == "" || s == "false" || s == "no" || s == "0"
 }
 
