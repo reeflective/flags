@@ -22,7 +22,7 @@ func positionals(ctx *context, stag *parser.MultiTag, val reflect.Value) (bool, 
 	// with their own requirements, and references to their values.
 	positionals, err := positional.ScanArgs(val, stag, parser.CopyOpts(ctx.opts))
 	if err != nil || positionals == nil {
-		return true, fmt.Errorf("failed to scan positional arguments: %w", err)
+		return true, err
 	}
 
 	// Finally, assemble all the parsers into our cobra Args function.

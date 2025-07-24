@@ -83,7 +83,7 @@ func TestCommandInline(t *testing.T) {
 	}{}
 
 	// Commands are, by default, marked TraverseChildren = true
-	root := newCommandWithArgs(&opts, []string{"-v", "cmd", "-g"})
+	root, err := newCommandWithArgs(&opts, []string{"-v", "cmd", "-g"})
 	cmd, err := root.ExecuteC()
 
 	test := assert.New(t)
@@ -109,7 +109,7 @@ func TestCommandInlineMulti(t *testing.T) {
 		C2 testCommand `command:"c2"`
 	}{}
 
-	root := newCommandWithArgs(&opts, []string{"-v", "c2", "-g"})
+	root, err := newCommandWithArgs(&opts, []string{"-v", "c2", "-g"})
 	cmd, err := root.ExecuteC()
 
 	test := assert.New(t)
@@ -135,7 +135,7 @@ func TestCommandFlagOrderFail(t *testing.T) {
 	}{}
 
 	// Commands are, by default, marked TraverseChildren = true
-	root := newCommandWithArgs(&opts, []string{"-v", "-g", "cmd"})
+	root, err := newCommandWithArgs(&opts, []string{"-v", "-g", "cmd"})
 	cmd, err := root.ExecuteC()
 
 	pt := assert.New(t)
@@ -154,7 +154,7 @@ func TestCommandFlagOrderSuccess(t *testing.T) {
 		Command testCommand `command:"cmd"`
 	}{}
 
-	root := newCommandWithArgs(&opts, []string{"-v", "cmd", "-g"})
+	root, err := newCommandWithArgs(&opts, []string{"-v", "cmd", "-g"})
 	cmd, err := root.ExecuteC()
 
 	pt := assert.New(t)
@@ -176,7 +176,7 @@ func TestCommandFlagPersistentSuccess(t *testing.T) {
 		Command testCommand `command:"cmd"`
 	}{}
 
-	root := newCommandWithArgs(&cmdData, []string{"cmd", "-v", "-g"})
+	root, err := newCommandWithArgs(&cmdData, []string{"cmd", "-v", "-g"})
 	cmd, err := root.ExecuteC()
 
 	pt := assert.New(t)
@@ -201,7 +201,7 @@ func TestCommandFlagPersistentFail(t *testing.T) {
 		Command testCommand `command:"cmd"`
 	}{}
 
-	root := newCommandWithArgs(&cmdData, []string{"-p", "cmd", "-v", "-g"})
+	root, err := newCommandWithArgs(&cmdData, []string{"-p", "cmd", "-v", "-g"})
 	cmd, err := root.ExecuteC()
 
 	pt := require.New(t)
@@ -224,7 +224,7 @@ func TestCommandFlagOverrideParent(t *testing.T) {
 		Command root `command:"cmd"` // Has the same -v flag
 	}{}
 
-	root := newCommandWithArgs(&opts, []string{"cmd", "-v"})
+	root, err := newCommandWithArgs(&opts, []string{"cmd", "-v"})
 	cmd, err := root.ExecuteC()
 
 	pt := assert.New(t)
@@ -247,7 +247,7 @@ func TestCommandFlagOverrideChild(t *testing.T) {
 		Command root `command:"cmd"` // Has the same -v flag
 	}{}
 
-	root := newCommandWithArgs(&opts, []string{"-v", "cmd"})
+	root, err := newCommandWithArgs(&opts, []string{"-v", "cmd"})
 	cmd, err := root.ExecuteC()
 
 	test := assert.New(t)
@@ -282,7 +282,7 @@ func TestCommandAdd(t *testing.T) {
 	t.Parallel()
 
 	rootData := root{}
-	root := newCommandWithArgs(&rootData, []string{"-v", "c1", "-p", "-g"})
+	root, err := newCommandWithArgs(&rootData, []string{"-v", "c1", "-p", "-g"})
 
 	// Binding checks
 	test := assert.New(t)
@@ -312,12 +312,12 @@ func TestSubcommandsOptional(t *testing.T) {
 	t.Parallel()
 
 	rootData := optionalCommandsRoot{}
-	root := newCommandWithArgs(&rootData, []string{"c1"})
+	root, err := newCommandWithArgs(&rootData, []string{"c1"})
 
 	test := assert.New(t)
 	test.NotNil(root.RunE)
 
-	err := root.Execute()
+	err = root.Execute()
 	test.NoError(err)
 }
 
@@ -328,13 +328,13 @@ func TestSubcommandsRequiredUsage(t *testing.T) {
 	t.Parallel()
 
 	rootData := optionalCommandsRoot{}
-	root := newCommandWithArgs(&rootData, []string{"c2"})
+	root, err := newCommandWithArgs(&rootData, []string{"c2"})
 
 	test := assert.New(t)
 	test.NotNil(root.RunE)
 
 	// No error since help usage printed does not return an error.
-	err := root.Execute()
+	err = root.Execute()
 	test.NoError(err)
 
 	// And error since invoked command does not exist

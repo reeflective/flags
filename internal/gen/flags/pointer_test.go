@@ -62,7 +62,7 @@ func TestPointerPrimitiveFlags(t *testing.T) {
 		"-m", "k1:2", "-m", "k2:-5",
 	}
 
-	root := newCommandWithArgs(&data, args)
+	root, err := newCommandWithArgs(&data, args)
 	cmd, err := root.ExecuteC()
 
 	test := assert.New(t)
@@ -85,7 +85,7 @@ func TestPointerGroup(t *testing.T) {
 		Group *pointerGroup `group:"Group Options"`
 	}{}
 
-	root := newCommandWithArgs(&opts, []string{"-v"})
+	root, err := newCommandWithArgs(&opts, []string{"-v"})
 	cmd, err := root.ExecuteC()
 
 	test := assert.New(t)
@@ -101,7 +101,7 @@ func TestDoNotChangeNonTaggedFields(t *testing.T) {
 	t.Parallel()
 
 	opts := pointerGroup{}
-	root := newCommandWithArgs(&opts, []string{"-v"})
+	root, err := newCommandWithArgs(&opts, []string{"-v"})
 	cmd, err := root.ExecuteC()
 
 	test := assert.New(t)

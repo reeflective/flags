@@ -41,6 +41,11 @@ func ScanArgs(val reflect.Value, stag *parser.MultiTag, opts ...parser.OptFunc) 
 		}
 	}
 
+	// After scanning all fields, validate the configuration.
+	if err := args.validateGreedySlices(); err != nil {
+		return nil, err
+	}
+
 	// Depending on our position and type, we reset the maximum
 	// number of words allowed for this argument, and update the
 	// counter that will be used by handlers to sync their use of words.
@@ -194,24 +199,89 @@ func parseArgsNumRequired(fieldTag parser.MultiTag) (required, maximum int, set 
 	return required, maximum, set
 }
 
-// adjustMaximums analyzes the position of a positional argument field,
-// and adjusts its maximum so that handlers can work on them correctly.
+// validateGreedySlices checks for invalid positional argument configurations where
+// a "greedy" slice (one with no maximum) is followed by another slice, which
+// would be impossible to parse.
+func (args *Args) validateGreedySlices() error {
+	var greedySliceFound bool
+	var greedySliceName string
+
+	for _, arg := range args.slots {
+		isSlice := arg.Value.Type().Kind() == reflect.Slice || arg.Value.Type().Kind() == reflect.Map
+
+		// If we have already found a greedy slice, and we encounter another
+		// slice of any kind, it's an error because it's shadowed.
+		if greedySliceFound && isSlice && arg.Maximum == -1 {
+			return args.errorSliceShadowing(arg.Name, greedySliceName)
+		}
+
+		// Check if the current argument is a greedy slice.
+		if isSlice && arg.Maximum == -1 {
+			greedySliceFound = true
+			greedySliceName = arg.Name
+		}
+	}
+
+	return nil
+}
+
+// errorSliceShadowing formats an error indicating that a greedy positional
+// slice is making a subsequent greedy slice unreachable.
+func (args *Args) errorSliceShadowing(shadowingArgName, shadowedArgName string) error {
+	details := fmt.Sprintf("positional `%s` is shadowed by `%s`, which is a greedy slice",
+		shadowedArgName,
+		shadowingArgName)
+
+	return fmt.Errorf("%w: %s", errors.ErrPositionalShadowing, details)
+}
+
+// adjustMaximums is a new version of adjustMaximums.
+// It constrains greedy slices that are followed by other greedy slices.
 func (args *Args) adjustMaximums() {
+	args.constrainGreedySlices()
+	args.applyDefaultAdjustments()
+}
+
+// constrainGreedySlices iterates through the positional arguments and constrains any
+// greedy slice that is followed by another greedy slice by setting its maximum to its minimum.
+func (args *Args) constrainGreedySlices() {
+	for pos, arg := range args.slots {
+		// We only care about slices that are currently "greedy" (no max set).
+		isSlice := arg.Value.Type().Kind() == reflect.Slice || arg.Value.Type().Kind() == reflect.Map
+		if !isSlice || arg.Maximum != -1 {
+			continue
+		}
+
+		// Look ahead to see if this greedy slice is followed by ANOTHER greedy slice.
+		for j := pos + 1; j < len(args.slots); j++ {
+			nextArg := args.slots[j]
+			nextIsSlice := nextArg.Value.Type().Kind() == reflect.Slice || nextArg.Value.Type().Kind() == reflect.Map
+
+			// If the next slice is ALSO greedy (max == -1), then the current one must be constrained.
+			if nextIsSlice && nextArg.Maximum == -1 && nextArg.Minimum > 0 {
+				arg.Maximum = arg.Minimum
+
+				break // The current arg is now constrained, move to the next one in the outer loop.
+			}
+		}
+	}
+}
+
+// applyDefaultAdjustments handles miscellaneous adjustments for positional arguments,
+// such as setting default maximums for non-slice fields and handling untagged
+// required slices.
+func (args *Args) applyDefaultAdjustments() {
 	for _, arg := range args.slots {
 		val := arg.Value
 		isSlice := val.Type().Kind() == reflect.Slice ||
 			val.Type().Kind() == reflect.Map
 
-		// First, the maximum index at which we should start
-		// parsing words can never be smaller than the minimum one
 		if arg.StartMax < arg.StartMin {
 			arg.StartMax = arg.StartMin
 		}
 
-		// The maximum is not left to -1 if the field is unique.
 		if arg.Maximum == -1 && !isSlice {
 			arg.Maximum = 1
-
 			if args.allRequired {
 				arg.Minimum = 1
 			}
@@ -223,16 +293,4 @@ func (args *Args) adjustMaximums() {
 			arg.Minimum = 1
 		}
 	}
-}
-
-func (args *Args) errorSliceShadowing(arg string, index int) error {
-	shadowed := ""
-	for _, arg := range args.slots[index+1:] {
-		shadowed += fmt.Sprintf(" `%s`,", arg.Name)
-	}
-
-	shadowed = strings.TrimSuffix(shadowed, ",")
-	details := fmt.Sprintf("positional `%s` is a slice with no maximum, which will shadow %s", arg, shadowed)
-
-	return fmt.Errorf("%w: %s", errors.ErrPositionalShadowing, details)
 }

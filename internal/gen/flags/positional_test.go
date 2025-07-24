@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/spf13/cobra"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // Tests partially ported from github.com/jessevdk/go-flags/arg_test.go,
@@ -22,6 +22,7 @@ import (
 // be identical to TestPositionalAllRequired.
 func TestAllOptional(t *testing.T) {
 	t.Parallel()
+	test := require.New(t)
 
 	opts := struct {
 		Value bool `short:"v"`
@@ -33,15 +34,16 @@ func TestAllOptional(t *testing.T) {
 		} `positional-args:"yes"`
 	}{}
 
-	cmd := newCommandWithArgs(&opts, []string{"10", "arg_test.go", "a", "b"})
-	cmd.Args(cmd, []string{"10", "arg_test.go", "a", "b"})
-	err := cmd.Execute()
+	cmd, err := newCommandWithArgs(&opts, []string{"10", "arg_test.go", "a", "b"})
+	test.NoErrorf(err, "Unexpected error: %v", err)
 
-	pt := assert.New(t)
-	pt.NoErrorf(err, "Unexpected error: %v", err)
-	pt.Equal(10, opts.Positional.Command, "Expected opts.Positional.Command to match")
-	pt.Equal("arg_test.go", opts.Positional.Filename, "Expected opts.Positional.Filename to match")
-	pt.Equal([]string{"a", "b"}, opts.Positional.Rest, "Expected opts.Positional.Rest to match")
+	cmd.Args(cmd, []string{"10", "arg_test.go", "a", "b"})
+	err = cmd.Execute()
+
+	test.NoErrorf(err, "Unexpected error: %v", err)
+	test.Equal(10, opts.Positional.Command, "Expected opts.Positional.Command to match")
+	test.Equal("arg_test.go", opts.Positional.Filename, "Expected opts.Positional.Filename to match")
+	test.Equal([]string{"a", "b"}, opts.Positional.Rest, "Expected opts.Positional.Rest to match")
 }
 
 // TestStructRequiredWithRestFail checks positionals without per-field tag minimum
@@ -49,6 +51,7 @@ func TestAllOptional(t *testing.T) {
 // fields required with at least one word each, except the last it it's a slice.
 func TestAllRequired(t *testing.T) {
 	t.Parallel()
+	test := require.New(t)
 
 	opts := struct {
 		Value bool `short:"v"`
@@ -60,17 +63,19 @@ func TestAllRequired(t *testing.T) {
 		} `positional-args:"yes" required:"yes"`
 	}{}
 
-	cmd := newCommandWithArgs(&opts, []string{"10"})
-	err := cmd.Args(cmd, []string{"10"})
+	cmd, err := newCommandWithArgs(&opts, []string{"10"})
+	test.NoErrorf(err, "Unexpected error: %v", err)
 
-	pt := assert.New(t)
-	pt.ErrorContains(err, "required argument: `Filename` and `Rest (at least 1 argument)` were not provided")
+	err = cmd.Args(cmd, []string{"10"})
+
+	test.ErrorContains(err, "required argument: `Filename` and `Rest (at least 1 argument)` were not provided")
 }
 
 // TestRequiredRestUndefinedFail checks that fields marked with a non-numeric
 // (and non-nil, or "not falsy"), will correctly error out.
 func TestRequiredRestUndefinedFail(t *testing.T) {
 	t.Parallel()
+	test := require.New(t)
 
 	opts := struct {
 		Value bool `short:"v"`
@@ -80,11 +85,12 @@ func TestRequiredRestUndefinedFail(t *testing.T) {
 		} `positional-args:"yes"`
 	}{}
 
-	cmd := newCommandWithArgs(&opts, []string{})
-	err := cmd.Args(cmd, []string{})
+	cmd, err := newCommandWithArgs(&opts, []string{})
+	test.NoErrorf(err, "Unexpected error: %v", err)
 
-	pt := assert.New(t)
-	pt.ErrorContains(err,
+	err = cmd.Args(cmd, []string{})
+
+	test.ErrorContains(err,
 		"`Rest (at least 1 argument)` was not provided")
 }
 
@@ -92,6 +98,7 @@ func TestRequiredRestUndefinedFail(t *testing.T) {
 // (and non-nil, or "not falsy"), will accept and parse only one argument word.
 func TestRequiredRestUndefinedPass(t *testing.T) {
 	t.Parallel()
+	test := require.New(t)
 
 	opts := struct {
 		Value bool `short:"v"`
@@ -101,12 +108,13 @@ func TestRequiredRestUndefinedPass(t *testing.T) {
 		} `positional-args:"yes"`
 	}{}
 
-	cmd := newCommandWithArgs(&opts, []string{"rest1"})
-	err := cmd.Args(cmd, []string{"rest1"})
+	cmd, err := newCommandWithArgs(&opts, []string{"rest1"})
+	test.NoErrorf(err, "Unexpected error: %v", err)
 
-	pt := assert.New(t)
-	pt.NoErrorf(err, "Unexpected error: %v", err)
-	pt.Equal("rest1", opts.Positional.Rest[0],
+	err = cmd.Args(cmd, []string{"rest1"})
+
+	test.NoErrorf(err, "Unexpected error: %v", err)
+	test.Equal("rest1", opts.Positional.Rest[0],
 		"Expected opts.Positional.Rest[0] to match")
 }
 
@@ -115,6 +123,7 @@ func TestRequiredRestUndefinedPass(t *testing.T) {
 // fail if they are not given the minimum words they want.
 func TestRequiredRestQuantityFail(t *testing.T) {
 	t.Parallel()
+	test := require.New(t)
 
 	opts := struct {
 		Value bool `short:"v"`
@@ -124,11 +133,12 @@ func TestRequiredRestQuantityFail(t *testing.T) {
 		} `positional-args:"yes"`
 	}{}
 
-	cmd := newCommandWithArgs(&opts, []string{"rest1"})
-	err := cmd.Args(cmd, []string{"rest1"})
+	cmd, err := newCommandWithArgs(&opts, []string{"rest1"})
+	test.NoErrorf(err, "Unexpected error: %v", err)
 
-	pt := assert.New(t)
-	pt.ErrorContains(err,
+	err = cmd.Args(cmd, []string{"rest1"})
+
+	test.ErrorContains(err,
 		"`Rest (at least 2 arguments, but got only 1)` was not provided")
 }
 
@@ -136,6 +146,7 @@ func TestRequiredRestQuantityFail(t *testing.T) {
 // quantity will accept and parse at minimum the specified number.
 func TestRequiredRestQuantityPass(t *testing.T) {
 	t.Parallel()
+	test := require.New(t)
 
 	opts := struct {
 		Value bool `short:"v"`
@@ -145,14 +156,15 @@ func TestRequiredRestQuantityPass(t *testing.T) {
 		} `positional-args:"yes"`
 	}{}
 
-	cmd := newCommandWithArgs(&opts, []string{"rest1", "rest2", "rest3"})
-	err := cmd.Args(cmd, []string{"rest1", "rest2", "rest3"})
+	cmd, err := newCommandWithArgs(&opts, []string{"rest1", "rest2", "rest3"})
+	test.NoErrorf(err, "Unexpected error: %v", err)
 
-	pt := assert.New(t)
-	pt.NoErrorf(err, "Unexpected error: %v", err)
-	pt.Equal("rest1", opts.Positional.Rest[0])
-	pt.Equal("rest2", opts.Positional.Rest[1])
-	pt.Equal("rest3", opts.Positional.Rest[2])
+	err = cmd.Args(cmd, []string{"rest1", "rest2", "rest3"})
+
+	test.NoErrorf(err, "Unexpected error: %v", err)
+	test.Equal("rest1", opts.Positional.Rest[0])
+	test.Equal("rest2", opts.Positional.Rest[1])
+	test.Equal("rest3", opts.Positional.Rest[2])
 }
 
 // TestRequiredRestRangeFail checks that the last positional field
@@ -160,6 +172,7 @@ func TestRequiredRestQuantityPass(t *testing.T) {
 // consumed some, up to their maximum allowed.
 func TestRequiredRestRangeFail(t *testing.T) {
 	t.Parallel()
+	test := require.New(t)
 
 	opts := struct {
 		Value bool `short:"v"`
@@ -169,11 +182,12 @@ func TestRequiredRestRangeFail(t *testing.T) {
 		} `positional-args:"yes"`
 	}{}
 
-	cmd := newCommandWithArgs(&opts, []string{"rest1", "rest2", "rest3"})
-	err := cmd.Args(cmd, []string{"rest1", "rest2", "rest3"})
+	cmd, err := newCommandWithArgs(&opts, []string{"rest1", "rest2", "rest3"})
+	test.NoErrorf(err, "Unexpected error: %v", err)
 
-	pt := assert.New(t)
-	pt.ErrorContains(err,
+	err = cmd.Args(cmd, []string{"rest1", "rest2", "rest3"})
+
+	test.ErrorContains(err,
 		"`Rest (at most 2 arguments, but got 3)` was not provided")
 }
 
@@ -186,6 +200,7 @@ func TestRequiredRestRangeFail(t *testing.T) {
 // an invalid 0-0 is a good test case candidate for this.
 func TestRequiredRestRangeEmptyFail(t *testing.T) {
 	t.Parallel()
+	test := require.New(t)
 
 	opts := struct {
 		Value bool `short:"v"`
@@ -195,11 +210,12 @@ func TestRequiredRestRangeEmptyFail(t *testing.T) {
 		} `positional-args:"yes"`
 	}{}
 
-	cmd := newCommandWithArgs(&opts, []string{"some", "thing"})
-	err := cmd.Args(cmd, []string{"some", "thing"})
+	cmd, err := newCommandWithArgs(&opts, []string{"some", "thing"})
+	test.NoErrorf(err, "Unexpected error: %v", err)
 
-	pt := assert.New(t)
-	pt.ErrorContains(err, "`Rest (zero arguments)` was not provided")
+	err = cmd.Args(cmd, []string{"some", "thing"})
+
+	test.ErrorContains(err, "`Rest (zero arguments)` was not provided")
 }
 
 //
@@ -210,6 +226,7 @@ func TestRequiredRestRangeEmptyFail(t *testing.T) {
 // that is not the last positional struct field will parse only one argument.
 func TestOptionalNonRestRangeMinimumPass(t *testing.T) {
 	t.Parallel()
+	test := require.New(t)
 
 	opts := struct {
 		Value bool `short:"v"`
@@ -221,14 +238,15 @@ func TestOptionalNonRestRangeMinimumPass(t *testing.T) {
 		} `positional-args:"yes" required:"yes"`
 	}{}
 
-	cmd := newCommandWithArgs(&opts, []string{"first", "second", "third"})
-	err := cmd.Args(cmd, []string{"first", "second", "third"})
+	cmd, err := newCommandWithArgs(&opts, []string{"first", "second", "third"})
+	test.NoErrorf(err, "Unexpected error: %v", err)
 
-	pt := assert.New(t)
-	pt.NoErrorf(err, "Unexpected error: %v", err)
-	pt.Equal([]string{"first"}, opts.Positional.NonRest)
-	pt.Equal("second", opts.Positional.Second)
-	pt.Equal("third", opts.Positional.Third)
+	err = cmd.Args(cmd, []string{"first", "second", "third"})
+
+	test.NoErrorf(err, "Unexpected error: %v", err)
+	test.Equal([]string{"first"}, opts.Positional.NonRest)
+	test.Equal("second", opts.Positional.Second)
+	test.Equal("third", opts.Positional.Third)
 }
 
 // TestRequiredNonRestRangeExcessPass checks that a slice of positionals
@@ -239,6 +257,7 @@ func TestOptionalNonRestRangeMinimumPass(t *testing.T) {
 // words to satisfy our requirements.
 func TestRequiredNonRestRangeExcessPass(t *testing.T) {
 	t.Parallel()
+	test := require.New(t)
 
 	opts := struct {
 		Value bool `short:"v"`
@@ -251,14 +270,15 @@ func TestRequiredNonRestRangeExcessPass(t *testing.T) {
 	}{}
 
 	args := []string{"nonrest1", "nonrest2", "second", "third", "lambda"}
-	cmd := newCommandWithArgs(&opts, args)
-	err := cmd.Args(cmd, args)
+	cmd, err := newCommandWithArgs(&opts, args)
+	test.NoErrorf(err, "Unexpected error: %v", err)
 
-	pt := assert.New(t)
-	pt.NoErrorf(err, "Unexpected error: %v", err)
-	pt.Equal([]string{"nonrest1", "nonrest2"}, opts.Positional.NonRest)
-	pt.Equal("second", opts.Positional.Second)
-	pt.Equal("third", opts.Positional.Third)
+	err = cmd.Args(cmd, args)
+
+	test.NoErrorf(err, "Unexpected error: %v", err)
+	test.Equal([]string{"nonrest1", "nonrest2"}, opts.Positional.NonRest)
+	test.Equal("second", opts.Positional.Second)
+	test.Equal("third", opts.Positional.Third)
 }
 
 // TestRequiredNonRestRangeFail checks that a slice of positionals
@@ -267,6 +287,7 @@ func TestRequiredNonRestRangeExcessPass(t *testing.T) {
 // or more of the next positional fields to raise an error.
 func TestRequiredNonRestRangeFail(t *testing.T) {
 	t.Parallel()
+	test := require.New(t)
 
 	opts := struct {
 		Value bool `short:"v"`
@@ -279,39 +300,41 @@ func TestRequiredNonRestRangeFail(t *testing.T) {
 	}{}
 
 	args := []string{"nonrest1", "nonrest2", "second"}
-	cmd := newCommandWithArgs(&opts, args)
-	err := cmd.Args(cmd, args)
+	cmd, err := newCommandWithArgs(&opts, args)
+	test.NoErrorf(err, "Unexpected error: %v", err)
 
-	pt := assert.New(t)
-	pt.ErrorContains(err, "`Third` was not provided")
+	err = cmd.Args(cmd, args)
+
+	test.ErrorContains(err, "`Third` was not provided")
 }
 
-// TestMixedSlicesMaxIsMinDefault checks that a struct containing
-// at least two slices for which a single numeric value has been specified,
-// will automatically set their maximum to the same value, thus correctly
-// parsing the words that are given: just enough for all named positionals.
-func TestMixedSlicesMaxIsMinDefault(t *testing.T) {
+// TestMixedSlicesMaximumPass checks that a struct containing
+// at least two slices specifying their minimum/maximum range
+// will correctly be scanned and will correctly pass their arguments.
+func TestMixedSlicesMaximumPass(t *testing.T) {
 	t.Parallel()
+	test := require.New(t)
 
 	opts := struct {
 		Value bool `short:"v"`
 
 		Positional struct {
-			FirstList  []string `required:"2"`
-			SecondList []string `required:"2"`
+			FirstList  []string `required:"2-2"`
+			SecondList []string `required:"2-2"`
 			Third      string
 		} `positional-args:"yes" required:"yes"`
 	}{}
 
 	args := []string{"first1", "first2", "second1", "second2", "third"}
-	cmd := newCommandWithArgs(&opts, args)
-	err := cmd.Args(cmd, args)
+	cmd, err := newCommandWithArgs(&opts, args)
+	test.NoErrorf(err, "Unexpected error: %v", err)
 
-	pt := assert.New(t)
-	pt.NoErrorf(err, "Unexpected error: %v", err)
-	pt.Equal([]string{"first1", "first2"}, opts.Positional.FirstList)
-	pt.Equal([]string{"second1", "second2"}, opts.Positional.SecondList)
-	pt.Equal("third", opts.Positional.Third)
+	err = cmd.Args(cmd, args)
+
+	test.NoErrorf(err, "Unexpected error: %v", err)
+	test.Equal([]string{"first1", "first2"}, opts.Positional.FirstList)
+	test.Equal([]string{"second1", "second2"}, opts.Positional.SecondList)
+	test.Equal("third", opts.Positional.Third)
 }
 
 // TestMixedSlicesNonRestPass checks that two slices of positionals
@@ -320,6 +343,7 @@ func TestMixedSlicesMaxIsMinDefault(t *testing.T) {
 // This test only provides the minimum valid number of argument words.
 func TestMixedSlicesMinimumNonRestPass(t *testing.T) {
 	t.Parallel()
+	test := require.New(t)
 
 	opts := struct {
 		Value bool `short:"v"`
@@ -332,14 +356,15 @@ func TestMixedSlicesMinimumNonRestPass(t *testing.T) {
 	}{}
 
 	args := []string{"first1", "first2", "second1", "third"}
-	cmd := newCommandWithArgs(&opts, args)
-	err := cmd.Args(cmd, args)
+	cmd, err := newCommandWithArgs(&opts, args)
+	test.NoErrorf(err, "Unexpected error: %v", err)
 
-	pt := assert.New(t)
-	pt.NoErrorf(err, "Unexpected error: %v", err)
-	pt.Equal([]string{"first1", "first2"}, opts.Positional.FirstList)
-	pt.Equal([]string{"second1"}, opts.Positional.SecondList)
-	pt.Equal("third", opts.Positional.Third)
+	err = cmd.Args(cmd, args)
+
+	test.NoErrorf(err, "Unexpected error: %v", err)
+	test.Equal([]string{"first1", "first2"}, opts.Positional.FirstList)
+	test.Equal([]string{"second1"}, opts.Positional.SecondList)
+	test.Equal("third", opts.Positional.Third)
 }
 
 // TestMixedSlicesNonRestFail checks that two slices of positionals,
@@ -348,6 +373,7 @@ func TestMixedSlicesMinimumNonRestPass(t *testing.T) {
 // an error.
 func TestMixedSlicesMinimumNonRestFail(t *testing.T) {
 	t.Parallel()
+	test := require.New(t)
 
 	opts := struct {
 		Value bool `short:"v"`
@@ -360,11 +386,12 @@ func TestMixedSlicesMinimumNonRestFail(t *testing.T) {
 	}{}
 
 	args := []string{"first1", "first2", "second1"}
-	cmd := newCommandWithArgs(&opts, args)
-	err := cmd.Args(cmd, args)
+	cmd, err := newCommandWithArgs(&opts, args)
+	test.NoErrorf(err, "Unexpected error: %v", err)
 
-	pt := assert.New(t)
-	pt.ErrorContains(err, "`Third` was not provided")
+	err = cmd.Args(cmd, args)
+
+	test.ErrorContains(err, "`Third` was not provided")
 }
 
 // TestMixedSlicesLastHasPriority checks that 2 slices of positionals,
@@ -379,6 +406,7 @@ func TestMixedSlicesMinimumNonRestFail(t *testing.T) {
 // than the total minimum required, but less than the "max".
 func TestMixedSlicesLastHasPriority(t *testing.T) {
 	t.Parallel()
+	test := require.New(t)
 
 	opts := struct {
 		Value bool `short:"v"`
@@ -392,51 +420,65 @@ func TestMixedSlicesLastHasPriority(t *testing.T) {
 	}{}
 
 	args := []string{"first1", "first2", "second1", "third1", "third2", "single"}
-	cmd := newCommandWithArgs(&opts, args)
-	err := cmd.Args(cmd, args)
+	cmd, err := newCommandWithArgs(&opts, args)
+	test.NoErrorf(err, "Unexpected error: %v", err)
 
-	pt := assert.New(t)
-	pt.NoErrorf(err, "Unexpected error: %v", err)
-	pt.Equal([]string{"first1", "first2", "second1"}, opts.Positional.FirstList)
-	pt.Equal([]string{"third1"}, opts.Positional.SecondList)
-	pt.Equal([]string{"third2"}, opts.Positional.ThirdList)
-	pt.Equal("single", opts.Positional.Third)
+	err = cmd.Args(cmd, args)
+
+	test.NoErrorf(err, "Unexpected error: %v", err)
+	test.Equal([]string{"first1", "first2", "second1"}, opts.Positional.FirstList)
+	test.Equal([]string{"third1"}, opts.Positional.SecondList)
+	test.Equal([]string{"third2"}, opts.Positional.ThirdList)
+	test.Equal("single", opts.Positional.Third)
+}
+
+// TestRequiredRestRangeHasPriority checks that the last slice of positional
+// is always correctly filled before the first one in the struct.
+func TestRequiredRestRangeHasPriority(t *testing.T) {
+	t.Parallel()
+	test := require.New(t)
+
+	opts := struct {
+		Value bool `short:"v"`
+
+		Positional struct {
+			First  []string
+			Second []string `required:"2-2"`
+		} `positional-args:"yes"`
+	}{}
+
+	args := []string{"first1", "first2", "second1", "second2"}
+	cmd, err := newCommandWithArgs(&opts, args)
+	test.NoErrorf(err, "Unexpected error: %v", err)
+
+	err = cmd.Args(cmd, args)
+
+	test.NoErrorf(err, "Unexpected error: %v", err)
+	test.Equal([]string{"first1", "first2"}, opts.Positional.First)
+	test.Equal([]string{"second1", "second2"}, opts.Positional.Second)
 }
 
 // TestTwoInfiniteSlicesExplicitFail checks that if a struct containing
 // at least two slices that are explicitly marked infinite (no maximum),
 // will return an error next to the cobra command being returned.
-// func TestTwoInfiniteSlicesExplicitFail(t *testing.T) {
-// 	t.Parallel()
-//
-// 	if os.Getenv("TestTwoInfiniteSlicesExplicitFail") == "1" {
-// 		opts := struct {
-// 			Value bool `short:"v"`
-//
-// 			Positional struct {
-// 				FirstList  []string
-// 				SecondList []string
-// 				ThirdList  []string `required:"1-2"`
-// 				Third      string
-// 			} `positional-args:"yes" required:"yes"`
-// 		}{}
-//
-// 		newCommandWithArgs(&opts, []string{}) // This will fail
-// 		return
-// 	}
-//
-// 	cmd := exec.Command(os.Args[0], "-test.run=TestTwoInfiniteSlicesExplicitFail")
-// 	cmd.Env = append(os.Environ(), "TestTwoInfiniteSlicesExplicitFail=1")
-//
-// 	err := cmd.Run()
-// 	if e, ok := err.(*exec.ExitError); ok && e.Success() {
-// 		t.Fatalf("process ran with err %v, want exit status 1", err)
-// 		return
-// 	}
-//
-// 	pt := assert.New(t)
-// 	pt.NotNilf(err, "Unexpected error: %v", err)
-// }
+func TestTwoInfiniteSlicesExplicitFail(t *testing.T) {
+	t.Parallel()
+	test := require.New(t)
+
+	opts := struct {
+		Value bool `short:"v"`
+
+		Positional struct {
+			FirstList  []string
+			SecondList []string
+			ThirdList  []string `required:"1-2"`
+			Third      string
+		} `positional-args:"yes" required:"yes"`
+	}{}
+
+	_, err := newCommandWithArgs(&opts, []string{})
+	test.EqualError(err, "parse error: positional argument shadows subsequent arguments: positional `FirstList` is shadowed by `SecondList`, which is a greedy slice", "Error mismatch")
+}
 
 //
 // Double dash positionals (more complex cases) --------------------------------------- //
@@ -467,20 +509,22 @@ func (d *doubleDashCommand) Execute(args []string) error {
 // that all remaining arguments after the double dash will be used as retargs.
 func TestPositionalDoubleDashSuccess(t *testing.T) {
 	t.Parallel()
+	test := require.New(t)
 
 	opts := struct {
 		Double doubleDashCommand `command:"double-dash"`
 	}{}
 
 	args := []string{"double-dash", "first1", "first2", "second1", "third1", "--", "third2", "single"}
-	cmd := newCommandWithArgs(&opts, args)
-	_, err := cmd.ExecuteC()
+	cmd, err := newCommandWithArgs(&opts, args)
+	test.NoErrorf(err, "Unexpected error: %v", err)
 
-	pt := assert.New(t)
-	pt.Equal([]string{"first1", "first2"}, opts.Double.Positional.FirstList)
-	pt.Equal([]string{"second1"}, opts.Double.Positional.SecondList)
-	pt.Equal("third1", opts.Double.Positional.Third)
-	pt.NoErrorf(err, "The command returned a retargs error: %v", err)
+	_, err = cmd.ExecuteC()
+
+	test.Equal([]string{"first1", "first2"}, opts.Double.Positional.FirstList)
+	test.Equal([]string{"second1"}, opts.Double.Positional.SecondList)
+	test.Equal("third1", opts.Double.Positional.Third)
+	test.NoErrorf(err, "The command returned a retargs error: %v", err)
 }
 
 // TestPositionalDoubleDashFail checks that a command being fed a sufficient
@@ -488,26 +532,32 @@ func TestPositionalDoubleDashSuccess(t *testing.T) {
 // that required slots cannot be fulfilled, will indeed fail.
 func TestPositionalDoubleDashFail(t *testing.T) {
 	t.Parallel()
+	test := require.New(t)
 
 	opts := struct {
 		Double doubleDashCommand `command:"double-dash"`
 	}{}
 
 	args := []string{"double-dash", "first1", "first2", "--", "second1", "third1", "third2", "single"}
-	cmd := newCommandWithArgs(&opts, args)
-	_, err := cmd.ExecuteC()
+	cmd, err := newCommandWithArgs(&opts, args)
+	test.NoErrorf(err, "Unexpected error: %v", err)
 
-	pt := assert.New(t)
-	pt.ErrorContains(err, "`SecondList (at least 1 argument)` and `Third` were not provided")
+	_, err = cmd.ExecuteC()
+
+	test.ErrorContains(err, "`SecondList (at least 1 argument)` and `Third` were not provided")
 }
 
 //
 // Helpers --------------------------------------------------------------- //
 //
 
-func newCommandWithArgs(data any, args []string) *cobra.Command {
-	cmd, _ := Generate(data) // Generate the command
-	cmd.SetArgs(args)        // And use our args for execution
+func newCommandWithArgs(data any, args []string) (*cobra.Command, error) {
+	cmd, err := Generate(data) // Generate the command
+	if err != nil {
+		return cmd, err
+	}
+
+	cmd.SetArgs(args) // And use our args for execution
 
 	// We don't want the errors to be printed to stdout.
 	cmd.SilenceErrors = true
@@ -520,5 +570,5 @@ func newCommandWithArgs(data any, args []string) *cobra.Command {
 		cmd.Use = ""
 	}
 
-	return cmd
+	return cmd, nil
 }
