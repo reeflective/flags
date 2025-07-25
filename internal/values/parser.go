@@ -10,7 +10,7 @@ import (
 // NewValue creates a new value instance for a flag or positional argument
 // based on its reflect.Value. It uses a tiered strategy to find the best
 // way to handle the type.
-func NewValue(val reflect.Value) Value {
+func NewValue(val reflect.Value, sep, mapSep *string) Value {
 	if val.Kind() == reflect.Ptr && val.IsNil() {
 		val.Set(reflect.New(val.Type().Elem()))
 	}
@@ -21,16 +21,16 @@ func NewValue(val reflect.Value) Value {
 	if v := fromGoFlagsInterfaces(val); v != nil {
 		return v
 	}
-	if v := fromGenerated(val); v != nil {
+	if v := fromGenerated(val, sep); v != nil { // Pass separator
 		return v
 	}
-	if v := fromMap(val); v != nil {
+	if v := fromMap(val, mapSep); v != nil { // Pass map separator
 		return v
 	}
 
 	// Dereference pointers if we need to.
 	if val.Kind() == reflect.Ptr {
-		return NewValue(val.Elem())
+		return NewValue(val.Elem(), sep, mapSep)
 	}
 
 	// Fallback to a reflective parser.
@@ -66,10 +66,10 @@ func fromGoFlagsInterfaces(val reflect.Value) Value {
 }
 
 // fromGenerated checks for types with auto-generated parsers.
-func fromGenerated(val reflect.Value) Value {
+func fromGenerated(val reflect.Value, sep *string) Value {
 	if val.CanAddr() && val.Addr().CanInterface() {
 		addr := val.Addr().Interface()
-		if v := ParseGenerated(addr); v != nil {
+		if v := ParseGenerated(addr, sep); v != nil {
 			return v
 		}
 		if v := ParseGeneratedPtrs(addr); v != nil {
@@ -81,7 +81,7 @@ func fromGenerated(val reflect.Value) Value {
 }
 
 // fromMap handles map types.
-func fromMap(val reflect.Value) Value {
+func fromMap(val reflect.Value, mapSep *string) Value {
 	if val.Kind() != reflect.Map {
 		return nil
 	}
@@ -97,7 +97,7 @@ func fromMap(val reflect.Value) Value {
 
 	if val.CanAddr() && val.Addr().CanInterface() {
 		addr := val.Addr().Interface()
-		if v := ParseGeneratedMap(addr); v != nil {
+		if v := ParseGeneratedMap(addr, mapSep); v != nil {
 			return v
 		}
 	}

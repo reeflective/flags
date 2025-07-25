@@ -64,7 +64,7 @@ func TestValidateValue_IsCumulative(t *testing.T) {
 	v := &validateValue{Value: newStringValue(strP("stringValue"))}
 	require.False(t, v.IsCumulative())
 
-	v = &validateValue{Value: newStringSliceValue(&[]string{})}
+	v = &validateValue{Value: newStringSliceValue(&[]string{}, nil)}
 	require.True(t, v.IsCumulative())
 }
 

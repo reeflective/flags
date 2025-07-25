@@ -45,7 +45,7 @@ func TestParseStruct(t *testing.T) {
 					Name:     "name",
 					EnvName:  "",
 					DefValue: []string{"name_value"},
-					Value:    values.ParseGenerated(&simpleCfg.Name),
+					Value:    values.ParseGenerated(&simpleCfg.Name, nil),
 					Usage:    "name description",
 				},
 				{
@@ -53,7 +53,7 @@ func TestParseStruct(t *testing.T) {
 					Short:      "t",
 					EnvName:    "NAME_TWO",
 					DefValue:   []string{"name2_value"},
-					Value:      values.ParseGenerated(&simpleCfg.Name2),
+					Value:      values.ParseGenerated(&simpleCfg.Name2, nil),
 					Hidden:     true,
 					Deprecated: true,
 				},
@@ -61,25 +61,25 @@ func TestParseStruct(t *testing.T) {
 					Name:     "name3",
 					EnvName:  "NAME_THREE",
 					DefValue: nil,
-					Value:    values.ParseGenerated(&simpleCfg.Name3),
+					Value:    values.ParseGenerated(&simpleCfg.Name3, nil),
 				},
 				{
 					Name:     "name4",
 					EnvName:  "NAME4",
 					DefValue: []string{"name_value4"},
-					Value:    values.ParseGenerated(simpleCfg.Name4),
+					Value:    values.ParseGenerated(simpleCfg.Name4, nil),
 				},
 				{
 					Name:     "addr",
 					EnvName:  "ADDR",
 					DefValue: []string{"127.0.0.1:0"},
-					Value:    values.ParseGenerated(simpleCfg.Addr),
+					Value:    values.ParseGenerated(simpleCfg.Addr, nil),
 				},
 				{
 					Name:     "map",
 					EnvName:  "MAP",
 					DefValue: []string{"map[test:15]"},
-					Value:    values.ParseGeneratedMap(&simpleCfg.Map),
+					Value:    values.ParseGeneratedMap(&simpleCfg.Map, nil),
 				},
 			},
 		},
@@ -92,7 +92,7 @@ func TestParseStruct(t *testing.T) {
 					Name:     "name",
 					EnvName:  "",
 					DefValue: []string{"name_value"},
-					Value:    values.ParseGenerated(&simpleCfg.Name),
+					Value:    values.ParseGenerated(&simpleCfg.Name, nil),
 					Usage:    "name description",
 				},
 				{
@@ -100,7 +100,7 @@ func TestParseStruct(t *testing.T) {
 					Short:      "t",
 					EnvName:    "PP|NAME_TWO",
 					DefValue:   []string{"name2_value"},
-					Value:      values.ParseGenerated(&simpleCfg.Name2),
+					Value:      values.ParseGenerated(&simpleCfg.Name2, nil),
 					Hidden:     true,
 					Deprecated: true,
 				},
@@ -108,25 +108,25 @@ func TestParseStruct(t *testing.T) {
 					Name:     "name3",
 					EnvName:  "PP|NAME_THREE",
 					DefValue: nil,
-					Value:    values.ParseGenerated(&simpleCfg.Name3),
+					Value:    values.ParseGenerated(&simpleCfg.Name3, nil),
 				},
 				{
 					Name:     "name4",
 					EnvName:  "PP|NAME4",
 					DefValue: []string{"name_value4"},
-					Value:    values.ParseGenerated(simpleCfg.Name4),
+					Value:    values.ParseGenerated(simpleCfg.Name4, nil),
 				},
 				{
 					Name:     "addr",
 					EnvName:  "PP|ADDR",
 					DefValue: []string{"127.0.0.1:0"},
-					Value:    values.ParseGenerated(simpleCfg.Addr),
+					Value:    values.ParseGenerated(simpleCfg.Addr, nil),
 				},
 				{
 					Name:     "map",
 					EnvName:  "PP|MAP",
 					DefValue: []string{"map[test:15]"},
-					Value:    values.ParseGeneratedMap(&simpleCfg.Map),
+					Value:    values.ParseGeneratedMap(&simpleCfg.Map, nil),
 				},
 			},
 			expErr: nil,
@@ -140,28 +140,28 @@ func TestParseStruct(t *testing.T) {
 					Name:     "string-value",
 					EnvName:  "STRING_VALUE",
 					DefValue: []string{"string"},
-					Value:    values.ParseGenerated(&diffTypesCfg.StringValue),
+					Value:    values.ParseGenerated(&diffTypesCfg.StringValue, nil),
 					Usage:    "",
 				},
 				{
 					Name:     "byte-value",
 					EnvName:  "BYTE_VALUE",
 					DefValue: []string{"10"},
-					Value:    values.ParseGenerated(&diffTypesCfg.ByteValue),
+					Value:    values.ParseGenerated(&diffTypesCfg.ByteValue, nil),
 					Usage:    "",
 				},
 				{
 					Name:     "string-slice-value",
 					EnvName:  "STRING_SLICE_VALUE",
 					DefValue: []string{"[]"},
-					Value:    values.ParseGenerated(&diffTypesCfg.StringSliceValue),
+					Value:    values.ParseGenerated(&diffTypesCfg.StringSliceValue, nil),
 					Usage:    "",
 				},
 				{
 					Name:     "bool-slice-value",
 					EnvName:  "BOOL_SLICE_VALUE",
 					DefValue: []string{"[]"},
-					Value:    values.ParseGenerated(&diffTypesCfg.BoolSliceValue),
+					Value:    values.ParseGenerated(&diffTypesCfg.BoolSliceValue, nil),
 					Usage:    "",
 				},
 				{
@@ -180,24 +180,24 @@ func TestParseStruct(t *testing.T) {
 				{
 					Name:    "map-int8-bool",
 					EnvName: "MAP_INT8_BOOL",
-					Value:   values.ParseGeneratedMap(&diffTypesCfg.MapInt8Bool),
+					Value:   values.ParseGeneratedMap(&diffTypesCfg.MapInt8Bool, nil),
 				},
 				{
 					Name:    "map-int16-int8",
 					EnvName: "MAP_INT16_INT8",
-					Value:   values.ParseGeneratedMap(&diffTypesCfg.MapInt16Int8),
+					Value:   values.ParseGeneratedMap(&diffTypesCfg.MapInt16Int8, nil),
 				},
 				{
 					Name:     "map-string-int64",
 					EnvName:  "MAP_STRING_INT64",
 					DefValue: []string{"map[test:888]"},
-					Value:    values.ParseGeneratedMap(&diffTypesCfg.MapStringInt64),
+					Value:    values.ParseGeneratedMap(&diffTypesCfg.MapStringInt64, nil),
 				},
 				{
 					Name:     "map-string-string",
 					EnvName:  "MAP_STRING_STRING",
 					DefValue: []string{"map[test:test-val]"},
-					Value:    values.ParseGeneratedMap(&diffTypesCfg.MapStringString),
+					Value:    values.ParseGeneratedMap(&diffTypesCfg.MapStringString, nil),
 				},
 			},
 		},
@@ -210,30 +210,30 @@ func TestParseStruct(t *testing.T) {
 					Name:     "sub-name",
 					EnvName:  "SUB_NAME",
 					DefValue: []string{"name_value"},
-					Value:    values.ParseGenerated(&nestedCfg.Sub.Name),
+					Value:    values.ParseGenerated(&nestedCfg.Sub.Name, nil),
 					Usage:    "name description",
 				},
 				{
 					Name:     "sub-name2",
 					EnvName:  "SUB_NAME_TWO",
 					DefValue: []string{"name2_value"},
-					Value:    values.ParseGenerated(&nestedCfg.Sub.Name2),
+					Value:    values.ParseGenerated(&nestedCfg.Sub.Name2, nil),
 				},
 				{
 					Name:    "name3",
 					EnvName: "NAME_THREE",
-					Value:   values.ParseGenerated(&nestedCfg.Sub.Name3),
+					Value:   values.ParseGenerated(&nestedCfg.Sub.Name3, nil),
 				},
 				{
 					Name:     "sub-sub2-name4",
 					EnvName:  "SUB_SUB2_NAME4",
 					DefValue: []string{"name4_value"},
-					Value:    values.ParseGenerated(&nestedCfg.Sub.SUB2.Name4),
+					Value:    values.ParseGenerated(&nestedCfg.Sub.SUB2.Name4, nil),
 				},
 				{
 					Name:    "sub-sub2-name5",
 					EnvName: "SUB_SUB2_name_five",
-					Value:   values.ParseGenerated(&nestedCfg.Sub.SUB2.Name5),
+					Value:   values.ParseGenerated(&nestedCfg.Sub.SUB2.Name5, nil),
 				},
 			},
 			expErr: nil,
@@ -246,13 +246,13 @@ func TestParseStruct(t *testing.T) {
 				{
 					Name:    "name",
 					EnvName: "NAME",
-					Value:   values.ParseGenerated(&descCfg.Name),
+					Value:   values.ParseGenerated(&descCfg.Name, nil),
 					Usage:   "name description",
 				},
 				{
 					Name:    "name2",
 					EnvName: "NAME2",
-					Value:   values.ParseGenerated(&descCfg.Name2),
+					Value:   values.ParseGenerated(&descCfg.Name2, nil),
 					Usage:   "name2 description",
 				},
 			},
@@ -265,13 +265,13 @@ func TestParseStruct(t *testing.T) {
 				{
 					Name:    "name1",
 					EnvName: "NAME1",
-					Value:   values.ParseGenerated(&anonymousCfg.Name1),
+					Value:   values.ParseGenerated(&anonymousCfg.Name1, nil),
 				},
 				{
 					Name:     "name",
 					EnvName:  "NAME",
 					DefValue: []string{"name_value"},
-					Value:    values.ParseGenerated(&anonymousCfg.Name),
+					Value:    values.ParseGenerated(&anonymousCfg.Name, nil),
 				},
 			},
 		},
@@ -283,13 +283,13 @@ func TestParseStruct(t *testing.T) {
 				{
 					Name:    "name1",
 					EnvName: "NAME1",
-					Value:   values.ParseGenerated(&anonymousCfg.Name1),
+					Value:   values.ParseGenerated(&anonymousCfg.Name1, nil),
 				},
 				{
 					Name:     "simple-name",
 					EnvName:  "SIMPLE_NAME",
 					DefValue: []string{"name_value"},
-					Value:    values.ParseGenerated(&anonymousCfg.Name),
+					Value:    values.ParseGenerated(&anonymousCfg.Name, nil),
 				},
 			},
 		},
@@ -326,6 +326,33 @@ func TestParseStruct(t *testing.T) {
 			require.Equal(t, test.expFlagSet, flagSet)
 		})
 	}
+}
+
+// TestParseStruct_Separators tests that `sep` and `mapsep` tags are correctly parsed.
+func TestParseStruct_Separators(t *testing.T) {
+	t.Parallel()
+
+	cfg := &struct {
+		Slice        []string       `long:"slice"          sep:" "`
+		Map          map[string]int `long:"map"            mapsep:"|"`
+		NoSplitSlice []string       `long:"no-split-slice" sep:"none"`
+	}{}
+
+	flags, err := parse(cfg)
+	require.NoError(t, err)
+	require.Len(t, flags, 3)
+
+	// Assertions
+	assert.NotNil(t, flags[0].Separator, "Slice separator should not be nil")
+	assert.Equal(t, " ", *flags[0].Separator, "Slice separator should be a space")
+	assert.Nil(t, flags[0].MapSeparator, "Slice should not have a map separator")
+
+	assert.NotNil(t, flags[1].MapSeparator, "Map separator should not be nil")
+	assert.Equal(t, "|", *flags[1].MapSeparator, "Map separator should be a pipe")
+	assert.Nil(t, flags[1].Separator, "Map should not have a slice separator")
+
+	assert.NotNil(t, flags[2].Separator, "NoSplitSlice separator should not be nil")
+	assert.Equal(t, "none", *flags[2].Separator, "NoSplitSlice separator should be 'none'")
 }
 
 // TestParseStruct_NilValue tests that nil pointers in a struct are correctly initialized.

@@ -21,6 +21,9 @@ type Flag struct {
 	Required      bool         // If true, the option _must_ be specified on the command line.
 	Choices       []string     // If non empty, only a certain set of values is allowed for an option.
 	OptionalValue []string     // The optional value of the option.
+	Negatable     bool         // If true, a --no-<name> flag is generated.
+	Separator     *string      // Custom separator for slice values.
+	MapSeparator  *string      // Custom separator for map values.
 }
 
 // parseFlagTag parses the struct tag for a given field and returns a Flag object.
@@ -58,12 +61,29 @@ func parseFlagTag(field reflect.StructField, opts *Opts) (*Flag, *MultiTag, erro
 		Deprecated:    isSet(tag, "deprecated"),
 		Choices:       getFlagChoices(tag),
 		OptionalValue: tag.GetMany("optional-value"),
+		Negatable:     isBool(field.Type) && isSet(tag, "negatable"),
+	}
+
+	// Add separators if they are present.
+	if sep, ok := tag.Get("sep"); ok {
+		flag.Separator = &sep
+	}
+	if mapsep, ok := tag.Get("mapsep"); ok {
+		flag.MapSeparator = &mapsep
 	}
 
 	required, _ := tag.Get("required")
 	flag.Required = isSet(tag, "required") && IsStringFalsy(required)
 
 	return flag, tag, nil
+}
+
+func isBool(t reflect.Type) bool {
+	if t.Kind() == reflect.Ptr {
+		t = t.Elem()
+	}
+
+	return t.Kind() == reflect.Bool
 }
 
 func getFlagName(field reflect.StructField, tag *MultiTag, opts *Opts) (string, string) {

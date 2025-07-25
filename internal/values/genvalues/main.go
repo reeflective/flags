@@ -36,7 +36,7 @@ var mapAllowedKinds = []reflect.Kind{ \nn
 }
 
 // ParseGenerated generates a flag with underlying interface type.
-func ParseGenerated(value any) Value {
+func ParseGenerated(value any, sep *string) Value {
 	switch value.(type) {
 	{{range .Values}}{{ if eq (.|InterfereType) (.Type) }}\nn
 	case *{{.Type}}:
@@ -44,8 +44,8 @@ func ParseGenerated(value any) Value {
 	{{ end }}{{ end }}\nn
 	{{range .Values}}{{ if not .NoSlice }}\nn
 	case *[]{{.Type}}:
-		return new{{.|Plural}}Value(value.(*[]{{.Type}}))
-	{{end}}{{end}}\nn
+		return new{{.|Plural}}Value(value.(*[]{{.Type}}), sep)
+	{{end}}{{end}}
 	default:
 		return nil
 	}
@@ -54,23 +54,23 @@ func ParseGenerated(value any) Value {
 // ParseGenerated generates a flag with underlying ptr type.
 func ParseGeneratedPtrs(value any) Value {
 	switch value.(type) {
-	{{range .Values}}{{ if ne (.|InterfereType) (.Type) }}\nn
+	{{range .Values}}{{ if ne (.|InterfereType) (.Type) }}
 	case *{{.Type}}:
 		return new{{.|Name}}Value(value.(*{{.Type}}))
-	{{end}}{{end}}\nn
+	{{end}}{{end}}
 	default:
 		return nil
 	}
 }
 
 // ParseGenerated generates a flag with underlying map type.
-func ParseGeneratedMap(value any) Value {
+func ParseGeneratedMap(value any, sep *string) Value {
 	switch value.(type) {
-	{{range .Values}}{{ if not .NoMap }}\nn
-	{{ $value := . }}{{range $mapKeyTypes}}\nn
+	{{range .Values}}{{ if not .NoMap }}
+	{{ $value := . }}{{range $mapKeyTypes}}
 	case *map[{{.}}]{{$value.Type}}:
-		return new{{MapValueName $value . | Title}}(value.(*map[{{.}}]{{$value.Type}}))
-	{{end}}{{end}}{{end}}\nn
+		return new{{MapValueName $value . | Title}}(value.(*map[{{.}}]{{$value.Type}}), sep)
+	{{end}}{{end}}{{end}}
 	default:
 		return nil
 	}
@@ -91,26 +91,26 @@ func new{{.|Name}}Value(p *{{.Type}}) *{{.|ValueName}} {
 }
 
 func (v *{{.|ValueName}}) Set(s string) error {
-	{{if .Parser }}\nn
+	{{if .Parser }}
 	parsed, err := {{.Parser}}
 	if err == nil {
-		{{if .Convert}}\nn
+		{{if .Convert}}
 		*v.value = ({{.Type}})(parsed)
-		{{else}}\nn
+		{{else}}
 		*v.value = parsed
-		{{end}}\nn
+		{{end}}
 		return nil
 	}
 	return err
-	{{ else }}\nn
+	{{ else }}
 	*v.value = s
 	return nil
-	{{end}}\nn
+	{{end}}
 }
 
 func (v *{{.|ValueName}}) Get() any {
  	if v != nil && v.value != nil {
-{{/* flag package create zero Value and compares it to actual Value */}}\nn
+{{/* flag package create zero Value and compares it to actual Value */}}
  		return *v.value
  	}
 	return nil
@@ -118,7 +118,7 @@ func (v *{{.|ValueName}}) Get() any {
 
 func (v *{{.|ValueName}}) String() string {
 	if v != nil && v.value != nil {
-{{/* flag package create zero Value and compares it to actual Value */}}\nn
+{{/* flag package create zero Value and compares it to actual Value */}}
 		return {{.|Format}}
 	}
 	return ""
@@ -130,8 +130,9 @@ func (v *{{.|ValueName}}) Type() string { return "{{.|Type}}" }
 // -- {{.Type}}Slice Value
 
 type {{.|SliceValueName}} struct{
-	value   *[]{{.Type}}
-	changed bool
+	value     *[]{{.Type}}
+	changed   bool
+	separator string
 }
 
 var _ RepeatableFlag = (*{{.|SliceValueName}})(nil)
@@ -139,14 +140,29 @@ var _ Value = (*{{.|SliceValueName}})(nil)
 var _ Getter = (*{{.|SliceValueName}})(nil)
 
 
-func new{{.|Name}}SliceValue(slice *[]{{.Type}}) *{{.|SliceValueName}}  {
-	return &{{.|SliceValueName}}{
+func new{{.|Name}}SliceValue(slice *[]{{.Type}}, sep *string) *{{.|SliceValueName}}  {
+	s := &{{.|SliceValueName}}{
 		value: slice,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+	return s
 }
 
 func (v *{{.|SliceValueName}}) Set(raw string) error {
-	ss := strings.Split(raw, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var ss []string
+	if separator == "none" {
+		ss = []string{raw}
+	} else {
+		ss = strings.Split(raw, separator)
+	}
+
 	{{if .Parser }}
 	out := make([]{{.Type}}, len(ss))
 	for i, s := range ss {
@@ -154,11 +170,11 @@ func (v *{{.|SliceValueName}}) Set(raw string) error {
 		if err != nil {
 			return err
 		}
-		{{if .Convert}}\nn
+		{{if .Convert}}
 		out[i] = ({{.Type}})(parsed)
-		{{else}}\nn
+		{{else}}
 		out[i] = parsed
-		{{end}}\nn
+		{{end}}
 	}
 	{{ else }}out := ss{{end}}
 	if !v.changed {
@@ -172,7 +188,7 @@ func (v *{{.|SliceValueName}}) Set(raw string) error {
 
 func (v *{{.|SliceValueName}}) Get() any {
  	if v != nil && v.value != nil {
-{{/* flag package create zero Value and compares it to actual Value */}}\nn
+{{/* flag package create zero Value and compares it to actual Value */}}
  		return *v.value
  	}
 	return ([]{{.Type}})(nil)
@@ -180,7 +196,7 @@ func (v *{{.|SliceValueName}}) Get() any {
 
 func (v *{{.|SliceValueName}}) String() string {
 	if v == nil || v.value == nil {
-{{/* flag package create zero Value and compares it to actual Value */}}\nn
+{{/* flag package create zero Value and compares it to actual Value */}}
 		return "[]"
 	}
 	out := make([]string, 0, len(*v.value))
@@ -203,7 +219,8 @@ func (v *{{.|SliceValueName}}) IsCumulative() bool {
 {{range $mapKeyTypes}}
 // -- {{ MapValueName $value . }}
 type {{ MapValueName $value . }} struct {
-	value *map[{{.}}]{{$value.Type}}
+	value     *map[{{.}}]{{$value.Type}}
+	separator string
 }
 
 var _ RepeatableFlag = (*{{MapValueName $value .}})(nil)
@@ -211,14 +228,28 @@ var _ Value = (*{{MapValueName $value .}})(nil)
 var _ Getter = (*{{MapValueName $value .}})(nil)
 
 
-func new{{MapValueName $value . | Title}}(m *map[{{.}}]{{$value.Type}}) *{{MapValueName $value .}}  {
-	return &{{MapValueName $value .}}{
+func new{{MapValueName $value . | Title}}(m *map[{{.}}]{{$value.Type}}, sep *string) *{{MapValueName $value .}}  {
+	s := &{{MapValueName $value .}}{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+	return s
 }
 
 func (v *{{MapValueName $value .}}) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
         ss := strings.Split(s, ":")
@@ -230,40 +261,40 @@ func (v *{{MapValueName $value .}}) Set(val string) error {
 
         s = ss[0]
 
-        {{if $kindVal.Parser }}\nn
+        {{if $kindVal.Parser }}
         parsedKey, err := {{$kindVal.Parser}}
         if err != nil {
             return err
         }
 
-        {{if $kindVal.Convert}}\nn
+        {{if $kindVal.Convert}}
         key := ({{$kindVal.Type}})(parsedKey)
-        {{else}}\nn
+        {{else}}
         key := parsedKey
-        {{end}}\nn
+        {{end}}
 
-        {{ else }}\nn
+        {{ else }}
         key := s 
-        {{end}}\nn
+        {{end}}
 
 
         s = ss[1]
      
-        {{if $value.Parser }}\nn
+        {{if $value.Parser }}
         parsedVal, err := {{$value.Parser}}
         if err != nil {
             return err
         }
 
-        {{if $value.Convert}}\nn
+        {{if $value.Convert}}
         val := ({{$value.Type}})(parsedVal)
-        {{else}}\nn
+        {{else}}
         val := parsedVal
-        {{end}}\nn
+        {{end}}
 
-        {{ else }}\nn
+        {{ else }}
         val := s 
-        {{end}}\nn
+        {{end}}
 
         (*v.value)[key] = val
     }
@@ -341,7 +372,7 @@ func Test{{.|Name}}Value(t *testing.T) {
 		{{ else }}\nn
 		a := new({{$value.Type}})
 		v := new{{$value|Name}}Value(a)
-		assert.Equal(t, ParseGenerated(a), v)
+		assert.Equal(t, ParseGenerated(a, nil), v)
 		{{ end }}\nn
 		err := v.Set("{{.In}}")
 		{{if .Err}}\nn
@@ -397,8 +428,8 @@ func Test{{.|Name}}SliceValue(t *testing.T) {
         t.Parallel()
 		var err error
 		a := new([]{{$value.Type}})
-		v := new{{$value|Name}}SliceValue(a)
-		assert.Equal(t, ParseGenerated(a), v)
+		v := new{{$value|Name}}SliceValue(a, nil)
+		assert.Equal(t, ParseGenerated(a, nil), v)
 		assert.True(t, v.IsCumulative())
 		{{range .In}}\nn
 		err = v.Set("{{.}}")
@@ -425,8 +456,8 @@ func Test{{MapValueName $value $keyType | Title}}(t *testing.T) {
         t.Parallel()
 		var err error
 		a := make(map[{{$keyType}}]{{$value.Type}})
-		v := new{{MapValueName $value $keyType | Title}}(&a)
-		assert.Equal(t, ParseGeneratedMap(&a), v)
+		v := new{{MapValueName $value $keyType | Title}}(&a, nil)
+		assert.Equal(t, ParseGeneratedMap(&a, nil), v)
 		assert.True(t, v.IsCumulative())
 		{{range .In}}\nn
 		err = v.Set("{{$keyType | KindTest}}{{.}}")
@@ -460,7 +491,7 @@ func Test{{MapValueName $value $keyType | Title}}(t *testing.T) {
 func TestParseGeneratedMap_NilDefault(t *testing.T) {
     t.Parallel()
 	a := new(bool)
-	v := ParseGeneratedMap(a)
+	v := ParseGeneratedMap(a, nil)
 	assert.Nil(t, v)
 }
 

@@ -96,7 +96,7 @@ func setSlice(slice reflect.Value, s string) error {
 	elemType := slice.Type().Elem()
 	elem := reflect.New(elemType).Elem()
 
-	elemParser := NewValue(elem)
+	elemParser := NewValue(elem, nil, nil)
 	if elemParser == nil {
 		return fmt.Errorf("%w: slice element type: %v", errors.ErrUnsupportedType, elemType)
 	}
@@ -118,8 +118,8 @@ func setMap(mapVal reflect.Value, s string) error {
 	key := reflect.New(mapVal.Type().Key()).Elem()
 	val := reflect.New(mapVal.Type().Elem()).Elem()
 
-	keyParser := NewValue(key)
-	valParser := NewValue(val)
+	keyParser := NewValue(key, nil, nil)
+	valParser := NewValue(val, nil, nil)
 	if keyParser == nil || valParser == nil {
 		return fmt.Errorf("%w: map key or value type", errors.ErrUnsupportedType)
 	}

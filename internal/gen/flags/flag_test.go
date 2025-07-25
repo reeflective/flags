@@ -19,7 +19,6 @@ import (
 
 //
 // Flag structs & test helpers -------------------------------------------------------- //
-//
 
 // testConfig stores all data needed for a single test.
 // This is different from flagsConfig, which is the CLI
@@ -113,7 +112,6 @@ func run(t *testing.T, test *testConfig) {
 
 //
 // Tests ---------------------------------------------------------------------------- //
-//
 
 // TestFlagsBase tests for a simple (old sflags) struct to be parsed.
 func TestFlagsBase(t *testing.T) {
@@ -360,4 +358,142 @@ func TestPFlagGetters(t *testing.T) {
 	intSliceValue, err := flagSet.GetIntSlice("int-slice-value")
 	require.NoError(t, err)
 	assert.Equal(t, []int{10, 20}, intSliceValue)
+}
+
+func TestNegatableFlag(t *testing.T) {
+	t.Parallel()
+
+	// Test cases
+	tests := []struct {
+		name   string
+		cfg    any
+		args   []string
+		expCfg any
+	}{
+		{
+			name: "Set negatable flag to true",
+			cfg: &struct {
+				MyFlag bool `long:"my-flag" negatable:""`
+			}{},
+			args: []string{"--my-flag"},
+			expCfg: &struct {
+				MyFlag bool `long:"my-flag" negatable:""`
+			}{MyFlag: true},
+		},
+		{
+			name: "Set negatable flag to false with --no prefix",
+			cfg: &struct {
+				MyFlag bool `long:"my-flag" negatable:""`
+			}{MyFlag: true}, // Start with true
+			args: []string{"--no-my-flag"},
+			expCfg: &struct {
+				MyFlag bool `long:"my-flag" negatable:""`
+			}{MyFlag: false},
+		},
+		{
+			name: "Default true is correctly negated",
+			cfg: &struct {
+				MyFlag bool `default:"true" long:"my-flag" negatable:""`
+			}{MyFlag: true},
+			args: []string{"--no-my-flag"},
+			expCfg: &struct {
+				MyFlag bool `default:"true" long:"my-flag" negatable:""`
+			}{MyFlag: false},
+		},
+		{
+			name: "Negating a false default has no effect",
+			cfg: &struct {
+				MyFlag bool `long:"my-flag" negatable:""`
+			}{},
+			args: []string{"--no-my-flag"},
+			expCfg: &struct {
+				MyFlag bool `long:"my-flag" negatable:""`
+			}{MyFlag: false},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			test := &testConfig{
+				cfg:    tt.cfg,
+				args:   tt.args,
+				expCfg: tt.expCfg,
+			}
+			run(t, test)
+		})
+	}
+}
+
+func TestCustomSeparators(t *testing.T) {
+	t.Parallel()
+
+	// Test cases
+	tests := []struct {
+		name   string
+		cfg    any
+		args   []string
+		expCfg any
+	}{
+		{
+			name: "Slice with space separator",
+			cfg: &struct {
+				Slice []string `long:"slice" sep:" "`
+			}{},
+			args: []string{"--slice", "apple orange banana"},
+			expCfg: &struct {
+				Slice []string `long:"slice" sep:" "`
+			}{Slice: []string{"apple", "orange", "banana"}},
+		},
+		{
+			name: "Slice with semicolon separator",
+			cfg: &struct {
+				Slice []int `long:"slice" sep:";"`
+			}{},
+			args: []string{"--slice", "1;2;3"},
+			expCfg: &struct {
+				Slice []int `long:"slice" sep:";"`
+			}{Slice: []int{1, 2, 3}},
+		},
+		{
+			name: "Map with pipe separator",
+			cfg: &struct {
+				Map map[string]int `long:"map" mapsep:"|"`
+			}{},
+			args: []string{"--map", "one:1|two:2"},
+			expCfg: &struct {
+				Map map[string]int `long:"map" mapsep:"|"`
+			}{Map: map[string]int{"one": 1, "two": 2}},
+		},
+		{
+			name: "Slice with separator disabled",
+			cfg: &struct {
+				Slice []string `long:"slice" sep:"none"`
+			}{},
+			args: []string{"--slice", "apple,orange banana"},
+			expCfg: &struct {
+				Slice []string `long:"slice" sep:"none"`
+			}{Slice: []string{"apple,orange banana"}},
+		},
+		{
+			name: "Default comma separator still works",
+			cfg: &struct {
+				Slice []string `long:"slice"`
+			}{},
+			args: []string{"--slice", "a,b,c"},
+			expCfg: &struct {
+				Slice []string `long:"slice"`
+			}{Slice: []string{"a", "b", "c"}},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			test := &testConfig{
+				cfg:    tt.cfg,
+				args:   tt.args,
+				expCfg: tt.expCfg,
+			}
+			run(t, test)
+		})
+	}
 }

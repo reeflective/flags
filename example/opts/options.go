@@ -15,9 +15,9 @@ import (
 
 // GroupedOptionsBasic shows how to group options together, with basic struct tags.
 type GroupedOptionsBasic struct {
-	Path  string            `description:"a path used by your command"                                            long:"path"  short:"p"`
+	Path  string            `description:"a path used by your command"                                            long:"path"  placeholder:"PATH"        short:"p"`
 	Elems map[string]string `description:"A map[string]string flag, with repeated flags or comma-separated items" long:"elems" short:"e"`
-	Files []string          `desc:"A list of files, with repeated flags or comma-separated items"                 long:"files" short:"f"`
+	Files []string          `desc:"A list of files, with repeated flags or comma-separated items"                 long:"files" placeholder:"FILE1 FILE2" short:"f"`
 	Check bool              `description:"a boolean checker, can be used in an option stacking, like -cp <path>"  long:"check" short:"c"`
 }
 

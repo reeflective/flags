@@ -30,7 +30,7 @@ var mapAllowedKinds = []reflect.Kind{
 }
 
 // ParseGenerated generates a flag with underlying interface type.
-func ParseGenerated(value any) Value {
+func ParseGenerated(value any, sep *string) Value {
 	switch value := value.(type) {
 	case *string:
 		return newStringValue(value)
@@ -71,45 +71,46 @@ func ParseGenerated(value any) Value {
 	case *net.IPNet:
 		return newIPNetValue(value)
 	case *[]string:
-		return newStringSliceValue(value)
+		return newStringSliceValue(value, sep)
 	case *[]bool:
-		return newBoolSliceValue(value)
+		return newBoolSliceValue(value, sep)
 	case *[]uint:
-		return newUintSliceValue(value)
+		return newUintSliceValue(value, sep)
 	case *[]uint8:
-		return newUint8SliceValue(value)
+		return newUint8SliceValue(value, sep)
 	case *[]uint16:
-		return newUint16SliceValue(value)
+		return newUint16SliceValue(value, sep)
 	case *[]uint32:
-		return newUint32SliceValue(value)
+		return newUint32SliceValue(value, sep)
 	case *[]uint64:
-		return newUint64SliceValue(value)
+		return newUint64SliceValue(value, sep)
 	case *[]int:
-		return newIntSliceValue(value)
+		return newIntSliceValue(value, sep)
 	case *[]int8:
-		return newInt8SliceValue(value)
+		return newInt8SliceValue(value, sep)
 	case *[]int16:
-		return newInt16SliceValue(value)
+		return newInt16SliceValue(value, sep)
 	case *[]int32:
-		return newInt32SliceValue(value)
+		return newInt32SliceValue(value, sep)
 	case *[]int64:
-		return newInt64SliceValue(value)
+		return newInt64SliceValue(value, sep)
 	case *[]float64:
-		return newFloat64SliceValue(value)
+		return newFloat64SliceValue(value, sep)
 	case *[]float32:
-		return newFloat32SliceValue(value)
+		return newFloat32SliceValue(value, sep)
 	case *[]time.Duration:
-		return newDurationSliceValue(value)
+		return newDurationSliceValue(value, sep)
 	case *[]net.IP:
-		return newIPSliceValue(value)
+		return newIPSliceValue(value, sep)
 	case *[]HexBytes:
-		return newHexBytesSliceValue(value)
+		return newHexBytesSliceValue(value, sep)
 	case *[]*regexp.Regexp:
-		return newRegexpSliceValue(value)
+		return newRegexpSliceValue(value, sep)
 	case *[]net.TCPAddr:
-		return newTCPAddrSliceValue(value)
+		return newTCPAddrSliceValue(value, sep)
 	case *[]net.IPNet:
-		return newIPNetSliceValue(value)
+		return newIPNetSliceValue(value, sep)
+
 	default:
 		return nil
 	}
@@ -118,434 +119,646 @@ func ParseGenerated(value any) Value {
 // ParseGenerated generates a flag with underlying ptr type.
 func ParseGeneratedPtrs(value any) Value {
 	switch value := value.(type) {
+
 	case **regexp.Regexp:
 		return newRegexpValue(value)
+
 	default:
 		return nil
 	}
 }
 
 // ParseGenerated generates a flag with underlying map type.
-func ParseGeneratedMap(value any) Value {
+func ParseGeneratedMap(value any, sep *string) Value {
 	switch value := value.(type) {
+
 	case *map[string]string:
-		return newStringStringMapValue(value)
+		return newStringStringMapValue(value, sep)
+
 	case *map[int]string:
-		return newIntStringMapValue(value)
+		return newIntStringMapValue(value, sep)
+
 	case *map[int8]string:
-		return newInt8StringMapValue(value)
+		return newInt8StringMapValue(value, sep)
+
 	case *map[int16]string:
-		return newInt16StringMapValue(value)
+		return newInt16StringMapValue(value, sep)
+
 	case *map[int32]string:
-		return newInt32StringMapValue(value)
+		return newInt32StringMapValue(value, sep)
+
 	case *map[int64]string:
-		return newInt64StringMapValue(value)
+		return newInt64StringMapValue(value, sep)
+
 	case *map[uint]string:
-		return newUintStringMapValue(value)
+		return newUintStringMapValue(value, sep)
+
 	case *map[uint8]string:
-		return newUint8StringMapValue(value)
+		return newUint8StringMapValue(value, sep)
+
 	case *map[uint16]string:
-		return newUint16StringMapValue(value)
+		return newUint16StringMapValue(value, sep)
+
 	case *map[uint32]string:
-		return newUint32StringMapValue(value)
+		return newUint32StringMapValue(value, sep)
+
 	case *map[uint64]string:
-		return newUint64StringMapValue(value)
+		return newUint64StringMapValue(value, sep)
+
 	case *map[string]bool:
-		return newStringBoolMapValue(value)
+		return newStringBoolMapValue(value, sep)
+
 	case *map[int]bool:
-		return newIntBoolMapValue(value)
+		return newIntBoolMapValue(value, sep)
+
 	case *map[int8]bool:
-		return newInt8BoolMapValue(value)
+		return newInt8BoolMapValue(value, sep)
+
 	case *map[int16]bool:
-		return newInt16BoolMapValue(value)
+		return newInt16BoolMapValue(value, sep)
+
 	case *map[int32]bool:
-		return newInt32BoolMapValue(value)
+		return newInt32BoolMapValue(value, sep)
+
 	case *map[int64]bool:
-		return newInt64BoolMapValue(value)
+		return newInt64BoolMapValue(value, sep)
+
 	case *map[uint]bool:
-		return newUintBoolMapValue(value)
+		return newUintBoolMapValue(value, sep)
+
 	case *map[uint8]bool:
-		return newUint8BoolMapValue(value)
+		return newUint8BoolMapValue(value, sep)
+
 	case *map[uint16]bool:
-		return newUint16BoolMapValue(value)
+		return newUint16BoolMapValue(value, sep)
+
 	case *map[uint32]bool:
-		return newUint32BoolMapValue(value)
+		return newUint32BoolMapValue(value, sep)
+
 	case *map[uint64]bool:
-		return newUint64BoolMapValue(value)
+		return newUint64BoolMapValue(value, sep)
+
 	case *map[string]uint:
-		return newStringUintMapValue(value)
+		return newStringUintMapValue(value, sep)
+
 	case *map[int]uint:
-		return newIntUintMapValue(value)
+		return newIntUintMapValue(value, sep)
+
 	case *map[int8]uint:
-		return newInt8UintMapValue(value)
+		return newInt8UintMapValue(value, sep)
+
 	case *map[int16]uint:
-		return newInt16UintMapValue(value)
+		return newInt16UintMapValue(value, sep)
+
 	case *map[int32]uint:
-		return newInt32UintMapValue(value)
+		return newInt32UintMapValue(value, sep)
+
 	case *map[int64]uint:
-		return newInt64UintMapValue(value)
+		return newInt64UintMapValue(value, sep)
+
 	case *map[uint]uint:
-		return newUintUintMapValue(value)
+		return newUintUintMapValue(value, sep)
+
 	case *map[uint8]uint:
-		return newUint8UintMapValue(value)
+		return newUint8UintMapValue(value, sep)
+
 	case *map[uint16]uint:
-		return newUint16UintMapValue(value)
+		return newUint16UintMapValue(value, sep)
+
 	case *map[uint32]uint:
-		return newUint32UintMapValue(value)
+		return newUint32UintMapValue(value, sep)
+
 	case *map[uint64]uint:
-		return newUint64UintMapValue(value)
+		return newUint64UintMapValue(value, sep)
+
 	case *map[string]uint8:
-		return newStringUint8MapValue(value)
+		return newStringUint8MapValue(value, sep)
+
 	case *map[int]uint8:
-		return newIntUint8MapValue(value)
+		return newIntUint8MapValue(value, sep)
+
 	case *map[int8]uint8:
-		return newInt8Uint8MapValue(value)
+		return newInt8Uint8MapValue(value, sep)
+
 	case *map[int16]uint8:
-		return newInt16Uint8MapValue(value)
+		return newInt16Uint8MapValue(value, sep)
+
 	case *map[int32]uint8:
-		return newInt32Uint8MapValue(value)
+		return newInt32Uint8MapValue(value, sep)
+
 	case *map[int64]uint8:
-		return newInt64Uint8MapValue(value)
+		return newInt64Uint8MapValue(value, sep)
+
 	case *map[uint]uint8:
-		return newUintUint8MapValue(value)
+		return newUintUint8MapValue(value, sep)
+
 	case *map[uint8]uint8:
-		return newUint8Uint8MapValue(value)
+		return newUint8Uint8MapValue(value, sep)
+
 	case *map[uint16]uint8:
-		return newUint16Uint8MapValue(value)
+		return newUint16Uint8MapValue(value, sep)
+
 	case *map[uint32]uint8:
-		return newUint32Uint8MapValue(value)
+		return newUint32Uint8MapValue(value, sep)
+
 	case *map[uint64]uint8:
-		return newUint64Uint8MapValue(value)
+		return newUint64Uint8MapValue(value, sep)
+
 	case *map[string]uint16:
-		return newStringUint16MapValue(value)
+		return newStringUint16MapValue(value, sep)
+
 	case *map[int]uint16:
-		return newIntUint16MapValue(value)
+		return newIntUint16MapValue(value, sep)
+
 	case *map[int8]uint16:
-		return newInt8Uint16MapValue(value)
+		return newInt8Uint16MapValue(value, sep)
+
 	case *map[int16]uint16:
-		return newInt16Uint16MapValue(value)
+		return newInt16Uint16MapValue(value, sep)
+
 	case *map[int32]uint16:
-		return newInt32Uint16MapValue(value)
+		return newInt32Uint16MapValue(value, sep)
+
 	case *map[int64]uint16:
-		return newInt64Uint16MapValue(value)
+		return newInt64Uint16MapValue(value, sep)
+
 	case *map[uint]uint16:
-		return newUintUint16MapValue(value)
+		return newUintUint16MapValue(value, sep)
+
 	case *map[uint8]uint16:
-		return newUint8Uint16MapValue(value)
+		return newUint8Uint16MapValue(value, sep)
+
 	case *map[uint16]uint16:
-		return newUint16Uint16MapValue(value)
+		return newUint16Uint16MapValue(value, sep)
+
 	case *map[uint32]uint16:
-		return newUint32Uint16MapValue(value)
+		return newUint32Uint16MapValue(value, sep)
+
 	case *map[uint64]uint16:
-		return newUint64Uint16MapValue(value)
+		return newUint64Uint16MapValue(value, sep)
+
 	case *map[string]uint32:
-		return newStringUint32MapValue(value)
+		return newStringUint32MapValue(value, sep)
+
 	case *map[int]uint32:
-		return newIntUint32MapValue(value)
+		return newIntUint32MapValue(value, sep)
+
 	case *map[int8]uint32:
-		return newInt8Uint32MapValue(value)
+		return newInt8Uint32MapValue(value, sep)
+
 	case *map[int16]uint32:
-		return newInt16Uint32MapValue(value)
+		return newInt16Uint32MapValue(value, sep)
+
 	case *map[int32]uint32:
-		return newInt32Uint32MapValue(value)
+		return newInt32Uint32MapValue(value, sep)
+
 	case *map[int64]uint32:
-		return newInt64Uint32MapValue(value)
+		return newInt64Uint32MapValue(value, sep)
+
 	case *map[uint]uint32:
-		return newUintUint32MapValue(value)
+		return newUintUint32MapValue(value, sep)
+
 	case *map[uint8]uint32:
-		return newUint8Uint32MapValue(value)
+		return newUint8Uint32MapValue(value, sep)
+
 	case *map[uint16]uint32:
-		return newUint16Uint32MapValue(value)
+		return newUint16Uint32MapValue(value, sep)
+
 	case *map[uint32]uint32:
-		return newUint32Uint32MapValue(value)
+		return newUint32Uint32MapValue(value, sep)
+
 	case *map[uint64]uint32:
-		return newUint64Uint32MapValue(value)
+		return newUint64Uint32MapValue(value, sep)
+
 	case *map[string]uint64:
-		return newStringUint64MapValue(value)
+		return newStringUint64MapValue(value, sep)
+
 	case *map[int]uint64:
-		return newIntUint64MapValue(value)
+		return newIntUint64MapValue(value, sep)
+
 	case *map[int8]uint64:
-		return newInt8Uint64MapValue(value)
+		return newInt8Uint64MapValue(value, sep)
+
 	case *map[int16]uint64:
-		return newInt16Uint64MapValue(value)
+		return newInt16Uint64MapValue(value, sep)
+
 	case *map[int32]uint64:
-		return newInt32Uint64MapValue(value)
+		return newInt32Uint64MapValue(value, sep)
+
 	case *map[int64]uint64:
-		return newInt64Uint64MapValue(value)
+		return newInt64Uint64MapValue(value, sep)
+
 	case *map[uint]uint64:
-		return newUintUint64MapValue(value)
+		return newUintUint64MapValue(value, sep)
+
 	case *map[uint8]uint64:
-		return newUint8Uint64MapValue(value)
+		return newUint8Uint64MapValue(value, sep)
+
 	case *map[uint16]uint64:
-		return newUint16Uint64MapValue(value)
+		return newUint16Uint64MapValue(value, sep)
+
 	case *map[uint32]uint64:
-		return newUint32Uint64MapValue(value)
+		return newUint32Uint64MapValue(value, sep)
+
 	case *map[uint64]uint64:
-		return newUint64Uint64MapValue(value)
+		return newUint64Uint64MapValue(value, sep)
+
 	case *map[string]int:
-		return newStringIntMapValue(value)
+		return newStringIntMapValue(value, sep)
+
 	case *map[int]int:
-		return newIntIntMapValue(value)
+		return newIntIntMapValue(value, sep)
+
 	case *map[int8]int:
-		return newInt8IntMapValue(value)
+		return newInt8IntMapValue(value, sep)
+
 	case *map[int16]int:
-		return newInt16IntMapValue(value)
+		return newInt16IntMapValue(value, sep)
+
 	case *map[int32]int:
-		return newInt32IntMapValue(value)
+		return newInt32IntMapValue(value, sep)
+
 	case *map[int64]int:
-		return newInt64IntMapValue(value)
+		return newInt64IntMapValue(value, sep)
+
 	case *map[uint]int:
-		return newUintIntMapValue(value)
+		return newUintIntMapValue(value, sep)
+
 	case *map[uint8]int:
-		return newUint8IntMapValue(value)
+		return newUint8IntMapValue(value, sep)
+
 	case *map[uint16]int:
-		return newUint16IntMapValue(value)
+		return newUint16IntMapValue(value, sep)
+
 	case *map[uint32]int:
-		return newUint32IntMapValue(value)
+		return newUint32IntMapValue(value, sep)
+
 	case *map[uint64]int:
-		return newUint64IntMapValue(value)
+		return newUint64IntMapValue(value, sep)
+
 	case *map[string]int8:
-		return newStringInt8MapValue(value)
+		return newStringInt8MapValue(value, sep)
+
 	case *map[int]int8:
-		return newIntInt8MapValue(value)
+		return newIntInt8MapValue(value, sep)
+
 	case *map[int8]int8:
-		return newInt8Int8MapValue(value)
+		return newInt8Int8MapValue(value, sep)
+
 	case *map[int16]int8:
-		return newInt16Int8MapValue(value)
+		return newInt16Int8MapValue(value, sep)
+
 	case *map[int32]int8:
-		return newInt32Int8MapValue(value)
+		return newInt32Int8MapValue(value, sep)
+
 	case *map[int64]int8:
-		return newInt64Int8MapValue(value)
+		return newInt64Int8MapValue(value, sep)
+
 	case *map[uint]int8:
-		return newUintInt8MapValue(value)
+		return newUintInt8MapValue(value, sep)
+
 	case *map[uint8]int8:
-		return newUint8Int8MapValue(value)
+		return newUint8Int8MapValue(value, sep)
+
 	case *map[uint16]int8:
-		return newUint16Int8MapValue(value)
+		return newUint16Int8MapValue(value, sep)
+
 	case *map[uint32]int8:
-		return newUint32Int8MapValue(value)
+		return newUint32Int8MapValue(value, sep)
+
 	case *map[uint64]int8:
-		return newUint64Int8MapValue(value)
+		return newUint64Int8MapValue(value, sep)
+
 	case *map[string]int16:
-		return newStringInt16MapValue(value)
+		return newStringInt16MapValue(value, sep)
+
 	case *map[int]int16:
-		return newIntInt16MapValue(value)
+		return newIntInt16MapValue(value, sep)
+
 	case *map[int8]int16:
-		return newInt8Int16MapValue(value)
+		return newInt8Int16MapValue(value, sep)
+
 	case *map[int16]int16:
-		return newInt16Int16MapValue(value)
+		return newInt16Int16MapValue(value, sep)
+
 	case *map[int32]int16:
-		return newInt32Int16MapValue(value)
+		return newInt32Int16MapValue(value, sep)
+
 	case *map[int64]int16:
-		return newInt64Int16MapValue(value)
+		return newInt64Int16MapValue(value, sep)
+
 	case *map[uint]int16:
-		return newUintInt16MapValue(value)
+		return newUintInt16MapValue(value, sep)
+
 	case *map[uint8]int16:
-		return newUint8Int16MapValue(value)
+		return newUint8Int16MapValue(value, sep)
+
 	case *map[uint16]int16:
-		return newUint16Int16MapValue(value)
+		return newUint16Int16MapValue(value, sep)
+
 	case *map[uint32]int16:
-		return newUint32Int16MapValue(value)
+		return newUint32Int16MapValue(value, sep)
+
 	case *map[uint64]int16:
-		return newUint64Int16MapValue(value)
+		return newUint64Int16MapValue(value, sep)
+
 	case *map[string]int32:
-		return newStringInt32MapValue(value)
+		return newStringInt32MapValue(value, sep)
+
 	case *map[int]int32:
-		return newIntInt32MapValue(value)
+		return newIntInt32MapValue(value, sep)
+
 	case *map[int8]int32:
-		return newInt8Int32MapValue(value)
+		return newInt8Int32MapValue(value, sep)
+
 	case *map[int16]int32:
-		return newInt16Int32MapValue(value)
+		return newInt16Int32MapValue(value, sep)
+
 	case *map[int32]int32:
-		return newInt32Int32MapValue(value)
+		return newInt32Int32MapValue(value, sep)
+
 	case *map[int64]int32:
-		return newInt64Int32MapValue(value)
+		return newInt64Int32MapValue(value, sep)
+
 	case *map[uint]int32:
-		return newUintInt32MapValue(value)
+		return newUintInt32MapValue(value, sep)
+
 	case *map[uint8]int32:
-		return newUint8Int32MapValue(value)
+		return newUint8Int32MapValue(value, sep)
+
 	case *map[uint16]int32:
-		return newUint16Int32MapValue(value)
+		return newUint16Int32MapValue(value, sep)
+
 	case *map[uint32]int32:
-		return newUint32Int32MapValue(value)
+		return newUint32Int32MapValue(value, sep)
+
 	case *map[uint64]int32:
-		return newUint64Int32MapValue(value)
+		return newUint64Int32MapValue(value, sep)
+
 	case *map[string]int64:
-		return newStringInt64MapValue(value)
+		return newStringInt64MapValue(value, sep)
+
 	case *map[int]int64:
-		return newIntInt64MapValue(value)
+		return newIntInt64MapValue(value, sep)
+
 	case *map[int8]int64:
-		return newInt8Int64MapValue(value)
+		return newInt8Int64MapValue(value, sep)
+
 	case *map[int16]int64:
-		return newInt16Int64MapValue(value)
+		return newInt16Int64MapValue(value, sep)
+
 	case *map[int32]int64:
-		return newInt32Int64MapValue(value)
+		return newInt32Int64MapValue(value, sep)
+
 	case *map[int64]int64:
-		return newInt64Int64MapValue(value)
+		return newInt64Int64MapValue(value, sep)
+
 	case *map[uint]int64:
-		return newUintInt64MapValue(value)
+		return newUintInt64MapValue(value, sep)
+
 	case *map[uint8]int64:
-		return newUint8Int64MapValue(value)
+		return newUint8Int64MapValue(value, sep)
+
 	case *map[uint16]int64:
-		return newUint16Int64MapValue(value)
+		return newUint16Int64MapValue(value, sep)
+
 	case *map[uint32]int64:
-		return newUint32Int64MapValue(value)
+		return newUint32Int64MapValue(value, sep)
+
 	case *map[uint64]int64:
-		return newUint64Int64MapValue(value)
+		return newUint64Int64MapValue(value, sep)
+
 	case *map[string]float64:
-		return newStringFloat64MapValue(value)
+		return newStringFloat64MapValue(value, sep)
+
 	case *map[int]float64:
-		return newIntFloat64MapValue(value)
+		return newIntFloat64MapValue(value, sep)
+
 	case *map[int8]float64:
-		return newInt8Float64MapValue(value)
+		return newInt8Float64MapValue(value, sep)
+
 	case *map[int16]float64:
-		return newInt16Float64MapValue(value)
+		return newInt16Float64MapValue(value, sep)
+
 	case *map[int32]float64:
-		return newInt32Float64MapValue(value)
+		return newInt32Float64MapValue(value, sep)
+
 	case *map[int64]float64:
-		return newInt64Float64MapValue(value)
+		return newInt64Float64MapValue(value, sep)
+
 	case *map[uint]float64:
-		return newUintFloat64MapValue(value)
+		return newUintFloat64MapValue(value, sep)
+
 	case *map[uint8]float64:
-		return newUint8Float64MapValue(value)
+		return newUint8Float64MapValue(value, sep)
+
 	case *map[uint16]float64:
-		return newUint16Float64MapValue(value)
+		return newUint16Float64MapValue(value, sep)
+
 	case *map[uint32]float64:
-		return newUint32Float64MapValue(value)
+		return newUint32Float64MapValue(value, sep)
+
 	case *map[uint64]float64:
-		return newUint64Float64MapValue(value)
+		return newUint64Float64MapValue(value, sep)
+
 	case *map[string]float32:
-		return newStringFloat32MapValue(value)
+		return newStringFloat32MapValue(value, sep)
+
 	case *map[int]float32:
-		return newIntFloat32MapValue(value)
+		return newIntFloat32MapValue(value, sep)
+
 	case *map[int8]float32:
-		return newInt8Float32MapValue(value)
+		return newInt8Float32MapValue(value, sep)
+
 	case *map[int16]float32:
-		return newInt16Float32MapValue(value)
+		return newInt16Float32MapValue(value, sep)
+
 	case *map[int32]float32:
-		return newInt32Float32MapValue(value)
+		return newInt32Float32MapValue(value, sep)
+
 	case *map[int64]float32:
-		return newInt64Float32MapValue(value)
+		return newInt64Float32MapValue(value, sep)
+
 	case *map[uint]float32:
-		return newUintFloat32MapValue(value)
+		return newUintFloat32MapValue(value, sep)
+
 	case *map[uint8]float32:
-		return newUint8Float32MapValue(value)
+		return newUint8Float32MapValue(value, sep)
+
 	case *map[uint16]float32:
-		return newUint16Float32MapValue(value)
+		return newUint16Float32MapValue(value, sep)
+
 	case *map[uint32]float32:
-		return newUint32Float32MapValue(value)
+		return newUint32Float32MapValue(value, sep)
+
 	case *map[uint64]float32:
-		return newUint64Float32MapValue(value)
+		return newUint64Float32MapValue(value, sep)
+
 	case *map[string]time.Duration:
-		return newStringDurationMapValue(value)
+		return newStringDurationMapValue(value, sep)
+
 	case *map[int]time.Duration:
-		return newIntDurationMapValue(value)
+		return newIntDurationMapValue(value, sep)
+
 	case *map[int8]time.Duration:
-		return newInt8DurationMapValue(value)
+		return newInt8DurationMapValue(value, sep)
+
 	case *map[int16]time.Duration:
-		return newInt16DurationMapValue(value)
+		return newInt16DurationMapValue(value, sep)
+
 	case *map[int32]time.Duration:
-		return newInt32DurationMapValue(value)
+		return newInt32DurationMapValue(value, sep)
+
 	case *map[int64]time.Duration:
-		return newInt64DurationMapValue(value)
+		return newInt64DurationMapValue(value, sep)
+
 	case *map[uint]time.Duration:
-		return newUintDurationMapValue(value)
+		return newUintDurationMapValue(value, sep)
+
 	case *map[uint8]time.Duration:
-		return newUint8DurationMapValue(value)
+		return newUint8DurationMapValue(value, sep)
+
 	case *map[uint16]time.Duration:
-		return newUint16DurationMapValue(value)
+		return newUint16DurationMapValue(value, sep)
+
 	case *map[uint32]time.Duration:
-		return newUint32DurationMapValue(value)
+		return newUint32DurationMapValue(value, sep)
+
 	case *map[uint64]time.Duration:
-		return newUint64DurationMapValue(value)
+		return newUint64DurationMapValue(value, sep)
+
 	case *map[string]net.IP:
-		return newStringIPMapValue(value)
+		return newStringIPMapValue(value, sep)
+
 	case *map[int]net.IP:
-		return newIntIPMapValue(value)
+		return newIntIPMapValue(value, sep)
+
 	case *map[int8]net.IP:
-		return newInt8IPMapValue(value)
+		return newInt8IPMapValue(value, sep)
+
 	case *map[int16]net.IP:
-		return newInt16IPMapValue(value)
+		return newInt16IPMapValue(value, sep)
+
 	case *map[int32]net.IP:
-		return newInt32IPMapValue(value)
+		return newInt32IPMapValue(value, sep)
+
 	case *map[int64]net.IP:
-		return newInt64IPMapValue(value)
+		return newInt64IPMapValue(value, sep)
+
 	case *map[uint]net.IP:
-		return newUintIPMapValue(value)
+		return newUintIPMapValue(value, sep)
+
 	case *map[uint8]net.IP:
-		return newUint8IPMapValue(value)
+		return newUint8IPMapValue(value, sep)
+
 	case *map[uint16]net.IP:
-		return newUint16IPMapValue(value)
+		return newUint16IPMapValue(value, sep)
+
 	case *map[uint32]net.IP:
-		return newUint32IPMapValue(value)
+		return newUint32IPMapValue(value, sep)
+
 	case *map[uint64]net.IP:
-		return newUint64IPMapValue(value)
+		return newUint64IPMapValue(value, sep)
+
 	case *map[string]HexBytes:
-		return newStringHexBytesMapValue(value)
+		return newStringHexBytesMapValue(value, sep)
+
 	case *map[int]HexBytes:
-		return newIntHexBytesMapValue(value)
+		return newIntHexBytesMapValue(value, sep)
+
 	case *map[int8]HexBytes:
-		return newInt8HexBytesMapValue(value)
+		return newInt8HexBytesMapValue(value, sep)
+
 	case *map[int16]HexBytes:
-		return newInt16HexBytesMapValue(value)
+		return newInt16HexBytesMapValue(value, sep)
+
 	case *map[int32]HexBytes:
-		return newInt32HexBytesMapValue(value)
+		return newInt32HexBytesMapValue(value, sep)
+
 	case *map[int64]HexBytes:
-		return newInt64HexBytesMapValue(value)
+		return newInt64HexBytesMapValue(value, sep)
+
 	case *map[uint]HexBytes:
-		return newUintHexBytesMapValue(value)
+		return newUintHexBytesMapValue(value, sep)
+
 	case *map[uint8]HexBytes:
-		return newUint8HexBytesMapValue(value)
+		return newUint8HexBytesMapValue(value, sep)
+
 	case *map[uint16]HexBytes:
-		return newUint16HexBytesMapValue(value)
+		return newUint16HexBytesMapValue(value, sep)
+
 	case *map[uint32]HexBytes:
-		return newUint32HexBytesMapValue(value)
+		return newUint32HexBytesMapValue(value, sep)
+
 	case *map[uint64]HexBytes:
-		return newUint64HexBytesMapValue(value)
+		return newUint64HexBytesMapValue(value, sep)
+
 	case *map[string]*regexp.Regexp:
-		return newStringRegexpMapValue(value)
+		return newStringRegexpMapValue(value, sep)
+
 	case *map[int]*regexp.Regexp:
-		return newIntRegexpMapValue(value)
+		return newIntRegexpMapValue(value, sep)
+
 	case *map[int8]*regexp.Regexp:
-		return newInt8RegexpMapValue(value)
+		return newInt8RegexpMapValue(value, sep)
+
 	case *map[int16]*regexp.Regexp:
-		return newInt16RegexpMapValue(value)
+		return newInt16RegexpMapValue(value, sep)
+
 	case *map[int32]*regexp.Regexp:
-		return newInt32RegexpMapValue(value)
+		return newInt32RegexpMapValue(value, sep)
+
 	case *map[int64]*regexp.Regexp:
-		return newInt64RegexpMapValue(value)
+		return newInt64RegexpMapValue(value, sep)
+
 	case *map[uint]*regexp.Regexp:
-		return newUintRegexpMapValue(value)
+		return newUintRegexpMapValue(value, sep)
+
 	case *map[uint8]*regexp.Regexp:
-		return newUint8RegexpMapValue(value)
+		return newUint8RegexpMapValue(value, sep)
+
 	case *map[uint16]*regexp.Regexp:
-		return newUint16RegexpMapValue(value)
+		return newUint16RegexpMapValue(value, sep)
+
 	case *map[uint32]*regexp.Regexp:
-		return newUint32RegexpMapValue(value)
+		return newUint32RegexpMapValue(value, sep)
+
 	case *map[uint64]*regexp.Regexp:
-		return newUint64RegexpMapValue(value)
+		return newUint64RegexpMapValue(value, sep)
+
 	case *map[string]net.IPNet:
-		return newStringIPNetMapValue(value)
+		return newStringIPNetMapValue(value, sep)
+
 	case *map[int]net.IPNet:
-		return newIntIPNetMapValue(value)
+		return newIntIPNetMapValue(value, sep)
+
 	case *map[int8]net.IPNet:
-		return newInt8IPNetMapValue(value)
+		return newInt8IPNetMapValue(value, sep)
+
 	case *map[int16]net.IPNet:
-		return newInt16IPNetMapValue(value)
+		return newInt16IPNetMapValue(value, sep)
+
 	case *map[int32]net.IPNet:
-		return newInt32IPNetMapValue(value)
+		return newInt32IPNetMapValue(value, sep)
+
 	case *map[int64]net.IPNet:
-		return newInt64IPNetMapValue(value)
+		return newInt64IPNetMapValue(value, sep)
+
 	case *map[uint]net.IPNet:
-		return newUintIPNetMapValue(value)
+		return newUintIPNetMapValue(value, sep)
+
 	case *map[uint8]net.IPNet:
-		return newUint8IPNetMapValue(value)
+		return newUint8IPNetMapValue(value, sep)
+
 	case *map[uint16]net.IPNet:
-		return newUint16IPNetMapValue(value)
+		return newUint16IPNetMapValue(value, sep)
+
 	case *map[uint32]net.IPNet:
-		return newUint32IPNetMapValue(value)
+		return newUint32IPNetMapValue(value, sep)
+
 	case *map[uint64]net.IPNet:
-		return newUint64IPNetMapValue(value)
+		return newUint64IPNetMapValue(value, sep)
+
 	default:
 		return nil
 	}
@@ -557,7 +770,6 @@ type stringValue struct {
 }
 
 var _ Value = (*stringValue)(nil)
-
 var _ Getter = (*stringValue)(nil)
 
 func newStringValue(p *string) *stringValue {
@@ -565,13 +777,16 @@ func newStringValue(p *string) *stringValue {
 }
 
 func (v *stringValue) Set(s string) error {
+
 	*v.value = s
 
 	return nil
+
 }
 
 func (v *stringValue) Get() any {
 	if v != nil && v.value != nil {
+
 		return *v.value
 	}
 
@@ -580,6 +795,7 @@ func (v *stringValue) Get() any {
 
 func (v *stringValue) String() string {
 	if v != nil && v.value != nil {
+
 		return *v.value
 	}
 
@@ -591,24 +807,39 @@ func (v *stringValue) Type() string { return "string" }
 // -- stringSlice Value
 
 type stringSliceValue struct {
-	value   *[]string
-	changed bool
+	value     *[]string
+	changed   bool
+	separator string
 }
 
 var _ RepeatableFlag = (*stringSliceValue)(nil)
-
 var _ Value = (*stringSliceValue)(nil)
-
 var _ Getter = (*stringSliceValue)(nil)
 
-func newStringSliceValue(slice *[]string) *stringSliceValue {
-	return &stringSliceValue{
+func newStringSliceValue(slice *[]string, sep *string) *stringSliceValue {
+	s := &stringSliceValue{
 		value: slice,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *stringSliceValue) Set(raw string) error {
-	ss := strings.Split(raw, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var ss []string
+	if separator == "none" {
+		ss = []string{raw}
+	} else {
+		ss = strings.Split(raw, separator)
+	}
+
 	out := ss
 	if !v.changed {
 		*v.value = out
@@ -622,6 +853,7 @@ func (v *stringSliceValue) Set(raw string) error {
 
 func (v *stringSliceValue) Get() any {
 	if v != nil && v.value != nil {
+
 		return *v.value
 	}
 
@@ -630,6 +862,7 @@ func (v *stringSliceValue) Get() any {
 
 func (v *stringSliceValue) String() string {
 	if v == nil || v.value == nil {
+
 		return "[]"
 	}
 	out := make([]string, 0, len(*v.value))
@@ -648,23 +881,37 @@ func (v *stringSliceValue) IsCumulative() bool {
 
 // -- stringStringMapValue.
 type stringStringMapValue struct {
-	value *map[string]string
+	value     *map[string]string
+	separator string
 }
 
 var _ RepeatableFlag = (*stringStringMapValue)(nil)
-
 var _ Value = (*stringStringMapValue)(nil)
-
 var _ Getter = (*stringStringMapValue)(nil)
 
-func newStringStringMapValue(m *map[string]string) *stringStringMapValue {
-	return &stringStringMapValue{
+func newStringStringMapValue(m *map[string]string, sep *string) *stringStringMapValue {
+	s := &stringStringMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *stringStringMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -710,23 +957,37 @@ func (v *stringStringMapValue) IsCumulative() bool {
 
 // -- intStringMapValue.
 type intStringMapValue struct {
-	value *map[int]string
+	value     *map[int]string
+	separator string
 }
 
 var _ RepeatableFlag = (*intStringMapValue)(nil)
-
 var _ Value = (*intStringMapValue)(nil)
-
 var _ Getter = (*intStringMapValue)(nil)
 
-func newIntStringMapValue(m *map[int]string) *intStringMapValue {
-	return &intStringMapValue{
+func newIntStringMapValue(m *map[int]string, sep *string) *intStringMapValue {
+	s := &intStringMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *intStringMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -777,23 +1038,37 @@ func (v *intStringMapValue) IsCumulative() bool {
 
 // -- int8StringMapValue.
 type int8StringMapValue struct {
-	value *map[int8]string
+	value     *map[int8]string
+	separator string
 }
 
 var _ RepeatableFlag = (*int8StringMapValue)(nil)
-
 var _ Value = (*int8StringMapValue)(nil)
-
 var _ Getter = (*int8StringMapValue)(nil)
 
-func newInt8StringMapValue(m *map[int8]string) *int8StringMapValue {
-	return &int8StringMapValue{
+func newInt8StringMapValue(m *map[int8]string, sep *string) *int8StringMapValue {
+	s := &int8StringMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int8StringMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -844,23 +1119,37 @@ func (v *int8StringMapValue) IsCumulative() bool {
 
 // -- int16StringMapValue.
 type int16StringMapValue struct {
-	value *map[int16]string
+	value     *map[int16]string
+	separator string
 }
 
 var _ RepeatableFlag = (*int16StringMapValue)(nil)
-
 var _ Value = (*int16StringMapValue)(nil)
-
 var _ Getter = (*int16StringMapValue)(nil)
 
-func newInt16StringMapValue(m *map[int16]string) *int16StringMapValue {
-	return &int16StringMapValue{
+func newInt16StringMapValue(m *map[int16]string, sep *string) *int16StringMapValue {
+	s := &int16StringMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int16StringMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -911,23 +1200,37 @@ func (v *int16StringMapValue) IsCumulative() bool {
 
 // -- int32StringMapValue.
 type int32StringMapValue struct {
-	value *map[int32]string
+	value     *map[int32]string
+	separator string
 }
 
 var _ RepeatableFlag = (*int32StringMapValue)(nil)
-
 var _ Value = (*int32StringMapValue)(nil)
-
 var _ Getter = (*int32StringMapValue)(nil)
 
-func newInt32StringMapValue(m *map[int32]string) *int32StringMapValue {
-	return &int32StringMapValue{
+func newInt32StringMapValue(m *map[int32]string, sep *string) *int32StringMapValue {
+	s := &int32StringMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int32StringMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -978,23 +1281,37 @@ func (v *int32StringMapValue) IsCumulative() bool {
 
 // -- int64StringMapValue.
 type int64StringMapValue struct {
-	value *map[int64]string
+	value     *map[int64]string
+	separator string
 }
 
 var _ RepeatableFlag = (*int64StringMapValue)(nil)
-
 var _ Value = (*int64StringMapValue)(nil)
-
 var _ Getter = (*int64StringMapValue)(nil)
 
-func newInt64StringMapValue(m *map[int64]string) *int64StringMapValue {
-	return &int64StringMapValue{
+func newInt64StringMapValue(m *map[int64]string, sep *string) *int64StringMapValue {
+	s := &int64StringMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int64StringMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -1045,23 +1362,37 @@ func (v *int64StringMapValue) IsCumulative() bool {
 
 // -- uintStringMapValue.
 type uintStringMapValue struct {
-	value *map[uint]string
+	value     *map[uint]string
+	separator string
 }
 
 var _ RepeatableFlag = (*uintStringMapValue)(nil)
-
 var _ Value = (*uintStringMapValue)(nil)
-
 var _ Getter = (*uintStringMapValue)(nil)
 
-func newUintStringMapValue(m *map[uint]string) *uintStringMapValue {
-	return &uintStringMapValue{
+func newUintStringMapValue(m *map[uint]string, sep *string) *uintStringMapValue {
+	s := &uintStringMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uintStringMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -1112,23 +1443,37 @@ func (v *uintStringMapValue) IsCumulative() bool {
 
 // -- uint8StringMapValue.
 type uint8StringMapValue struct {
-	value *map[uint8]string
+	value     *map[uint8]string
+	separator string
 }
 
 var _ RepeatableFlag = (*uint8StringMapValue)(nil)
-
 var _ Value = (*uint8StringMapValue)(nil)
-
 var _ Getter = (*uint8StringMapValue)(nil)
 
-func newUint8StringMapValue(m *map[uint8]string) *uint8StringMapValue {
-	return &uint8StringMapValue{
+func newUint8StringMapValue(m *map[uint8]string, sep *string) *uint8StringMapValue {
+	s := &uint8StringMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint8StringMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -1179,23 +1524,37 @@ func (v *uint8StringMapValue) IsCumulative() bool {
 
 // -- uint16StringMapValue.
 type uint16StringMapValue struct {
-	value *map[uint16]string
+	value     *map[uint16]string
+	separator string
 }
 
 var _ RepeatableFlag = (*uint16StringMapValue)(nil)
-
 var _ Value = (*uint16StringMapValue)(nil)
-
 var _ Getter = (*uint16StringMapValue)(nil)
 
-func newUint16StringMapValue(m *map[uint16]string) *uint16StringMapValue {
-	return &uint16StringMapValue{
+func newUint16StringMapValue(m *map[uint16]string, sep *string) *uint16StringMapValue {
+	s := &uint16StringMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint16StringMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -1246,23 +1605,37 @@ func (v *uint16StringMapValue) IsCumulative() bool {
 
 // -- uint32StringMapValue.
 type uint32StringMapValue struct {
-	value *map[uint32]string
+	value     *map[uint32]string
+	separator string
 }
 
 var _ RepeatableFlag = (*uint32StringMapValue)(nil)
-
 var _ Value = (*uint32StringMapValue)(nil)
-
 var _ Getter = (*uint32StringMapValue)(nil)
 
-func newUint32StringMapValue(m *map[uint32]string) *uint32StringMapValue {
-	return &uint32StringMapValue{
+func newUint32StringMapValue(m *map[uint32]string, sep *string) *uint32StringMapValue {
+	s := &uint32StringMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint32StringMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -1313,23 +1686,37 @@ func (v *uint32StringMapValue) IsCumulative() bool {
 
 // -- uint64StringMapValue.
 type uint64StringMapValue struct {
-	value *map[uint64]string
+	value     *map[uint64]string
+	separator string
 }
 
 var _ RepeatableFlag = (*uint64StringMapValue)(nil)
-
 var _ Value = (*uint64StringMapValue)(nil)
-
 var _ Getter = (*uint64StringMapValue)(nil)
 
-func newUint64StringMapValue(m *map[uint64]string) *uint64StringMapValue {
-	return &uint64StringMapValue{
+func newUint64StringMapValue(m *map[uint64]string, sep *string) *uint64StringMapValue {
+	s := &uint64StringMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint64StringMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -1384,7 +1771,6 @@ type boolValue struct {
 }
 
 var _ Value = (*boolValue)(nil)
-
 var _ Getter = (*boolValue)(nil)
 
 func newBoolValue(p *bool) *boolValue {
@@ -1392,18 +1778,22 @@ func newBoolValue(p *bool) *boolValue {
 }
 
 func (v *boolValue) Set(s string) error {
+
 	parsed, err := strconv.ParseBool(s)
 	if err == nil {
+
 		*v.value = parsed
 
 		return nil
 	}
 
 	return err
+
 }
 
 func (v *boolValue) Get() any {
 	if v != nil && v.value != nil {
+
 		return *v.value
 	}
 
@@ -1412,6 +1802,7 @@ func (v *boolValue) Get() any {
 
 func (v *boolValue) String() string {
 	if v != nil && v.value != nil {
+
 		return strconv.FormatBool(*v.value)
 	}
 
@@ -1423,24 +1814,38 @@ func (v *boolValue) Type() string { return "bool" }
 // -- boolSlice Value
 
 type boolSliceValue struct {
-	value   *[]bool
-	changed bool
+	value     *[]bool
+	changed   bool
+	separator string
 }
 
 var _ RepeatableFlag = (*boolSliceValue)(nil)
-
 var _ Value = (*boolSliceValue)(nil)
-
 var _ Getter = (*boolSliceValue)(nil)
 
-func newBoolSliceValue(slice *[]bool) *boolSliceValue {
-	return &boolSliceValue{
+func newBoolSliceValue(slice *[]bool, sep *string) *boolSliceValue {
+	s := &boolSliceValue{
 		value: slice,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *boolSliceValue) Set(raw string) error {
-	ss := strings.Split(raw, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var ss []string
+	if separator == "none" {
+		ss = []string{raw}
+	} else {
+		ss = strings.Split(raw, separator)
+	}
 
 	out := make([]bool, len(ss))
 	for i, s := range ss {
@@ -1448,7 +1853,9 @@ func (v *boolSliceValue) Set(raw string) error {
 		if err != nil {
 			return err
 		}
+
 		out[i] = parsed
+
 	}
 
 	if !v.changed {
@@ -1463,6 +1870,7 @@ func (v *boolSliceValue) Set(raw string) error {
 
 func (v *boolSliceValue) Get() any {
 	if v != nil && v.value != nil {
+
 		return *v.value
 	}
 
@@ -1471,6 +1879,7 @@ func (v *boolSliceValue) Get() any {
 
 func (v *boolSliceValue) String() string {
 	if v == nil || v.value == nil {
+
 		return "[]"
 	}
 	out := make([]string, 0, len(*v.value))
@@ -1489,23 +1898,37 @@ func (v *boolSliceValue) IsCumulative() bool {
 
 // -- stringBoolMapValue.
 type stringBoolMapValue struct {
-	value *map[string]bool
+	value     *map[string]bool
+	separator string
 }
 
 var _ RepeatableFlag = (*stringBoolMapValue)(nil)
-
 var _ Value = (*stringBoolMapValue)(nil)
-
 var _ Getter = (*stringBoolMapValue)(nil)
 
-func newStringBoolMapValue(m *map[string]bool) *stringBoolMapValue {
-	return &stringBoolMapValue{
+func newStringBoolMapValue(m *map[string]bool, sep *string) *stringBoolMapValue {
+	s := &stringBoolMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *stringBoolMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -1556,23 +1979,37 @@ func (v *stringBoolMapValue) IsCumulative() bool {
 
 // -- intBoolMapValue.
 type intBoolMapValue struct {
-	value *map[int]bool
+	value     *map[int]bool
+	separator string
 }
 
 var _ RepeatableFlag = (*intBoolMapValue)(nil)
-
 var _ Value = (*intBoolMapValue)(nil)
-
 var _ Getter = (*intBoolMapValue)(nil)
 
-func newIntBoolMapValue(m *map[int]bool) *intBoolMapValue {
-	return &intBoolMapValue{
+func newIntBoolMapValue(m *map[int]bool, sep *string) *intBoolMapValue {
+	s := &intBoolMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *intBoolMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -1628,23 +2065,37 @@ func (v *intBoolMapValue) IsCumulative() bool {
 
 // -- int8BoolMapValue.
 type int8BoolMapValue struct {
-	value *map[int8]bool
+	value     *map[int8]bool
+	separator string
 }
 
 var _ RepeatableFlag = (*int8BoolMapValue)(nil)
-
 var _ Value = (*int8BoolMapValue)(nil)
-
 var _ Getter = (*int8BoolMapValue)(nil)
 
-func newInt8BoolMapValue(m *map[int8]bool) *int8BoolMapValue {
-	return &int8BoolMapValue{
+func newInt8BoolMapValue(m *map[int8]bool, sep *string) *int8BoolMapValue {
+	s := &int8BoolMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int8BoolMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -1700,23 +2151,37 @@ func (v *int8BoolMapValue) IsCumulative() bool {
 
 // -- int16BoolMapValue.
 type int16BoolMapValue struct {
-	value *map[int16]bool
+	value     *map[int16]bool
+	separator string
 }
 
 var _ RepeatableFlag = (*int16BoolMapValue)(nil)
-
 var _ Value = (*int16BoolMapValue)(nil)
-
 var _ Getter = (*int16BoolMapValue)(nil)
 
-func newInt16BoolMapValue(m *map[int16]bool) *int16BoolMapValue {
-	return &int16BoolMapValue{
+func newInt16BoolMapValue(m *map[int16]bool, sep *string) *int16BoolMapValue {
+	s := &int16BoolMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int16BoolMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -1772,23 +2237,37 @@ func (v *int16BoolMapValue) IsCumulative() bool {
 
 // -- int32BoolMapValue.
 type int32BoolMapValue struct {
-	value *map[int32]bool
+	value     *map[int32]bool
+	separator string
 }
 
 var _ RepeatableFlag = (*int32BoolMapValue)(nil)
-
 var _ Value = (*int32BoolMapValue)(nil)
-
 var _ Getter = (*int32BoolMapValue)(nil)
 
-func newInt32BoolMapValue(m *map[int32]bool) *int32BoolMapValue {
-	return &int32BoolMapValue{
+func newInt32BoolMapValue(m *map[int32]bool, sep *string) *int32BoolMapValue {
+	s := &int32BoolMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int32BoolMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -1844,23 +2323,37 @@ func (v *int32BoolMapValue) IsCumulative() bool {
 
 // -- int64BoolMapValue.
 type int64BoolMapValue struct {
-	value *map[int64]bool
+	value     *map[int64]bool
+	separator string
 }
 
 var _ RepeatableFlag = (*int64BoolMapValue)(nil)
-
 var _ Value = (*int64BoolMapValue)(nil)
-
 var _ Getter = (*int64BoolMapValue)(nil)
 
-func newInt64BoolMapValue(m *map[int64]bool) *int64BoolMapValue {
-	return &int64BoolMapValue{
+func newInt64BoolMapValue(m *map[int64]bool, sep *string) *int64BoolMapValue {
+	s := &int64BoolMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int64BoolMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -1916,23 +2409,37 @@ func (v *int64BoolMapValue) IsCumulative() bool {
 
 // -- uintBoolMapValue.
 type uintBoolMapValue struct {
-	value *map[uint]bool
+	value     *map[uint]bool
+	separator string
 }
 
 var _ RepeatableFlag = (*uintBoolMapValue)(nil)
-
 var _ Value = (*uintBoolMapValue)(nil)
-
 var _ Getter = (*uintBoolMapValue)(nil)
 
-func newUintBoolMapValue(m *map[uint]bool) *uintBoolMapValue {
-	return &uintBoolMapValue{
+func newUintBoolMapValue(m *map[uint]bool, sep *string) *uintBoolMapValue {
+	s := &uintBoolMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uintBoolMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -1988,23 +2495,37 @@ func (v *uintBoolMapValue) IsCumulative() bool {
 
 // -- uint8BoolMapValue.
 type uint8BoolMapValue struct {
-	value *map[uint8]bool
+	value     *map[uint8]bool
+	separator string
 }
 
 var _ RepeatableFlag = (*uint8BoolMapValue)(nil)
-
 var _ Value = (*uint8BoolMapValue)(nil)
-
 var _ Getter = (*uint8BoolMapValue)(nil)
 
-func newUint8BoolMapValue(m *map[uint8]bool) *uint8BoolMapValue {
-	return &uint8BoolMapValue{
+func newUint8BoolMapValue(m *map[uint8]bool, sep *string) *uint8BoolMapValue {
+	s := &uint8BoolMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint8BoolMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -2060,23 +2581,37 @@ func (v *uint8BoolMapValue) IsCumulative() bool {
 
 // -- uint16BoolMapValue.
 type uint16BoolMapValue struct {
-	value *map[uint16]bool
+	value     *map[uint16]bool
+	separator string
 }
 
 var _ RepeatableFlag = (*uint16BoolMapValue)(nil)
-
 var _ Value = (*uint16BoolMapValue)(nil)
-
 var _ Getter = (*uint16BoolMapValue)(nil)
 
-func newUint16BoolMapValue(m *map[uint16]bool) *uint16BoolMapValue {
-	return &uint16BoolMapValue{
+func newUint16BoolMapValue(m *map[uint16]bool, sep *string) *uint16BoolMapValue {
+	s := &uint16BoolMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint16BoolMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -2132,23 +2667,37 @@ func (v *uint16BoolMapValue) IsCumulative() bool {
 
 // -- uint32BoolMapValue.
 type uint32BoolMapValue struct {
-	value *map[uint32]bool
+	value     *map[uint32]bool
+	separator string
 }
 
 var _ RepeatableFlag = (*uint32BoolMapValue)(nil)
-
 var _ Value = (*uint32BoolMapValue)(nil)
-
 var _ Getter = (*uint32BoolMapValue)(nil)
 
-func newUint32BoolMapValue(m *map[uint32]bool) *uint32BoolMapValue {
-	return &uint32BoolMapValue{
+func newUint32BoolMapValue(m *map[uint32]bool, sep *string) *uint32BoolMapValue {
+	s := &uint32BoolMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint32BoolMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -2204,23 +2753,37 @@ func (v *uint32BoolMapValue) IsCumulative() bool {
 
 // -- uint64BoolMapValue.
 type uint64BoolMapValue struct {
-	value *map[uint64]bool
+	value     *map[uint64]bool
+	separator string
 }
 
 var _ RepeatableFlag = (*uint64BoolMapValue)(nil)
-
 var _ Value = (*uint64BoolMapValue)(nil)
-
 var _ Getter = (*uint64BoolMapValue)(nil)
 
-func newUint64BoolMapValue(m *map[uint64]bool) *uint64BoolMapValue {
-	return &uint64BoolMapValue{
+func newUint64BoolMapValue(m *map[uint64]bool, sep *string) *uint64BoolMapValue {
+	s := &uint64BoolMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint64BoolMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -2280,7 +2843,6 @@ type uintValue struct {
 }
 
 var _ Value = (*uintValue)(nil)
-
 var _ Getter = (*uintValue)(nil)
 
 func newUintValue(p *uint) *uintValue {
@@ -2288,18 +2850,22 @@ func newUintValue(p *uint) *uintValue {
 }
 
 func (v *uintValue) Set(s string) error {
+
 	parsed, err := strconv.ParseUint(s, 0, 64)
 	if err == nil {
+
 		*v.value = (uint)(parsed)
 
 		return nil
 	}
 
 	return err
+
 }
 
 func (v *uintValue) Get() any {
 	if v != nil && v.value != nil {
+
 		return *v.value
 	}
 
@@ -2308,6 +2874,7 @@ func (v *uintValue) Get() any {
 
 func (v *uintValue) String() string {
 	if v != nil && v.value != nil {
+
 		return strconv.FormatUint(uint64(*v.value), 10)
 	}
 
@@ -2319,24 +2886,38 @@ func (v *uintValue) Type() string { return "uint" }
 // -- uintSlice Value
 
 type uintSliceValue struct {
-	value   *[]uint
-	changed bool
+	value     *[]uint
+	changed   bool
+	separator string
 }
 
 var _ RepeatableFlag = (*uintSliceValue)(nil)
-
 var _ Value = (*uintSliceValue)(nil)
-
 var _ Getter = (*uintSliceValue)(nil)
 
-func newUintSliceValue(slice *[]uint) *uintSliceValue {
-	return &uintSliceValue{
+func newUintSliceValue(slice *[]uint, sep *string) *uintSliceValue {
+	s := &uintSliceValue{
 		value: slice,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uintSliceValue) Set(raw string) error {
-	ss := strings.Split(raw, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var ss []string
+	if separator == "none" {
+		ss = []string{raw}
+	} else {
+		ss = strings.Split(raw, separator)
+	}
 
 	out := make([]uint, len(ss))
 	for i, s := range ss {
@@ -2344,7 +2925,9 @@ func (v *uintSliceValue) Set(raw string) error {
 		if err != nil {
 			return err
 		}
+
 		out[i] = (uint)(parsed)
+
 	}
 
 	if !v.changed {
@@ -2359,6 +2942,7 @@ func (v *uintSliceValue) Set(raw string) error {
 
 func (v *uintSliceValue) Get() any {
 	if v != nil && v.value != nil {
+
 		return *v.value
 	}
 
@@ -2367,6 +2951,7 @@ func (v *uintSliceValue) Get() any {
 
 func (v *uintSliceValue) String() string {
 	if v == nil || v.value == nil {
+
 		return "[]"
 	}
 	out := make([]string, 0, len(*v.value))
@@ -2385,23 +2970,37 @@ func (v *uintSliceValue) IsCumulative() bool {
 
 // -- stringUintMapValue.
 type stringUintMapValue struct {
-	value *map[string]uint
+	value     *map[string]uint
+	separator string
 }
 
 var _ RepeatableFlag = (*stringUintMapValue)(nil)
-
 var _ Value = (*stringUintMapValue)(nil)
-
 var _ Getter = (*stringUintMapValue)(nil)
 
-func newStringUintMapValue(m *map[string]uint) *stringUintMapValue {
-	return &stringUintMapValue{
+func newStringUintMapValue(m *map[string]uint, sep *string) *stringUintMapValue {
+	s := &stringUintMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *stringUintMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -2452,23 +3051,37 @@ func (v *stringUintMapValue) IsCumulative() bool {
 
 // -- intUintMapValue.
 type intUintMapValue struct {
-	value *map[int]uint
+	value     *map[int]uint
+	separator string
 }
 
 var _ RepeatableFlag = (*intUintMapValue)(nil)
-
 var _ Value = (*intUintMapValue)(nil)
-
 var _ Getter = (*intUintMapValue)(nil)
 
-func newIntUintMapValue(m *map[int]uint) *intUintMapValue {
-	return &intUintMapValue{
+func newIntUintMapValue(m *map[int]uint, sep *string) *intUintMapValue {
+	s := &intUintMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *intUintMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -2524,23 +3137,37 @@ func (v *intUintMapValue) IsCumulative() bool {
 
 // -- int8UintMapValue.
 type int8UintMapValue struct {
-	value *map[int8]uint
+	value     *map[int8]uint
+	separator string
 }
 
 var _ RepeatableFlag = (*int8UintMapValue)(nil)
-
 var _ Value = (*int8UintMapValue)(nil)
-
 var _ Getter = (*int8UintMapValue)(nil)
 
-func newInt8UintMapValue(m *map[int8]uint) *int8UintMapValue {
-	return &int8UintMapValue{
+func newInt8UintMapValue(m *map[int8]uint, sep *string) *int8UintMapValue {
+	s := &int8UintMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int8UintMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -2596,23 +3223,37 @@ func (v *int8UintMapValue) IsCumulative() bool {
 
 // -- int16UintMapValue.
 type int16UintMapValue struct {
-	value *map[int16]uint
+	value     *map[int16]uint
+	separator string
 }
 
 var _ RepeatableFlag = (*int16UintMapValue)(nil)
-
 var _ Value = (*int16UintMapValue)(nil)
-
 var _ Getter = (*int16UintMapValue)(nil)
 
-func newInt16UintMapValue(m *map[int16]uint) *int16UintMapValue {
-	return &int16UintMapValue{
+func newInt16UintMapValue(m *map[int16]uint, sep *string) *int16UintMapValue {
+	s := &int16UintMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int16UintMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -2668,23 +3309,37 @@ func (v *int16UintMapValue) IsCumulative() bool {
 
 // -- int32UintMapValue.
 type int32UintMapValue struct {
-	value *map[int32]uint
+	value     *map[int32]uint
+	separator string
 }
 
 var _ RepeatableFlag = (*int32UintMapValue)(nil)
-
 var _ Value = (*int32UintMapValue)(nil)
-
 var _ Getter = (*int32UintMapValue)(nil)
 
-func newInt32UintMapValue(m *map[int32]uint) *int32UintMapValue {
-	return &int32UintMapValue{
+func newInt32UintMapValue(m *map[int32]uint, sep *string) *int32UintMapValue {
+	s := &int32UintMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int32UintMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -2740,23 +3395,37 @@ func (v *int32UintMapValue) IsCumulative() bool {
 
 // -- int64UintMapValue.
 type int64UintMapValue struct {
-	value *map[int64]uint
+	value     *map[int64]uint
+	separator string
 }
 
 var _ RepeatableFlag = (*int64UintMapValue)(nil)
-
 var _ Value = (*int64UintMapValue)(nil)
-
 var _ Getter = (*int64UintMapValue)(nil)
 
-func newInt64UintMapValue(m *map[int64]uint) *int64UintMapValue {
-	return &int64UintMapValue{
+func newInt64UintMapValue(m *map[int64]uint, sep *string) *int64UintMapValue {
+	s := &int64UintMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int64UintMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -2812,23 +3481,37 @@ func (v *int64UintMapValue) IsCumulative() bool {
 
 // -- uintUintMapValue.
 type uintUintMapValue struct {
-	value *map[uint]uint
+	value     *map[uint]uint
+	separator string
 }
 
 var _ RepeatableFlag = (*uintUintMapValue)(nil)
-
 var _ Value = (*uintUintMapValue)(nil)
-
 var _ Getter = (*uintUintMapValue)(nil)
 
-func newUintUintMapValue(m *map[uint]uint) *uintUintMapValue {
-	return &uintUintMapValue{
+func newUintUintMapValue(m *map[uint]uint, sep *string) *uintUintMapValue {
+	s := &uintUintMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uintUintMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -2884,23 +3567,37 @@ func (v *uintUintMapValue) IsCumulative() bool {
 
 // -- uint8UintMapValue.
 type uint8UintMapValue struct {
-	value *map[uint8]uint
+	value     *map[uint8]uint
+	separator string
 }
 
 var _ RepeatableFlag = (*uint8UintMapValue)(nil)
-
 var _ Value = (*uint8UintMapValue)(nil)
-
 var _ Getter = (*uint8UintMapValue)(nil)
 
-func newUint8UintMapValue(m *map[uint8]uint) *uint8UintMapValue {
-	return &uint8UintMapValue{
+func newUint8UintMapValue(m *map[uint8]uint, sep *string) *uint8UintMapValue {
+	s := &uint8UintMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint8UintMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -2956,23 +3653,37 @@ func (v *uint8UintMapValue) IsCumulative() bool {
 
 // -- uint16UintMapValue.
 type uint16UintMapValue struct {
-	value *map[uint16]uint
+	value     *map[uint16]uint
+	separator string
 }
 
 var _ RepeatableFlag = (*uint16UintMapValue)(nil)
-
 var _ Value = (*uint16UintMapValue)(nil)
-
 var _ Getter = (*uint16UintMapValue)(nil)
 
-func newUint16UintMapValue(m *map[uint16]uint) *uint16UintMapValue {
-	return &uint16UintMapValue{
+func newUint16UintMapValue(m *map[uint16]uint, sep *string) *uint16UintMapValue {
+	s := &uint16UintMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint16UintMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -3028,23 +3739,37 @@ func (v *uint16UintMapValue) IsCumulative() bool {
 
 // -- uint32UintMapValue.
 type uint32UintMapValue struct {
-	value *map[uint32]uint
+	value     *map[uint32]uint
+	separator string
 }
 
 var _ RepeatableFlag = (*uint32UintMapValue)(nil)
-
 var _ Value = (*uint32UintMapValue)(nil)
-
 var _ Getter = (*uint32UintMapValue)(nil)
 
-func newUint32UintMapValue(m *map[uint32]uint) *uint32UintMapValue {
-	return &uint32UintMapValue{
+func newUint32UintMapValue(m *map[uint32]uint, sep *string) *uint32UintMapValue {
+	s := &uint32UintMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint32UintMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -3100,23 +3825,37 @@ func (v *uint32UintMapValue) IsCumulative() bool {
 
 // -- uint64UintMapValue.
 type uint64UintMapValue struct {
-	value *map[uint64]uint
+	value     *map[uint64]uint
+	separator string
 }
 
 var _ RepeatableFlag = (*uint64UintMapValue)(nil)
-
 var _ Value = (*uint64UintMapValue)(nil)
-
 var _ Getter = (*uint64UintMapValue)(nil)
 
-func newUint64UintMapValue(m *map[uint64]uint) *uint64UintMapValue {
-	return &uint64UintMapValue{
+func newUint64UintMapValue(m *map[uint64]uint, sep *string) *uint64UintMapValue {
+	s := &uint64UintMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint64UintMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -3176,7 +3915,6 @@ type uint8Value struct {
 }
 
 var _ Value = (*uint8Value)(nil)
-
 var _ Getter = (*uint8Value)(nil)
 
 func newUint8Value(p *uint8) *uint8Value {
@@ -3184,18 +3922,22 @@ func newUint8Value(p *uint8) *uint8Value {
 }
 
 func (v *uint8Value) Set(s string) error {
+
 	parsed, err := strconv.ParseUint(s, 0, 8)
 	if err == nil {
+
 		*v.value = (uint8)(parsed)
 
 		return nil
 	}
 
 	return err
+
 }
 
 func (v *uint8Value) Get() any {
 	if v != nil && v.value != nil {
+
 		return *v.value
 	}
 
@@ -3204,6 +3946,7 @@ func (v *uint8Value) Get() any {
 
 func (v *uint8Value) String() string {
 	if v != nil && v.value != nil {
+
 		return strconv.FormatUint(uint64(*v.value), 10)
 	}
 
@@ -3215,24 +3958,38 @@ func (v *uint8Value) Type() string { return "uint8" }
 // -- uint8Slice Value
 
 type uint8SliceValue struct {
-	value   *[]uint8
-	changed bool
+	value     *[]uint8
+	changed   bool
+	separator string
 }
 
 var _ RepeatableFlag = (*uint8SliceValue)(nil)
-
 var _ Value = (*uint8SliceValue)(nil)
-
 var _ Getter = (*uint8SliceValue)(nil)
 
-func newUint8SliceValue(slice *[]uint8) *uint8SliceValue {
-	return &uint8SliceValue{
+func newUint8SliceValue(slice *[]uint8, sep *string) *uint8SliceValue {
+	s := &uint8SliceValue{
 		value: slice,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint8SliceValue) Set(raw string) error {
-	ss := strings.Split(raw, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var ss []string
+	if separator == "none" {
+		ss = []string{raw}
+	} else {
+		ss = strings.Split(raw, separator)
+	}
 
 	out := make([]uint8, len(ss))
 	for i, s := range ss {
@@ -3240,7 +3997,9 @@ func (v *uint8SliceValue) Set(raw string) error {
 		if err != nil {
 			return err
 		}
+
 		out[i] = (uint8)(parsed)
+
 	}
 
 	if !v.changed {
@@ -3255,6 +4014,7 @@ func (v *uint8SliceValue) Set(raw string) error {
 
 func (v *uint8SliceValue) Get() any {
 	if v != nil && v.value != nil {
+
 		return *v.value
 	}
 
@@ -3263,6 +4023,7 @@ func (v *uint8SliceValue) Get() any {
 
 func (v *uint8SliceValue) String() string {
 	if v == nil || v.value == nil {
+
 		return "[]"
 	}
 	out := make([]string, 0, len(*v.value))
@@ -3281,23 +4042,37 @@ func (v *uint8SliceValue) IsCumulative() bool {
 
 // -- stringUint8MapValue.
 type stringUint8MapValue struct {
-	value *map[string]uint8
+	value     *map[string]uint8
+	separator string
 }
 
 var _ RepeatableFlag = (*stringUint8MapValue)(nil)
-
 var _ Value = (*stringUint8MapValue)(nil)
-
 var _ Getter = (*stringUint8MapValue)(nil)
 
-func newStringUint8MapValue(m *map[string]uint8) *stringUint8MapValue {
-	return &stringUint8MapValue{
+func newStringUint8MapValue(m *map[string]uint8, sep *string) *stringUint8MapValue {
+	s := &stringUint8MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *stringUint8MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -3348,23 +4123,37 @@ func (v *stringUint8MapValue) IsCumulative() bool {
 
 // -- intUint8MapValue.
 type intUint8MapValue struct {
-	value *map[int]uint8
+	value     *map[int]uint8
+	separator string
 }
 
 var _ RepeatableFlag = (*intUint8MapValue)(nil)
-
 var _ Value = (*intUint8MapValue)(nil)
-
 var _ Getter = (*intUint8MapValue)(nil)
 
-func newIntUint8MapValue(m *map[int]uint8) *intUint8MapValue {
-	return &intUint8MapValue{
+func newIntUint8MapValue(m *map[int]uint8, sep *string) *intUint8MapValue {
+	s := &intUint8MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *intUint8MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -3420,23 +4209,37 @@ func (v *intUint8MapValue) IsCumulative() bool {
 
 // -- int8Uint8MapValue.
 type int8Uint8MapValue struct {
-	value *map[int8]uint8
+	value     *map[int8]uint8
+	separator string
 }
 
 var _ RepeatableFlag = (*int8Uint8MapValue)(nil)
-
 var _ Value = (*int8Uint8MapValue)(nil)
-
 var _ Getter = (*int8Uint8MapValue)(nil)
 
-func newInt8Uint8MapValue(m *map[int8]uint8) *int8Uint8MapValue {
-	return &int8Uint8MapValue{
+func newInt8Uint8MapValue(m *map[int8]uint8, sep *string) *int8Uint8MapValue {
+	s := &int8Uint8MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int8Uint8MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -3492,23 +4295,37 @@ func (v *int8Uint8MapValue) IsCumulative() bool {
 
 // -- int16Uint8MapValue.
 type int16Uint8MapValue struct {
-	value *map[int16]uint8
+	value     *map[int16]uint8
+	separator string
 }
 
 var _ RepeatableFlag = (*int16Uint8MapValue)(nil)
-
 var _ Value = (*int16Uint8MapValue)(nil)
-
 var _ Getter = (*int16Uint8MapValue)(nil)
 
-func newInt16Uint8MapValue(m *map[int16]uint8) *int16Uint8MapValue {
-	return &int16Uint8MapValue{
+func newInt16Uint8MapValue(m *map[int16]uint8, sep *string) *int16Uint8MapValue {
+	s := &int16Uint8MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int16Uint8MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -3564,23 +4381,37 @@ func (v *int16Uint8MapValue) IsCumulative() bool {
 
 // -- int32Uint8MapValue.
 type int32Uint8MapValue struct {
-	value *map[int32]uint8
+	value     *map[int32]uint8
+	separator string
 }
 
 var _ RepeatableFlag = (*int32Uint8MapValue)(nil)
-
 var _ Value = (*int32Uint8MapValue)(nil)
-
 var _ Getter = (*int32Uint8MapValue)(nil)
 
-func newInt32Uint8MapValue(m *map[int32]uint8) *int32Uint8MapValue {
-	return &int32Uint8MapValue{
+func newInt32Uint8MapValue(m *map[int32]uint8, sep *string) *int32Uint8MapValue {
+	s := &int32Uint8MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int32Uint8MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -3636,23 +4467,37 @@ func (v *int32Uint8MapValue) IsCumulative() bool {
 
 // -- int64Uint8MapValue.
 type int64Uint8MapValue struct {
-	value *map[int64]uint8
+	value     *map[int64]uint8
+	separator string
 }
 
 var _ RepeatableFlag = (*int64Uint8MapValue)(nil)
-
 var _ Value = (*int64Uint8MapValue)(nil)
-
 var _ Getter = (*int64Uint8MapValue)(nil)
 
-func newInt64Uint8MapValue(m *map[int64]uint8) *int64Uint8MapValue {
-	return &int64Uint8MapValue{
+func newInt64Uint8MapValue(m *map[int64]uint8, sep *string) *int64Uint8MapValue {
+	s := &int64Uint8MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int64Uint8MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -3708,23 +4553,37 @@ func (v *int64Uint8MapValue) IsCumulative() bool {
 
 // -- uintUint8MapValue.
 type uintUint8MapValue struct {
-	value *map[uint]uint8
+	value     *map[uint]uint8
+	separator string
 }
 
 var _ RepeatableFlag = (*uintUint8MapValue)(nil)
-
 var _ Value = (*uintUint8MapValue)(nil)
-
 var _ Getter = (*uintUint8MapValue)(nil)
 
-func newUintUint8MapValue(m *map[uint]uint8) *uintUint8MapValue {
-	return &uintUint8MapValue{
+func newUintUint8MapValue(m *map[uint]uint8, sep *string) *uintUint8MapValue {
+	s := &uintUint8MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uintUint8MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -3780,23 +4639,37 @@ func (v *uintUint8MapValue) IsCumulative() bool {
 
 // -- uint8Uint8MapValue.
 type uint8Uint8MapValue struct {
-	value *map[uint8]uint8
+	value     *map[uint8]uint8
+	separator string
 }
 
 var _ RepeatableFlag = (*uint8Uint8MapValue)(nil)
-
 var _ Value = (*uint8Uint8MapValue)(nil)
-
 var _ Getter = (*uint8Uint8MapValue)(nil)
 
-func newUint8Uint8MapValue(m *map[uint8]uint8) *uint8Uint8MapValue {
-	return &uint8Uint8MapValue{
+func newUint8Uint8MapValue(m *map[uint8]uint8, sep *string) *uint8Uint8MapValue {
+	s := &uint8Uint8MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint8Uint8MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -3852,23 +4725,37 @@ func (v *uint8Uint8MapValue) IsCumulative() bool {
 
 // -- uint16Uint8MapValue.
 type uint16Uint8MapValue struct {
-	value *map[uint16]uint8
+	value     *map[uint16]uint8
+	separator string
 }
 
 var _ RepeatableFlag = (*uint16Uint8MapValue)(nil)
-
 var _ Value = (*uint16Uint8MapValue)(nil)
-
 var _ Getter = (*uint16Uint8MapValue)(nil)
 
-func newUint16Uint8MapValue(m *map[uint16]uint8) *uint16Uint8MapValue {
-	return &uint16Uint8MapValue{
+func newUint16Uint8MapValue(m *map[uint16]uint8, sep *string) *uint16Uint8MapValue {
+	s := &uint16Uint8MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint16Uint8MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -3924,23 +4811,37 @@ func (v *uint16Uint8MapValue) IsCumulative() bool {
 
 // -- uint32Uint8MapValue.
 type uint32Uint8MapValue struct {
-	value *map[uint32]uint8
+	value     *map[uint32]uint8
+	separator string
 }
 
 var _ RepeatableFlag = (*uint32Uint8MapValue)(nil)
-
 var _ Value = (*uint32Uint8MapValue)(nil)
-
 var _ Getter = (*uint32Uint8MapValue)(nil)
 
-func newUint32Uint8MapValue(m *map[uint32]uint8) *uint32Uint8MapValue {
-	return &uint32Uint8MapValue{
+func newUint32Uint8MapValue(m *map[uint32]uint8, sep *string) *uint32Uint8MapValue {
+	s := &uint32Uint8MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint32Uint8MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -3996,23 +4897,37 @@ func (v *uint32Uint8MapValue) IsCumulative() bool {
 
 // -- uint64Uint8MapValue.
 type uint64Uint8MapValue struct {
-	value *map[uint64]uint8
+	value     *map[uint64]uint8
+	separator string
 }
 
 var _ RepeatableFlag = (*uint64Uint8MapValue)(nil)
-
 var _ Value = (*uint64Uint8MapValue)(nil)
-
 var _ Getter = (*uint64Uint8MapValue)(nil)
 
-func newUint64Uint8MapValue(m *map[uint64]uint8) *uint64Uint8MapValue {
-	return &uint64Uint8MapValue{
+func newUint64Uint8MapValue(m *map[uint64]uint8, sep *string) *uint64Uint8MapValue {
+	s := &uint64Uint8MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint64Uint8MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -4072,7 +4987,6 @@ type uint16Value struct {
 }
 
 var _ Value = (*uint16Value)(nil)
-
 var _ Getter = (*uint16Value)(nil)
 
 func newUint16Value(p *uint16) *uint16Value {
@@ -4080,18 +4994,22 @@ func newUint16Value(p *uint16) *uint16Value {
 }
 
 func (v *uint16Value) Set(s string) error {
+
 	parsed, err := strconv.ParseUint(s, 0, 16)
 	if err == nil {
+
 		*v.value = (uint16)(parsed)
 
 		return nil
 	}
 
 	return err
+
 }
 
 func (v *uint16Value) Get() any {
 	if v != nil && v.value != nil {
+
 		return *v.value
 	}
 
@@ -4100,6 +5018,7 @@ func (v *uint16Value) Get() any {
 
 func (v *uint16Value) String() string {
 	if v != nil && v.value != nil {
+
 		return strconv.FormatUint(uint64(*v.value), 10)
 	}
 
@@ -4111,24 +5030,38 @@ func (v *uint16Value) Type() string { return "uint16" }
 // -- uint16Slice Value
 
 type uint16SliceValue struct {
-	value   *[]uint16
-	changed bool
+	value     *[]uint16
+	changed   bool
+	separator string
 }
 
 var _ RepeatableFlag = (*uint16SliceValue)(nil)
-
 var _ Value = (*uint16SliceValue)(nil)
-
 var _ Getter = (*uint16SliceValue)(nil)
 
-func newUint16SliceValue(slice *[]uint16) *uint16SliceValue {
-	return &uint16SliceValue{
+func newUint16SliceValue(slice *[]uint16, sep *string) *uint16SliceValue {
+	s := &uint16SliceValue{
 		value: slice,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint16SliceValue) Set(raw string) error {
-	ss := strings.Split(raw, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var ss []string
+	if separator == "none" {
+		ss = []string{raw}
+	} else {
+		ss = strings.Split(raw, separator)
+	}
 
 	out := make([]uint16, len(ss))
 	for i, s := range ss {
@@ -4136,7 +5069,9 @@ func (v *uint16SliceValue) Set(raw string) error {
 		if err != nil {
 			return err
 		}
+
 		out[i] = (uint16)(parsed)
+
 	}
 
 	if !v.changed {
@@ -4151,6 +5086,7 @@ func (v *uint16SliceValue) Set(raw string) error {
 
 func (v *uint16SliceValue) Get() any {
 	if v != nil && v.value != nil {
+
 		return *v.value
 	}
 
@@ -4159,6 +5095,7 @@ func (v *uint16SliceValue) Get() any {
 
 func (v *uint16SliceValue) String() string {
 	if v == nil || v.value == nil {
+
 		return "[]"
 	}
 	out := make([]string, 0, len(*v.value))
@@ -4177,23 +5114,37 @@ func (v *uint16SliceValue) IsCumulative() bool {
 
 // -- stringUint16MapValue.
 type stringUint16MapValue struct {
-	value *map[string]uint16
+	value     *map[string]uint16
+	separator string
 }
 
 var _ RepeatableFlag = (*stringUint16MapValue)(nil)
-
 var _ Value = (*stringUint16MapValue)(nil)
-
 var _ Getter = (*stringUint16MapValue)(nil)
 
-func newStringUint16MapValue(m *map[string]uint16) *stringUint16MapValue {
-	return &stringUint16MapValue{
+func newStringUint16MapValue(m *map[string]uint16, sep *string) *stringUint16MapValue {
+	s := &stringUint16MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *stringUint16MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -4244,23 +5195,37 @@ func (v *stringUint16MapValue) IsCumulative() bool {
 
 // -- intUint16MapValue.
 type intUint16MapValue struct {
-	value *map[int]uint16
+	value     *map[int]uint16
+	separator string
 }
 
 var _ RepeatableFlag = (*intUint16MapValue)(nil)
-
 var _ Value = (*intUint16MapValue)(nil)
-
 var _ Getter = (*intUint16MapValue)(nil)
 
-func newIntUint16MapValue(m *map[int]uint16) *intUint16MapValue {
-	return &intUint16MapValue{
+func newIntUint16MapValue(m *map[int]uint16, sep *string) *intUint16MapValue {
+	s := &intUint16MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *intUint16MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -4316,23 +5281,37 @@ func (v *intUint16MapValue) IsCumulative() bool {
 
 // -- int8Uint16MapValue.
 type int8Uint16MapValue struct {
-	value *map[int8]uint16
+	value     *map[int8]uint16
+	separator string
 }
 
 var _ RepeatableFlag = (*int8Uint16MapValue)(nil)
-
 var _ Value = (*int8Uint16MapValue)(nil)
-
 var _ Getter = (*int8Uint16MapValue)(nil)
 
-func newInt8Uint16MapValue(m *map[int8]uint16) *int8Uint16MapValue {
-	return &int8Uint16MapValue{
+func newInt8Uint16MapValue(m *map[int8]uint16, sep *string) *int8Uint16MapValue {
+	s := &int8Uint16MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int8Uint16MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -4388,23 +5367,37 @@ func (v *int8Uint16MapValue) IsCumulative() bool {
 
 // -- int16Uint16MapValue.
 type int16Uint16MapValue struct {
-	value *map[int16]uint16
+	value     *map[int16]uint16
+	separator string
 }
 
 var _ RepeatableFlag = (*int16Uint16MapValue)(nil)
-
 var _ Value = (*int16Uint16MapValue)(nil)
-
 var _ Getter = (*int16Uint16MapValue)(nil)
 
-func newInt16Uint16MapValue(m *map[int16]uint16) *int16Uint16MapValue {
-	return &int16Uint16MapValue{
+func newInt16Uint16MapValue(m *map[int16]uint16, sep *string) *int16Uint16MapValue {
+	s := &int16Uint16MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int16Uint16MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -4460,23 +5453,37 @@ func (v *int16Uint16MapValue) IsCumulative() bool {
 
 // -- int32Uint16MapValue.
 type int32Uint16MapValue struct {
-	value *map[int32]uint16
+	value     *map[int32]uint16
+	separator string
 }
 
 var _ RepeatableFlag = (*int32Uint16MapValue)(nil)
-
 var _ Value = (*int32Uint16MapValue)(nil)
-
 var _ Getter = (*int32Uint16MapValue)(nil)
 
-func newInt32Uint16MapValue(m *map[int32]uint16) *int32Uint16MapValue {
-	return &int32Uint16MapValue{
+func newInt32Uint16MapValue(m *map[int32]uint16, sep *string) *int32Uint16MapValue {
+	s := &int32Uint16MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int32Uint16MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -4532,23 +5539,37 @@ func (v *int32Uint16MapValue) IsCumulative() bool {
 
 // -- int64Uint16MapValue.
 type int64Uint16MapValue struct {
-	value *map[int64]uint16
+	value     *map[int64]uint16
+	separator string
 }
 
 var _ RepeatableFlag = (*int64Uint16MapValue)(nil)
-
 var _ Value = (*int64Uint16MapValue)(nil)
-
 var _ Getter = (*int64Uint16MapValue)(nil)
 
-func newInt64Uint16MapValue(m *map[int64]uint16) *int64Uint16MapValue {
-	return &int64Uint16MapValue{
+func newInt64Uint16MapValue(m *map[int64]uint16, sep *string) *int64Uint16MapValue {
+	s := &int64Uint16MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int64Uint16MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -4604,23 +5625,37 @@ func (v *int64Uint16MapValue) IsCumulative() bool {
 
 // -- uintUint16MapValue.
 type uintUint16MapValue struct {
-	value *map[uint]uint16
+	value     *map[uint]uint16
+	separator string
 }
 
 var _ RepeatableFlag = (*uintUint16MapValue)(nil)
-
 var _ Value = (*uintUint16MapValue)(nil)
-
 var _ Getter = (*uintUint16MapValue)(nil)
 
-func newUintUint16MapValue(m *map[uint]uint16) *uintUint16MapValue {
-	return &uintUint16MapValue{
+func newUintUint16MapValue(m *map[uint]uint16, sep *string) *uintUint16MapValue {
+	s := &uintUint16MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uintUint16MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -4676,23 +5711,37 @@ func (v *uintUint16MapValue) IsCumulative() bool {
 
 // -- uint8Uint16MapValue.
 type uint8Uint16MapValue struct {
-	value *map[uint8]uint16
+	value     *map[uint8]uint16
+	separator string
 }
 
 var _ RepeatableFlag = (*uint8Uint16MapValue)(nil)
-
 var _ Value = (*uint8Uint16MapValue)(nil)
-
 var _ Getter = (*uint8Uint16MapValue)(nil)
 
-func newUint8Uint16MapValue(m *map[uint8]uint16) *uint8Uint16MapValue {
-	return &uint8Uint16MapValue{
+func newUint8Uint16MapValue(m *map[uint8]uint16, sep *string) *uint8Uint16MapValue {
+	s := &uint8Uint16MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint8Uint16MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -4748,23 +5797,37 @@ func (v *uint8Uint16MapValue) IsCumulative() bool {
 
 // -- uint16Uint16MapValue.
 type uint16Uint16MapValue struct {
-	value *map[uint16]uint16
+	value     *map[uint16]uint16
+	separator string
 }
 
 var _ RepeatableFlag = (*uint16Uint16MapValue)(nil)
-
 var _ Value = (*uint16Uint16MapValue)(nil)
-
 var _ Getter = (*uint16Uint16MapValue)(nil)
 
-func newUint16Uint16MapValue(m *map[uint16]uint16) *uint16Uint16MapValue {
-	return &uint16Uint16MapValue{
+func newUint16Uint16MapValue(m *map[uint16]uint16, sep *string) *uint16Uint16MapValue {
+	s := &uint16Uint16MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint16Uint16MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -4820,23 +5883,37 @@ func (v *uint16Uint16MapValue) IsCumulative() bool {
 
 // -- uint32Uint16MapValue.
 type uint32Uint16MapValue struct {
-	value *map[uint32]uint16
+	value     *map[uint32]uint16
+	separator string
 }
 
 var _ RepeatableFlag = (*uint32Uint16MapValue)(nil)
-
 var _ Value = (*uint32Uint16MapValue)(nil)
-
 var _ Getter = (*uint32Uint16MapValue)(nil)
 
-func newUint32Uint16MapValue(m *map[uint32]uint16) *uint32Uint16MapValue {
-	return &uint32Uint16MapValue{
+func newUint32Uint16MapValue(m *map[uint32]uint16, sep *string) *uint32Uint16MapValue {
+	s := &uint32Uint16MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint32Uint16MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -4892,23 +5969,37 @@ func (v *uint32Uint16MapValue) IsCumulative() bool {
 
 // -- uint64Uint16MapValue.
 type uint64Uint16MapValue struct {
-	value *map[uint64]uint16
+	value     *map[uint64]uint16
+	separator string
 }
 
 var _ RepeatableFlag = (*uint64Uint16MapValue)(nil)
-
 var _ Value = (*uint64Uint16MapValue)(nil)
-
 var _ Getter = (*uint64Uint16MapValue)(nil)
 
-func newUint64Uint16MapValue(m *map[uint64]uint16) *uint64Uint16MapValue {
-	return &uint64Uint16MapValue{
+func newUint64Uint16MapValue(m *map[uint64]uint16, sep *string) *uint64Uint16MapValue {
+	s := &uint64Uint16MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint64Uint16MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -4968,7 +6059,6 @@ type uint32Value struct {
 }
 
 var _ Value = (*uint32Value)(nil)
-
 var _ Getter = (*uint32Value)(nil)
 
 func newUint32Value(p *uint32) *uint32Value {
@@ -4976,18 +6066,22 @@ func newUint32Value(p *uint32) *uint32Value {
 }
 
 func (v *uint32Value) Set(s string) error {
+
 	parsed, err := strconv.ParseUint(s, 0, 32)
 	if err == nil {
+
 		*v.value = (uint32)(parsed)
 
 		return nil
 	}
 
 	return err
+
 }
 
 func (v *uint32Value) Get() any {
 	if v != nil && v.value != nil {
+
 		return *v.value
 	}
 
@@ -4996,6 +6090,7 @@ func (v *uint32Value) Get() any {
 
 func (v *uint32Value) String() string {
 	if v != nil && v.value != nil {
+
 		return strconv.FormatUint(uint64(*v.value), 10)
 	}
 
@@ -5007,24 +6102,38 @@ func (v *uint32Value) Type() string { return "uint32" }
 // -- uint32Slice Value
 
 type uint32SliceValue struct {
-	value   *[]uint32
-	changed bool
+	value     *[]uint32
+	changed   bool
+	separator string
 }
 
 var _ RepeatableFlag = (*uint32SliceValue)(nil)
-
 var _ Value = (*uint32SliceValue)(nil)
-
 var _ Getter = (*uint32SliceValue)(nil)
 
-func newUint32SliceValue(slice *[]uint32) *uint32SliceValue {
-	return &uint32SliceValue{
+func newUint32SliceValue(slice *[]uint32, sep *string) *uint32SliceValue {
+	s := &uint32SliceValue{
 		value: slice,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint32SliceValue) Set(raw string) error {
-	ss := strings.Split(raw, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var ss []string
+	if separator == "none" {
+		ss = []string{raw}
+	} else {
+		ss = strings.Split(raw, separator)
+	}
 
 	out := make([]uint32, len(ss))
 	for i, s := range ss {
@@ -5032,7 +6141,9 @@ func (v *uint32SliceValue) Set(raw string) error {
 		if err != nil {
 			return err
 		}
+
 		out[i] = (uint32)(parsed)
+
 	}
 
 	if !v.changed {
@@ -5047,6 +6158,7 @@ func (v *uint32SliceValue) Set(raw string) error {
 
 func (v *uint32SliceValue) Get() any {
 	if v != nil && v.value != nil {
+
 		return *v.value
 	}
 
@@ -5055,6 +6167,7 @@ func (v *uint32SliceValue) Get() any {
 
 func (v *uint32SliceValue) String() string {
 	if v == nil || v.value == nil {
+
 		return "[]"
 	}
 	out := make([]string, 0, len(*v.value))
@@ -5073,23 +6186,37 @@ func (v *uint32SliceValue) IsCumulative() bool {
 
 // -- stringUint32MapValue.
 type stringUint32MapValue struct {
-	value *map[string]uint32
+	value     *map[string]uint32
+	separator string
 }
 
 var _ RepeatableFlag = (*stringUint32MapValue)(nil)
-
 var _ Value = (*stringUint32MapValue)(nil)
-
 var _ Getter = (*stringUint32MapValue)(nil)
 
-func newStringUint32MapValue(m *map[string]uint32) *stringUint32MapValue {
-	return &stringUint32MapValue{
+func newStringUint32MapValue(m *map[string]uint32, sep *string) *stringUint32MapValue {
+	s := &stringUint32MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *stringUint32MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -5140,23 +6267,37 @@ func (v *stringUint32MapValue) IsCumulative() bool {
 
 // -- intUint32MapValue.
 type intUint32MapValue struct {
-	value *map[int]uint32
+	value     *map[int]uint32
+	separator string
 }
 
 var _ RepeatableFlag = (*intUint32MapValue)(nil)
-
 var _ Value = (*intUint32MapValue)(nil)
-
 var _ Getter = (*intUint32MapValue)(nil)
 
-func newIntUint32MapValue(m *map[int]uint32) *intUint32MapValue {
-	return &intUint32MapValue{
+func newIntUint32MapValue(m *map[int]uint32, sep *string) *intUint32MapValue {
+	s := &intUint32MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *intUint32MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -5212,23 +6353,37 @@ func (v *intUint32MapValue) IsCumulative() bool {
 
 // -- int8Uint32MapValue.
 type int8Uint32MapValue struct {
-	value *map[int8]uint32
+	value     *map[int8]uint32
+	separator string
 }
 
 var _ RepeatableFlag = (*int8Uint32MapValue)(nil)
-
 var _ Value = (*int8Uint32MapValue)(nil)
-
 var _ Getter = (*int8Uint32MapValue)(nil)
 
-func newInt8Uint32MapValue(m *map[int8]uint32) *int8Uint32MapValue {
-	return &int8Uint32MapValue{
+func newInt8Uint32MapValue(m *map[int8]uint32, sep *string) *int8Uint32MapValue {
+	s := &int8Uint32MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int8Uint32MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -5284,23 +6439,37 @@ func (v *int8Uint32MapValue) IsCumulative() bool {
 
 // -- int16Uint32MapValue.
 type int16Uint32MapValue struct {
-	value *map[int16]uint32
+	value     *map[int16]uint32
+	separator string
 }
 
 var _ RepeatableFlag = (*int16Uint32MapValue)(nil)
-
 var _ Value = (*int16Uint32MapValue)(nil)
-
 var _ Getter = (*int16Uint32MapValue)(nil)
 
-func newInt16Uint32MapValue(m *map[int16]uint32) *int16Uint32MapValue {
-	return &int16Uint32MapValue{
+func newInt16Uint32MapValue(m *map[int16]uint32, sep *string) *int16Uint32MapValue {
+	s := &int16Uint32MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int16Uint32MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -5356,23 +6525,37 @@ func (v *int16Uint32MapValue) IsCumulative() bool {
 
 // -- int32Uint32MapValue.
 type int32Uint32MapValue struct {
-	value *map[int32]uint32
+	value     *map[int32]uint32
+	separator string
 }
 
 var _ RepeatableFlag = (*int32Uint32MapValue)(nil)
-
 var _ Value = (*int32Uint32MapValue)(nil)
-
 var _ Getter = (*int32Uint32MapValue)(nil)
 
-func newInt32Uint32MapValue(m *map[int32]uint32) *int32Uint32MapValue {
-	return &int32Uint32MapValue{
+func newInt32Uint32MapValue(m *map[int32]uint32, sep *string) *int32Uint32MapValue {
+	s := &int32Uint32MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int32Uint32MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -5428,23 +6611,37 @@ func (v *int32Uint32MapValue) IsCumulative() bool {
 
 // -- int64Uint32MapValue.
 type int64Uint32MapValue struct {
-	value *map[int64]uint32
+	value     *map[int64]uint32
+	separator string
 }
 
 var _ RepeatableFlag = (*int64Uint32MapValue)(nil)
-
 var _ Value = (*int64Uint32MapValue)(nil)
-
 var _ Getter = (*int64Uint32MapValue)(nil)
 
-func newInt64Uint32MapValue(m *map[int64]uint32) *int64Uint32MapValue {
-	return &int64Uint32MapValue{
+func newInt64Uint32MapValue(m *map[int64]uint32, sep *string) *int64Uint32MapValue {
+	s := &int64Uint32MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int64Uint32MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -5500,23 +6697,37 @@ func (v *int64Uint32MapValue) IsCumulative() bool {
 
 // -- uintUint32MapValue.
 type uintUint32MapValue struct {
-	value *map[uint]uint32
+	value     *map[uint]uint32
+	separator string
 }
 
 var _ RepeatableFlag = (*uintUint32MapValue)(nil)
-
 var _ Value = (*uintUint32MapValue)(nil)
-
 var _ Getter = (*uintUint32MapValue)(nil)
 
-func newUintUint32MapValue(m *map[uint]uint32) *uintUint32MapValue {
-	return &uintUint32MapValue{
+func newUintUint32MapValue(m *map[uint]uint32, sep *string) *uintUint32MapValue {
+	s := &uintUint32MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uintUint32MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -5572,23 +6783,37 @@ func (v *uintUint32MapValue) IsCumulative() bool {
 
 // -- uint8Uint32MapValue.
 type uint8Uint32MapValue struct {
-	value *map[uint8]uint32
+	value     *map[uint8]uint32
+	separator string
 }
 
 var _ RepeatableFlag = (*uint8Uint32MapValue)(nil)
-
 var _ Value = (*uint8Uint32MapValue)(nil)
-
 var _ Getter = (*uint8Uint32MapValue)(nil)
 
-func newUint8Uint32MapValue(m *map[uint8]uint32) *uint8Uint32MapValue {
-	return &uint8Uint32MapValue{
+func newUint8Uint32MapValue(m *map[uint8]uint32, sep *string) *uint8Uint32MapValue {
+	s := &uint8Uint32MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint8Uint32MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -5644,23 +6869,37 @@ func (v *uint8Uint32MapValue) IsCumulative() bool {
 
 // -- uint16Uint32MapValue.
 type uint16Uint32MapValue struct {
-	value *map[uint16]uint32
+	value     *map[uint16]uint32
+	separator string
 }
 
 var _ RepeatableFlag = (*uint16Uint32MapValue)(nil)
-
 var _ Value = (*uint16Uint32MapValue)(nil)
-
 var _ Getter = (*uint16Uint32MapValue)(nil)
 
-func newUint16Uint32MapValue(m *map[uint16]uint32) *uint16Uint32MapValue {
-	return &uint16Uint32MapValue{
+func newUint16Uint32MapValue(m *map[uint16]uint32, sep *string) *uint16Uint32MapValue {
+	s := &uint16Uint32MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint16Uint32MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -5716,23 +6955,37 @@ func (v *uint16Uint32MapValue) IsCumulative() bool {
 
 // -- uint32Uint32MapValue.
 type uint32Uint32MapValue struct {
-	value *map[uint32]uint32
+	value     *map[uint32]uint32
+	separator string
 }
 
 var _ RepeatableFlag = (*uint32Uint32MapValue)(nil)
-
 var _ Value = (*uint32Uint32MapValue)(nil)
-
 var _ Getter = (*uint32Uint32MapValue)(nil)
 
-func newUint32Uint32MapValue(m *map[uint32]uint32) *uint32Uint32MapValue {
-	return &uint32Uint32MapValue{
+func newUint32Uint32MapValue(m *map[uint32]uint32, sep *string) *uint32Uint32MapValue {
+	s := &uint32Uint32MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint32Uint32MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -5788,23 +7041,37 @@ func (v *uint32Uint32MapValue) IsCumulative() bool {
 
 // -- uint64Uint32MapValue.
 type uint64Uint32MapValue struct {
-	value *map[uint64]uint32
+	value     *map[uint64]uint32
+	separator string
 }
 
 var _ RepeatableFlag = (*uint64Uint32MapValue)(nil)
-
 var _ Value = (*uint64Uint32MapValue)(nil)
-
 var _ Getter = (*uint64Uint32MapValue)(nil)
 
-func newUint64Uint32MapValue(m *map[uint64]uint32) *uint64Uint32MapValue {
-	return &uint64Uint32MapValue{
+func newUint64Uint32MapValue(m *map[uint64]uint32, sep *string) *uint64Uint32MapValue {
+	s := &uint64Uint32MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint64Uint32MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -5864,7 +7131,6 @@ type uint64Value struct {
 }
 
 var _ Value = (*uint64Value)(nil)
-
 var _ Getter = (*uint64Value)(nil)
 
 func newUint64Value(p *uint64) *uint64Value {
@@ -5872,18 +7138,22 @@ func newUint64Value(p *uint64) *uint64Value {
 }
 
 func (v *uint64Value) Set(s string) error {
+
 	parsed, err := strconv.ParseUint(s, 0, 64)
 	if err == nil {
+
 		*v.value = parsed
 
 		return nil
 	}
 
 	return err
+
 }
 
 func (v *uint64Value) Get() any {
 	if v != nil && v.value != nil {
+
 		return *v.value
 	}
 
@@ -5892,6 +7162,7 @@ func (v *uint64Value) Get() any {
 
 func (v *uint64Value) String() string {
 	if v != nil && v.value != nil {
+
 		return strconv.FormatUint(*v.value, 10)
 	}
 
@@ -5903,24 +7174,38 @@ func (v *uint64Value) Type() string { return "uint64" }
 // -- uint64Slice Value
 
 type uint64SliceValue struct {
-	value   *[]uint64
-	changed bool
+	value     *[]uint64
+	changed   bool
+	separator string
 }
 
 var _ RepeatableFlag = (*uint64SliceValue)(nil)
-
 var _ Value = (*uint64SliceValue)(nil)
-
 var _ Getter = (*uint64SliceValue)(nil)
 
-func newUint64SliceValue(slice *[]uint64) *uint64SliceValue {
-	return &uint64SliceValue{
+func newUint64SliceValue(slice *[]uint64, sep *string) *uint64SliceValue {
+	s := &uint64SliceValue{
 		value: slice,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint64SliceValue) Set(raw string) error {
-	ss := strings.Split(raw, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var ss []string
+	if separator == "none" {
+		ss = []string{raw}
+	} else {
+		ss = strings.Split(raw, separator)
+	}
 
 	out := make([]uint64, len(ss))
 	for i, s := range ss {
@@ -5928,7 +7213,9 @@ func (v *uint64SliceValue) Set(raw string) error {
 		if err != nil {
 			return err
 		}
+
 		out[i] = parsed
+
 	}
 
 	if !v.changed {
@@ -5943,6 +7230,7 @@ func (v *uint64SliceValue) Set(raw string) error {
 
 func (v *uint64SliceValue) Get() any {
 	if v != nil && v.value != nil {
+
 		return *v.value
 	}
 
@@ -5951,6 +7239,7 @@ func (v *uint64SliceValue) Get() any {
 
 func (v *uint64SliceValue) String() string {
 	if v == nil || v.value == nil {
+
 		return "[]"
 	}
 	out := make([]string, 0, len(*v.value))
@@ -5969,23 +7258,37 @@ func (v *uint64SliceValue) IsCumulative() bool {
 
 // -- stringUint64MapValue.
 type stringUint64MapValue struct {
-	value *map[string]uint64
+	value     *map[string]uint64
+	separator string
 }
 
 var _ RepeatableFlag = (*stringUint64MapValue)(nil)
-
 var _ Value = (*stringUint64MapValue)(nil)
-
 var _ Getter = (*stringUint64MapValue)(nil)
 
-func newStringUint64MapValue(m *map[string]uint64) *stringUint64MapValue {
-	return &stringUint64MapValue{
+func newStringUint64MapValue(m *map[string]uint64, sep *string) *stringUint64MapValue {
+	s := &stringUint64MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *stringUint64MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -6036,23 +7339,37 @@ func (v *stringUint64MapValue) IsCumulative() bool {
 
 // -- intUint64MapValue.
 type intUint64MapValue struct {
-	value *map[int]uint64
+	value     *map[int]uint64
+	separator string
 }
 
 var _ RepeatableFlag = (*intUint64MapValue)(nil)
-
 var _ Value = (*intUint64MapValue)(nil)
-
 var _ Getter = (*intUint64MapValue)(nil)
 
-func newIntUint64MapValue(m *map[int]uint64) *intUint64MapValue {
-	return &intUint64MapValue{
+func newIntUint64MapValue(m *map[int]uint64, sep *string) *intUint64MapValue {
+	s := &intUint64MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *intUint64MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -6108,23 +7425,37 @@ func (v *intUint64MapValue) IsCumulative() bool {
 
 // -- int8Uint64MapValue.
 type int8Uint64MapValue struct {
-	value *map[int8]uint64
+	value     *map[int8]uint64
+	separator string
 }
 
 var _ RepeatableFlag = (*int8Uint64MapValue)(nil)
-
 var _ Value = (*int8Uint64MapValue)(nil)
-
 var _ Getter = (*int8Uint64MapValue)(nil)
 
-func newInt8Uint64MapValue(m *map[int8]uint64) *int8Uint64MapValue {
-	return &int8Uint64MapValue{
+func newInt8Uint64MapValue(m *map[int8]uint64, sep *string) *int8Uint64MapValue {
+	s := &int8Uint64MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int8Uint64MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -6180,23 +7511,37 @@ func (v *int8Uint64MapValue) IsCumulative() bool {
 
 // -- int16Uint64MapValue.
 type int16Uint64MapValue struct {
-	value *map[int16]uint64
+	value     *map[int16]uint64
+	separator string
 }
 
 var _ RepeatableFlag = (*int16Uint64MapValue)(nil)
-
 var _ Value = (*int16Uint64MapValue)(nil)
-
 var _ Getter = (*int16Uint64MapValue)(nil)
 
-func newInt16Uint64MapValue(m *map[int16]uint64) *int16Uint64MapValue {
-	return &int16Uint64MapValue{
+func newInt16Uint64MapValue(m *map[int16]uint64, sep *string) *int16Uint64MapValue {
+	s := &int16Uint64MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int16Uint64MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -6252,23 +7597,37 @@ func (v *int16Uint64MapValue) IsCumulative() bool {
 
 // -- int32Uint64MapValue.
 type int32Uint64MapValue struct {
-	value *map[int32]uint64
+	value     *map[int32]uint64
+	separator string
 }
 
 var _ RepeatableFlag = (*int32Uint64MapValue)(nil)
-
 var _ Value = (*int32Uint64MapValue)(nil)
-
 var _ Getter = (*int32Uint64MapValue)(nil)
 
-func newInt32Uint64MapValue(m *map[int32]uint64) *int32Uint64MapValue {
-	return &int32Uint64MapValue{
+func newInt32Uint64MapValue(m *map[int32]uint64, sep *string) *int32Uint64MapValue {
+	s := &int32Uint64MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int32Uint64MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -6324,23 +7683,37 @@ func (v *int32Uint64MapValue) IsCumulative() bool {
 
 // -- int64Uint64MapValue.
 type int64Uint64MapValue struct {
-	value *map[int64]uint64
+	value     *map[int64]uint64
+	separator string
 }
 
 var _ RepeatableFlag = (*int64Uint64MapValue)(nil)
-
 var _ Value = (*int64Uint64MapValue)(nil)
-
 var _ Getter = (*int64Uint64MapValue)(nil)
 
-func newInt64Uint64MapValue(m *map[int64]uint64) *int64Uint64MapValue {
-	return &int64Uint64MapValue{
+func newInt64Uint64MapValue(m *map[int64]uint64, sep *string) *int64Uint64MapValue {
+	s := &int64Uint64MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int64Uint64MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -6396,23 +7769,37 @@ func (v *int64Uint64MapValue) IsCumulative() bool {
 
 // -- uintUint64MapValue.
 type uintUint64MapValue struct {
-	value *map[uint]uint64
+	value     *map[uint]uint64
+	separator string
 }
 
 var _ RepeatableFlag = (*uintUint64MapValue)(nil)
-
 var _ Value = (*uintUint64MapValue)(nil)
-
 var _ Getter = (*uintUint64MapValue)(nil)
 
-func newUintUint64MapValue(m *map[uint]uint64) *uintUint64MapValue {
-	return &uintUint64MapValue{
+func newUintUint64MapValue(m *map[uint]uint64, sep *string) *uintUint64MapValue {
+	s := &uintUint64MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uintUint64MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -6468,23 +7855,37 @@ func (v *uintUint64MapValue) IsCumulative() bool {
 
 // -- uint8Uint64MapValue.
 type uint8Uint64MapValue struct {
-	value *map[uint8]uint64
+	value     *map[uint8]uint64
+	separator string
 }
 
 var _ RepeatableFlag = (*uint8Uint64MapValue)(nil)
-
 var _ Value = (*uint8Uint64MapValue)(nil)
-
 var _ Getter = (*uint8Uint64MapValue)(nil)
 
-func newUint8Uint64MapValue(m *map[uint8]uint64) *uint8Uint64MapValue {
-	return &uint8Uint64MapValue{
+func newUint8Uint64MapValue(m *map[uint8]uint64, sep *string) *uint8Uint64MapValue {
+	s := &uint8Uint64MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint8Uint64MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -6540,23 +7941,37 @@ func (v *uint8Uint64MapValue) IsCumulative() bool {
 
 // -- uint16Uint64MapValue.
 type uint16Uint64MapValue struct {
-	value *map[uint16]uint64
+	value     *map[uint16]uint64
+	separator string
 }
 
 var _ RepeatableFlag = (*uint16Uint64MapValue)(nil)
-
 var _ Value = (*uint16Uint64MapValue)(nil)
-
 var _ Getter = (*uint16Uint64MapValue)(nil)
 
-func newUint16Uint64MapValue(m *map[uint16]uint64) *uint16Uint64MapValue {
-	return &uint16Uint64MapValue{
+func newUint16Uint64MapValue(m *map[uint16]uint64, sep *string) *uint16Uint64MapValue {
+	s := &uint16Uint64MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint16Uint64MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -6612,23 +8027,37 @@ func (v *uint16Uint64MapValue) IsCumulative() bool {
 
 // -- uint32Uint64MapValue.
 type uint32Uint64MapValue struct {
-	value *map[uint32]uint64
+	value     *map[uint32]uint64
+	separator string
 }
 
 var _ RepeatableFlag = (*uint32Uint64MapValue)(nil)
-
 var _ Value = (*uint32Uint64MapValue)(nil)
-
 var _ Getter = (*uint32Uint64MapValue)(nil)
 
-func newUint32Uint64MapValue(m *map[uint32]uint64) *uint32Uint64MapValue {
-	return &uint32Uint64MapValue{
+func newUint32Uint64MapValue(m *map[uint32]uint64, sep *string) *uint32Uint64MapValue {
+	s := &uint32Uint64MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint32Uint64MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -6684,23 +8113,37 @@ func (v *uint32Uint64MapValue) IsCumulative() bool {
 
 // -- uint64Uint64MapValue.
 type uint64Uint64MapValue struct {
-	value *map[uint64]uint64
+	value     *map[uint64]uint64
+	separator string
 }
 
 var _ RepeatableFlag = (*uint64Uint64MapValue)(nil)
-
 var _ Value = (*uint64Uint64MapValue)(nil)
-
 var _ Getter = (*uint64Uint64MapValue)(nil)
 
-func newUint64Uint64MapValue(m *map[uint64]uint64) *uint64Uint64MapValue {
-	return &uint64Uint64MapValue{
+func newUint64Uint64MapValue(m *map[uint64]uint64, sep *string) *uint64Uint64MapValue {
+	s := &uint64Uint64MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint64Uint64MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -6760,7 +8203,6 @@ type intValue struct {
 }
 
 var _ Value = (*intValue)(nil)
-
 var _ Getter = (*intValue)(nil)
 
 func newIntValue(p *int) *intValue {
@@ -6768,18 +8210,22 @@ func newIntValue(p *int) *intValue {
 }
 
 func (v *intValue) Set(s string) error {
+
 	parsed, err := strconv.ParseInt(s, 0, 64)
 	if err == nil {
+
 		*v.value = (int)(parsed)
 
 		return nil
 	}
 
 	return err
+
 }
 
 func (v *intValue) Get() any {
 	if v != nil && v.value != nil {
+
 		return *v.value
 	}
 
@@ -6788,6 +8234,7 @@ func (v *intValue) Get() any {
 
 func (v *intValue) String() string {
 	if v != nil && v.value != nil {
+
 		return strconv.Itoa(*v.value)
 	}
 
@@ -6799,24 +8246,38 @@ func (v *intValue) Type() string { return "int" }
 // -- intSlice Value
 
 type intSliceValue struct {
-	value   *[]int
-	changed bool
+	value     *[]int
+	changed   bool
+	separator string
 }
 
 var _ RepeatableFlag = (*intSliceValue)(nil)
-
 var _ Value = (*intSliceValue)(nil)
-
 var _ Getter = (*intSliceValue)(nil)
 
-func newIntSliceValue(slice *[]int) *intSliceValue {
-	return &intSliceValue{
+func newIntSliceValue(slice *[]int, sep *string) *intSliceValue {
+	s := &intSliceValue{
 		value: slice,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *intSliceValue) Set(raw string) error {
-	ss := strings.Split(raw, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var ss []string
+	if separator == "none" {
+		ss = []string{raw}
+	} else {
+		ss = strings.Split(raw, separator)
+	}
 
 	out := make([]int, len(ss))
 	for i, s := range ss {
@@ -6824,7 +8285,9 @@ func (v *intSliceValue) Set(raw string) error {
 		if err != nil {
 			return err
 		}
+
 		out[i] = (int)(parsed)
+
 	}
 
 	if !v.changed {
@@ -6839,6 +8302,7 @@ func (v *intSliceValue) Set(raw string) error {
 
 func (v *intSliceValue) Get() any {
 	if v != nil && v.value != nil {
+
 		return *v.value
 	}
 
@@ -6847,6 +8311,7 @@ func (v *intSliceValue) Get() any {
 
 func (v *intSliceValue) String() string {
 	if v == nil || v.value == nil {
+
 		return "[]"
 	}
 	out := make([]string, 0, len(*v.value))
@@ -6865,23 +8330,37 @@ func (v *intSliceValue) IsCumulative() bool {
 
 // -- stringIntMapValue.
 type stringIntMapValue struct {
-	value *map[string]int
+	value     *map[string]int
+	separator string
 }
 
 var _ RepeatableFlag = (*stringIntMapValue)(nil)
-
 var _ Value = (*stringIntMapValue)(nil)
-
 var _ Getter = (*stringIntMapValue)(nil)
 
-func newStringIntMapValue(m *map[string]int) *stringIntMapValue {
-	return &stringIntMapValue{
+func newStringIntMapValue(m *map[string]int, sep *string) *stringIntMapValue {
+	s := &stringIntMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *stringIntMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -6932,23 +8411,37 @@ func (v *stringIntMapValue) IsCumulative() bool {
 
 // -- intIntMapValue.
 type intIntMapValue struct {
-	value *map[int]int
+	value     *map[int]int
+	separator string
 }
 
 var _ RepeatableFlag = (*intIntMapValue)(nil)
-
 var _ Value = (*intIntMapValue)(nil)
-
 var _ Getter = (*intIntMapValue)(nil)
 
-func newIntIntMapValue(m *map[int]int) *intIntMapValue {
-	return &intIntMapValue{
+func newIntIntMapValue(m *map[int]int, sep *string) *intIntMapValue {
+	s := &intIntMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *intIntMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -7004,23 +8497,37 @@ func (v *intIntMapValue) IsCumulative() bool {
 
 // -- int8IntMapValue.
 type int8IntMapValue struct {
-	value *map[int8]int
+	value     *map[int8]int
+	separator string
 }
 
 var _ RepeatableFlag = (*int8IntMapValue)(nil)
-
 var _ Value = (*int8IntMapValue)(nil)
-
 var _ Getter = (*int8IntMapValue)(nil)
 
-func newInt8IntMapValue(m *map[int8]int) *int8IntMapValue {
-	return &int8IntMapValue{
+func newInt8IntMapValue(m *map[int8]int, sep *string) *int8IntMapValue {
+	s := &int8IntMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int8IntMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -7076,23 +8583,37 @@ func (v *int8IntMapValue) IsCumulative() bool {
 
 // -- int16IntMapValue.
 type int16IntMapValue struct {
-	value *map[int16]int
+	value     *map[int16]int
+	separator string
 }
 
 var _ RepeatableFlag = (*int16IntMapValue)(nil)
-
 var _ Value = (*int16IntMapValue)(nil)
-
 var _ Getter = (*int16IntMapValue)(nil)
 
-func newInt16IntMapValue(m *map[int16]int) *int16IntMapValue {
-	return &int16IntMapValue{
+func newInt16IntMapValue(m *map[int16]int, sep *string) *int16IntMapValue {
+	s := &int16IntMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int16IntMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -7148,23 +8669,37 @@ func (v *int16IntMapValue) IsCumulative() bool {
 
 // -- int32IntMapValue.
 type int32IntMapValue struct {
-	value *map[int32]int
+	value     *map[int32]int
+	separator string
 }
 
 var _ RepeatableFlag = (*int32IntMapValue)(nil)
-
 var _ Value = (*int32IntMapValue)(nil)
-
 var _ Getter = (*int32IntMapValue)(nil)
 
-func newInt32IntMapValue(m *map[int32]int) *int32IntMapValue {
-	return &int32IntMapValue{
+func newInt32IntMapValue(m *map[int32]int, sep *string) *int32IntMapValue {
+	s := &int32IntMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int32IntMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -7220,23 +8755,37 @@ func (v *int32IntMapValue) IsCumulative() bool {
 
 // -- int64IntMapValue.
 type int64IntMapValue struct {
-	value *map[int64]int
+	value     *map[int64]int
+	separator string
 }
 
 var _ RepeatableFlag = (*int64IntMapValue)(nil)
-
 var _ Value = (*int64IntMapValue)(nil)
-
 var _ Getter = (*int64IntMapValue)(nil)
 
-func newInt64IntMapValue(m *map[int64]int) *int64IntMapValue {
-	return &int64IntMapValue{
+func newInt64IntMapValue(m *map[int64]int, sep *string) *int64IntMapValue {
+	s := &int64IntMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int64IntMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -7292,23 +8841,37 @@ func (v *int64IntMapValue) IsCumulative() bool {
 
 // -- uintIntMapValue.
 type uintIntMapValue struct {
-	value *map[uint]int
+	value     *map[uint]int
+	separator string
 }
 
 var _ RepeatableFlag = (*uintIntMapValue)(nil)
-
 var _ Value = (*uintIntMapValue)(nil)
-
 var _ Getter = (*uintIntMapValue)(nil)
 
-func newUintIntMapValue(m *map[uint]int) *uintIntMapValue {
-	return &uintIntMapValue{
+func newUintIntMapValue(m *map[uint]int, sep *string) *uintIntMapValue {
+	s := &uintIntMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uintIntMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -7364,23 +8927,37 @@ func (v *uintIntMapValue) IsCumulative() bool {
 
 // -- uint8IntMapValue.
 type uint8IntMapValue struct {
-	value *map[uint8]int
+	value     *map[uint8]int
+	separator string
 }
 
 var _ RepeatableFlag = (*uint8IntMapValue)(nil)
-
 var _ Value = (*uint8IntMapValue)(nil)
-
 var _ Getter = (*uint8IntMapValue)(nil)
 
-func newUint8IntMapValue(m *map[uint8]int) *uint8IntMapValue {
-	return &uint8IntMapValue{
+func newUint8IntMapValue(m *map[uint8]int, sep *string) *uint8IntMapValue {
+	s := &uint8IntMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint8IntMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -7436,23 +9013,37 @@ func (v *uint8IntMapValue) IsCumulative() bool {
 
 // -- uint16IntMapValue.
 type uint16IntMapValue struct {
-	value *map[uint16]int
+	value     *map[uint16]int
+	separator string
 }
 
 var _ RepeatableFlag = (*uint16IntMapValue)(nil)
-
 var _ Value = (*uint16IntMapValue)(nil)
-
 var _ Getter = (*uint16IntMapValue)(nil)
 
-func newUint16IntMapValue(m *map[uint16]int) *uint16IntMapValue {
-	return &uint16IntMapValue{
+func newUint16IntMapValue(m *map[uint16]int, sep *string) *uint16IntMapValue {
+	s := &uint16IntMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint16IntMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -7508,23 +9099,37 @@ func (v *uint16IntMapValue) IsCumulative() bool {
 
 // -- uint32IntMapValue.
 type uint32IntMapValue struct {
-	value *map[uint32]int
+	value     *map[uint32]int
+	separator string
 }
 
 var _ RepeatableFlag = (*uint32IntMapValue)(nil)
-
 var _ Value = (*uint32IntMapValue)(nil)
-
 var _ Getter = (*uint32IntMapValue)(nil)
 
-func newUint32IntMapValue(m *map[uint32]int) *uint32IntMapValue {
-	return &uint32IntMapValue{
+func newUint32IntMapValue(m *map[uint32]int, sep *string) *uint32IntMapValue {
+	s := &uint32IntMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint32IntMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -7580,23 +9185,37 @@ func (v *uint32IntMapValue) IsCumulative() bool {
 
 // -- uint64IntMapValue.
 type uint64IntMapValue struct {
-	value *map[uint64]int
+	value     *map[uint64]int
+	separator string
 }
 
 var _ RepeatableFlag = (*uint64IntMapValue)(nil)
-
 var _ Value = (*uint64IntMapValue)(nil)
-
 var _ Getter = (*uint64IntMapValue)(nil)
 
-func newUint64IntMapValue(m *map[uint64]int) *uint64IntMapValue {
-	return &uint64IntMapValue{
+func newUint64IntMapValue(m *map[uint64]int, sep *string) *uint64IntMapValue {
+	s := &uint64IntMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint64IntMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -7656,7 +9275,6 @@ type int8Value struct {
 }
 
 var _ Value = (*int8Value)(nil)
-
 var _ Getter = (*int8Value)(nil)
 
 func newInt8Value(p *int8) *int8Value {
@@ -7664,18 +9282,22 @@ func newInt8Value(p *int8) *int8Value {
 }
 
 func (v *int8Value) Set(s string) error {
+
 	parsed, err := strconv.ParseInt(s, 0, 8)
 	if err == nil {
+
 		*v.value = (int8)(parsed)
 
 		return nil
 	}
 
 	return err
+
 }
 
 func (v *int8Value) Get() any {
 	if v != nil && v.value != nil {
+
 		return *v.value
 	}
 
@@ -7684,6 +9306,7 @@ func (v *int8Value) Get() any {
 
 func (v *int8Value) String() string {
 	if v != nil && v.value != nil {
+
 		return strconv.Itoa(int(*v.value))
 	}
 
@@ -7695,24 +9318,38 @@ func (v *int8Value) Type() string { return "int8" }
 // -- int8Slice Value
 
 type int8SliceValue struct {
-	value   *[]int8
-	changed bool
+	value     *[]int8
+	changed   bool
+	separator string
 }
 
 var _ RepeatableFlag = (*int8SliceValue)(nil)
-
 var _ Value = (*int8SliceValue)(nil)
-
 var _ Getter = (*int8SliceValue)(nil)
 
-func newInt8SliceValue(slice *[]int8) *int8SliceValue {
-	return &int8SliceValue{
+func newInt8SliceValue(slice *[]int8, sep *string) *int8SliceValue {
+	s := &int8SliceValue{
 		value: slice,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int8SliceValue) Set(raw string) error {
-	ss := strings.Split(raw, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var ss []string
+	if separator == "none" {
+		ss = []string{raw}
+	} else {
+		ss = strings.Split(raw, separator)
+	}
 
 	out := make([]int8, len(ss))
 	for i, s := range ss {
@@ -7720,7 +9357,9 @@ func (v *int8SliceValue) Set(raw string) error {
 		if err != nil {
 			return err
 		}
+
 		out[i] = (int8)(parsed)
+
 	}
 
 	if !v.changed {
@@ -7735,6 +9374,7 @@ func (v *int8SliceValue) Set(raw string) error {
 
 func (v *int8SliceValue) Get() any {
 	if v != nil && v.value != nil {
+
 		return *v.value
 	}
 
@@ -7743,6 +9383,7 @@ func (v *int8SliceValue) Get() any {
 
 func (v *int8SliceValue) String() string {
 	if v == nil || v.value == nil {
+
 		return "[]"
 	}
 	out := make([]string, 0, len(*v.value))
@@ -7761,23 +9402,37 @@ func (v *int8SliceValue) IsCumulative() bool {
 
 // -- stringInt8MapValue.
 type stringInt8MapValue struct {
-	value *map[string]int8
+	value     *map[string]int8
+	separator string
 }
 
 var _ RepeatableFlag = (*stringInt8MapValue)(nil)
-
 var _ Value = (*stringInt8MapValue)(nil)
-
 var _ Getter = (*stringInt8MapValue)(nil)
 
-func newStringInt8MapValue(m *map[string]int8) *stringInt8MapValue {
-	return &stringInt8MapValue{
+func newStringInt8MapValue(m *map[string]int8, sep *string) *stringInt8MapValue {
+	s := &stringInt8MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *stringInt8MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -7828,23 +9483,37 @@ func (v *stringInt8MapValue) IsCumulative() bool {
 
 // -- intInt8MapValue.
 type intInt8MapValue struct {
-	value *map[int]int8
+	value     *map[int]int8
+	separator string
 }
 
 var _ RepeatableFlag = (*intInt8MapValue)(nil)
-
 var _ Value = (*intInt8MapValue)(nil)
-
 var _ Getter = (*intInt8MapValue)(nil)
 
-func newIntInt8MapValue(m *map[int]int8) *intInt8MapValue {
-	return &intInt8MapValue{
+func newIntInt8MapValue(m *map[int]int8, sep *string) *intInt8MapValue {
+	s := &intInt8MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *intInt8MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -7900,23 +9569,37 @@ func (v *intInt8MapValue) IsCumulative() bool {
 
 // -- int8Int8MapValue.
 type int8Int8MapValue struct {
-	value *map[int8]int8
+	value     *map[int8]int8
+	separator string
 }
 
 var _ RepeatableFlag = (*int8Int8MapValue)(nil)
-
 var _ Value = (*int8Int8MapValue)(nil)
-
 var _ Getter = (*int8Int8MapValue)(nil)
 
-func newInt8Int8MapValue(m *map[int8]int8) *int8Int8MapValue {
-	return &int8Int8MapValue{
+func newInt8Int8MapValue(m *map[int8]int8, sep *string) *int8Int8MapValue {
+	s := &int8Int8MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int8Int8MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -7972,23 +9655,37 @@ func (v *int8Int8MapValue) IsCumulative() bool {
 
 // -- int16Int8MapValue.
 type int16Int8MapValue struct {
-	value *map[int16]int8
+	value     *map[int16]int8
+	separator string
 }
 
 var _ RepeatableFlag = (*int16Int8MapValue)(nil)
-
 var _ Value = (*int16Int8MapValue)(nil)
-
 var _ Getter = (*int16Int8MapValue)(nil)
 
-func newInt16Int8MapValue(m *map[int16]int8) *int16Int8MapValue {
-	return &int16Int8MapValue{
+func newInt16Int8MapValue(m *map[int16]int8, sep *string) *int16Int8MapValue {
+	s := &int16Int8MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int16Int8MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -8044,23 +9741,37 @@ func (v *int16Int8MapValue) IsCumulative() bool {
 
 // -- int32Int8MapValue.
 type int32Int8MapValue struct {
-	value *map[int32]int8
+	value     *map[int32]int8
+	separator string
 }
 
 var _ RepeatableFlag = (*int32Int8MapValue)(nil)
-
 var _ Value = (*int32Int8MapValue)(nil)
-
 var _ Getter = (*int32Int8MapValue)(nil)
 
-func newInt32Int8MapValue(m *map[int32]int8) *int32Int8MapValue {
-	return &int32Int8MapValue{
+func newInt32Int8MapValue(m *map[int32]int8, sep *string) *int32Int8MapValue {
+	s := &int32Int8MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int32Int8MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -8116,23 +9827,37 @@ func (v *int32Int8MapValue) IsCumulative() bool {
 
 // -- int64Int8MapValue.
 type int64Int8MapValue struct {
-	value *map[int64]int8
+	value     *map[int64]int8
+	separator string
 }
 
 var _ RepeatableFlag = (*int64Int8MapValue)(nil)
-
 var _ Value = (*int64Int8MapValue)(nil)
-
 var _ Getter = (*int64Int8MapValue)(nil)
 
-func newInt64Int8MapValue(m *map[int64]int8) *int64Int8MapValue {
-	return &int64Int8MapValue{
+func newInt64Int8MapValue(m *map[int64]int8, sep *string) *int64Int8MapValue {
+	s := &int64Int8MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int64Int8MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -8188,23 +9913,37 @@ func (v *int64Int8MapValue) IsCumulative() bool {
 
 // -- uintInt8MapValue.
 type uintInt8MapValue struct {
-	value *map[uint]int8
+	value     *map[uint]int8
+	separator string
 }
 
 var _ RepeatableFlag = (*uintInt8MapValue)(nil)
-
 var _ Value = (*uintInt8MapValue)(nil)
-
 var _ Getter = (*uintInt8MapValue)(nil)
 
-func newUintInt8MapValue(m *map[uint]int8) *uintInt8MapValue {
-	return &uintInt8MapValue{
+func newUintInt8MapValue(m *map[uint]int8, sep *string) *uintInt8MapValue {
+	s := &uintInt8MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uintInt8MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -8260,23 +9999,37 @@ func (v *uintInt8MapValue) IsCumulative() bool {
 
 // -- uint8Int8MapValue.
 type uint8Int8MapValue struct {
-	value *map[uint8]int8
+	value     *map[uint8]int8
+	separator string
 }
 
 var _ RepeatableFlag = (*uint8Int8MapValue)(nil)
-
 var _ Value = (*uint8Int8MapValue)(nil)
-
 var _ Getter = (*uint8Int8MapValue)(nil)
 
-func newUint8Int8MapValue(m *map[uint8]int8) *uint8Int8MapValue {
-	return &uint8Int8MapValue{
+func newUint8Int8MapValue(m *map[uint8]int8, sep *string) *uint8Int8MapValue {
+	s := &uint8Int8MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint8Int8MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -8332,23 +10085,37 @@ func (v *uint8Int8MapValue) IsCumulative() bool {
 
 // -- uint16Int8MapValue.
 type uint16Int8MapValue struct {
-	value *map[uint16]int8
+	value     *map[uint16]int8
+	separator string
 }
 
 var _ RepeatableFlag = (*uint16Int8MapValue)(nil)
-
 var _ Value = (*uint16Int8MapValue)(nil)
-
 var _ Getter = (*uint16Int8MapValue)(nil)
 
-func newUint16Int8MapValue(m *map[uint16]int8) *uint16Int8MapValue {
-	return &uint16Int8MapValue{
+func newUint16Int8MapValue(m *map[uint16]int8, sep *string) *uint16Int8MapValue {
+	s := &uint16Int8MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint16Int8MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -8404,23 +10171,37 @@ func (v *uint16Int8MapValue) IsCumulative() bool {
 
 // -- uint32Int8MapValue.
 type uint32Int8MapValue struct {
-	value *map[uint32]int8
+	value     *map[uint32]int8
+	separator string
 }
 
 var _ RepeatableFlag = (*uint32Int8MapValue)(nil)
-
 var _ Value = (*uint32Int8MapValue)(nil)
-
 var _ Getter = (*uint32Int8MapValue)(nil)
 
-func newUint32Int8MapValue(m *map[uint32]int8) *uint32Int8MapValue {
-	return &uint32Int8MapValue{
+func newUint32Int8MapValue(m *map[uint32]int8, sep *string) *uint32Int8MapValue {
+	s := &uint32Int8MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint32Int8MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -8476,23 +10257,37 @@ func (v *uint32Int8MapValue) IsCumulative() bool {
 
 // -- uint64Int8MapValue.
 type uint64Int8MapValue struct {
-	value *map[uint64]int8
+	value     *map[uint64]int8
+	separator string
 }
 
 var _ RepeatableFlag = (*uint64Int8MapValue)(nil)
-
 var _ Value = (*uint64Int8MapValue)(nil)
-
 var _ Getter = (*uint64Int8MapValue)(nil)
 
-func newUint64Int8MapValue(m *map[uint64]int8) *uint64Int8MapValue {
-	return &uint64Int8MapValue{
+func newUint64Int8MapValue(m *map[uint64]int8, sep *string) *uint64Int8MapValue {
+	s := &uint64Int8MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint64Int8MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -8552,7 +10347,6 @@ type int16Value struct {
 }
 
 var _ Value = (*int16Value)(nil)
-
 var _ Getter = (*int16Value)(nil)
 
 func newInt16Value(p *int16) *int16Value {
@@ -8560,18 +10354,22 @@ func newInt16Value(p *int16) *int16Value {
 }
 
 func (v *int16Value) Set(s string) error {
+
 	parsed, err := strconv.ParseInt(s, 0, 16)
 	if err == nil {
+
 		*v.value = (int16)(parsed)
 
 		return nil
 	}
 
 	return err
+
 }
 
 func (v *int16Value) Get() any {
 	if v != nil && v.value != nil {
+
 		return *v.value
 	}
 
@@ -8580,6 +10378,7 @@ func (v *int16Value) Get() any {
 
 func (v *int16Value) String() string {
 	if v != nil && v.value != nil {
+
 		return strconv.Itoa(int(*v.value))
 	}
 
@@ -8591,24 +10390,38 @@ func (v *int16Value) Type() string { return "int16" }
 // -- int16Slice Value
 
 type int16SliceValue struct {
-	value   *[]int16
-	changed bool
+	value     *[]int16
+	changed   bool
+	separator string
 }
 
 var _ RepeatableFlag = (*int16SliceValue)(nil)
-
 var _ Value = (*int16SliceValue)(nil)
-
 var _ Getter = (*int16SliceValue)(nil)
 
-func newInt16SliceValue(slice *[]int16) *int16SliceValue {
-	return &int16SliceValue{
+func newInt16SliceValue(slice *[]int16, sep *string) *int16SliceValue {
+	s := &int16SliceValue{
 		value: slice,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int16SliceValue) Set(raw string) error {
-	ss := strings.Split(raw, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var ss []string
+	if separator == "none" {
+		ss = []string{raw}
+	} else {
+		ss = strings.Split(raw, separator)
+	}
 
 	out := make([]int16, len(ss))
 	for i, s := range ss {
@@ -8616,7 +10429,9 @@ func (v *int16SliceValue) Set(raw string) error {
 		if err != nil {
 			return err
 		}
+
 		out[i] = (int16)(parsed)
+
 	}
 
 	if !v.changed {
@@ -8631,6 +10446,7 @@ func (v *int16SliceValue) Set(raw string) error {
 
 func (v *int16SliceValue) Get() any {
 	if v != nil && v.value != nil {
+
 		return *v.value
 	}
 
@@ -8639,6 +10455,7 @@ func (v *int16SliceValue) Get() any {
 
 func (v *int16SliceValue) String() string {
 	if v == nil || v.value == nil {
+
 		return "[]"
 	}
 	out := make([]string, 0, len(*v.value))
@@ -8657,23 +10474,37 @@ func (v *int16SliceValue) IsCumulative() bool {
 
 // -- stringInt16MapValue.
 type stringInt16MapValue struct {
-	value *map[string]int16
+	value     *map[string]int16
+	separator string
 }
 
 var _ RepeatableFlag = (*stringInt16MapValue)(nil)
-
 var _ Value = (*stringInt16MapValue)(nil)
-
 var _ Getter = (*stringInt16MapValue)(nil)
 
-func newStringInt16MapValue(m *map[string]int16) *stringInt16MapValue {
-	return &stringInt16MapValue{
+func newStringInt16MapValue(m *map[string]int16, sep *string) *stringInt16MapValue {
+	s := &stringInt16MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *stringInt16MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -8724,23 +10555,37 @@ func (v *stringInt16MapValue) IsCumulative() bool {
 
 // -- intInt16MapValue.
 type intInt16MapValue struct {
-	value *map[int]int16
+	value     *map[int]int16
+	separator string
 }
 
 var _ RepeatableFlag = (*intInt16MapValue)(nil)
-
 var _ Value = (*intInt16MapValue)(nil)
-
 var _ Getter = (*intInt16MapValue)(nil)
 
-func newIntInt16MapValue(m *map[int]int16) *intInt16MapValue {
-	return &intInt16MapValue{
+func newIntInt16MapValue(m *map[int]int16, sep *string) *intInt16MapValue {
+	s := &intInt16MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *intInt16MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -8796,23 +10641,37 @@ func (v *intInt16MapValue) IsCumulative() bool {
 
 // -- int8Int16MapValue.
 type int8Int16MapValue struct {
-	value *map[int8]int16
+	value     *map[int8]int16
+	separator string
 }
 
 var _ RepeatableFlag = (*int8Int16MapValue)(nil)
-
 var _ Value = (*int8Int16MapValue)(nil)
-
 var _ Getter = (*int8Int16MapValue)(nil)
 
-func newInt8Int16MapValue(m *map[int8]int16) *int8Int16MapValue {
-	return &int8Int16MapValue{
+func newInt8Int16MapValue(m *map[int8]int16, sep *string) *int8Int16MapValue {
+	s := &int8Int16MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int8Int16MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -8868,23 +10727,37 @@ func (v *int8Int16MapValue) IsCumulative() bool {
 
 // -- int16Int16MapValue.
 type int16Int16MapValue struct {
-	value *map[int16]int16
+	value     *map[int16]int16
+	separator string
 }
 
 var _ RepeatableFlag = (*int16Int16MapValue)(nil)
-
 var _ Value = (*int16Int16MapValue)(nil)
-
 var _ Getter = (*int16Int16MapValue)(nil)
 
-func newInt16Int16MapValue(m *map[int16]int16) *int16Int16MapValue {
-	return &int16Int16MapValue{
+func newInt16Int16MapValue(m *map[int16]int16, sep *string) *int16Int16MapValue {
+	s := &int16Int16MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int16Int16MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -8940,23 +10813,37 @@ func (v *int16Int16MapValue) IsCumulative() bool {
 
 // -- int32Int16MapValue.
 type int32Int16MapValue struct {
-	value *map[int32]int16
+	value     *map[int32]int16
+	separator string
 }
 
 var _ RepeatableFlag = (*int32Int16MapValue)(nil)
-
 var _ Value = (*int32Int16MapValue)(nil)
-
 var _ Getter = (*int32Int16MapValue)(nil)
 
-func newInt32Int16MapValue(m *map[int32]int16) *int32Int16MapValue {
-	return &int32Int16MapValue{
+func newInt32Int16MapValue(m *map[int32]int16, sep *string) *int32Int16MapValue {
+	s := &int32Int16MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int32Int16MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -9012,23 +10899,37 @@ func (v *int32Int16MapValue) IsCumulative() bool {
 
 // -- int64Int16MapValue.
 type int64Int16MapValue struct {
-	value *map[int64]int16
+	value     *map[int64]int16
+	separator string
 }
 
 var _ RepeatableFlag = (*int64Int16MapValue)(nil)
-
 var _ Value = (*int64Int16MapValue)(nil)
-
 var _ Getter = (*int64Int16MapValue)(nil)
 
-func newInt64Int16MapValue(m *map[int64]int16) *int64Int16MapValue {
-	return &int64Int16MapValue{
+func newInt64Int16MapValue(m *map[int64]int16, sep *string) *int64Int16MapValue {
+	s := &int64Int16MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int64Int16MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -9084,23 +10985,37 @@ func (v *int64Int16MapValue) IsCumulative() bool {
 
 // -- uintInt16MapValue.
 type uintInt16MapValue struct {
-	value *map[uint]int16
+	value     *map[uint]int16
+	separator string
 }
 
 var _ RepeatableFlag = (*uintInt16MapValue)(nil)
-
 var _ Value = (*uintInt16MapValue)(nil)
-
 var _ Getter = (*uintInt16MapValue)(nil)
 
-func newUintInt16MapValue(m *map[uint]int16) *uintInt16MapValue {
-	return &uintInt16MapValue{
+func newUintInt16MapValue(m *map[uint]int16, sep *string) *uintInt16MapValue {
+	s := &uintInt16MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uintInt16MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -9156,23 +11071,37 @@ func (v *uintInt16MapValue) IsCumulative() bool {
 
 // -- uint8Int16MapValue.
 type uint8Int16MapValue struct {
-	value *map[uint8]int16
+	value     *map[uint8]int16
+	separator string
 }
 
 var _ RepeatableFlag = (*uint8Int16MapValue)(nil)
-
 var _ Value = (*uint8Int16MapValue)(nil)
-
 var _ Getter = (*uint8Int16MapValue)(nil)
 
-func newUint8Int16MapValue(m *map[uint8]int16) *uint8Int16MapValue {
-	return &uint8Int16MapValue{
+func newUint8Int16MapValue(m *map[uint8]int16, sep *string) *uint8Int16MapValue {
+	s := &uint8Int16MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint8Int16MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -9228,23 +11157,37 @@ func (v *uint8Int16MapValue) IsCumulative() bool {
 
 // -- uint16Int16MapValue.
 type uint16Int16MapValue struct {
-	value *map[uint16]int16
+	value     *map[uint16]int16
+	separator string
 }
 
 var _ RepeatableFlag = (*uint16Int16MapValue)(nil)
-
 var _ Value = (*uint16Int16MapValue)(nil)
-
 var _ Getter = (*uint16Int16MapValue)(nil)
 
-func newUint16Int16MapValue(m *map[uint16]int16) *uint16Int16MapValue {
-	return &uint16Int16MapValue{
+func newUint16Int16MapValue(m *map[uint16]int16, sep *string) *uint16Int16MapValue {
+	s := &uint16Int16MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint16Int16MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -9300,23 +11243,37 @@ func (v *uint16Int16MapValue) IsCumulative() bool {
 
 // -- uint32Int16MapValue.
 type uint32Int16MapValue struct {
-	value *map[uint32]int16
+	value     *map[uint32]int16
+	separator string
 }
 
 var _ RepeatableFlag = (*uint32Int16MapValue)(nil)
-
 var _ Value = (*uint32Int16MapValue)(nil)
-
 var _ Getter = (*uint32Int16MapValue)(nil)
 
-func newUint32Int16MapValue(m *map[uint32]int16) *uint32Int16MapValue {
-	return &uint32Int16MapValue{
+func newUint32Int16MapValue(m *map[uint32]int16, sep *string) *uint32Int16MapValue {
+	s := &uint32Int16MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint32Int16MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -9372,23 +11329,37 @@ func (v *uint32Int16MapValue) IsCumulative() bool {
 
 // -- uint64Int16MapValue.
 type uint64Int16MapValue struct {
-	value *map[uint64]int16
+	value     *map[uint64]int16
+	separator string
 }
 
 var _ RepeatableFlag = (*uint64Int16MapValue)(nil)
-
 var _ Value = (*uint64Int16MapValue)(nil)
-
 var _ Getter = (*uint64Int16MapValue)(nil)
 
-func newUint64Int16MapValue(m *map[uint64]int16) *uint64Int16MapValue {
-	return &uint64Int16MapValue{
+func newUint64Int16MapValue(m *map[uint64]int16, sep *string) *uint64Int16MapValue {
+	s := &uint64Int16MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint64Int16MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -9448,7 +11419,6 @@ type int32Value struct {
 }
 
 var _ Value = (*int32Value)(nil)
-
 var _ Getter = (*int32Value)(nil)
 
 func newInt32Value(p *int32) *int32Value {
@@ -9456,18 +11426,22 @@ func newInt32Value(p *int32) *int32Value {
 }
 
 func (v *int32Value) Set(s string) error {
+
 	parsed, err := strconv.ParseInt(s, 0, 32)
 	if err == nil {
+
 		*v.value = (int32)(parsed)
 
 		return nil
 	}
 
 	return err
+
 }
 
 func (v *int32Value) Get() any {
 	if v != nil && v.value != nil {
+
 		return *v.value
 	}
 
@@ -9476,6 +11450,7 @@ func (v *int32Value) Get() any {
 
 func (v *int32Value) String() string {
 	if v != nil && v.value != nil {
+
 		return strconv.Itoa(int(*v.value))
 	}
 
@@ -9487,24 +11462,38 @@ func (v *int32Value) Type() string { return "int32" }
 // -- int32Slice Value
 
 type int32SliceValue struct {
-	value   *[]int32
-	changed bool
+	value     *[]int32
+	changed   bool
+	separator string
 }
 
 var _ RepeatableFlag = (*int32SliceValue)(nil)
-
 var _ Value = (*int32SliceValue)(nil)
-
 var _ Getter = (*int32SliceValue)(nil)
 
-func newInt32SliceValue(slice *[]int32) *int32SliceValue {
-	return &int32SliceValue{
+func newInt32SliceValue(slice *[]int32, sep *string) *int32SliceValue {
+	s := &int32SliceValue{
 		value: slice,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int32SliceValue) Set(raw string) error {
-	ss := strings.Split(raw, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var ss []string
+	if separator == "none" {
+		ss = []string{raw}
+	} else {
+		ss = strings.Split(raw, separator)
+	}
 
 	out := make([]int32, len(ss))
 	for i, s := range ss {
@@ -9512,7 +11501,9 @@ func (v *int32SliceValue) Set(raw string) error {
 		if err != nil {
 			return err
 		}
+
 		out[i] = (int32)(parsed)
+
 	}
 
 	if !v.changed {
@@ -9527,6 +11518,7 @@ func (v *int32SliceValue) Set(raw string) error {
 
 func (v *int32SliceValue) Get() any {
 	if v != nil && v.value != nil {
+
 		return *v.value
 	}
 
@@ -9535,6 +11527,7 @@ func (v *int32SliceValue) Get() any {
 
 func (v *int32SliceValue) String() string {
 	if v == nil || v.value == nil {
+
 		return "[]"
 	}
 	out := make([]string, 0, len(*v.value))
@@ -9553,23 +11546,37 @@ func (v *int32SliceValue) IsCumulative() bool {
 
 // -- stringInt32MapValue.
 type stringInt32MapValue struct {
-	value *map[string]int32
+	value     *map[string]int32
+	separator string
 }
 
 var _ RepeatableFlag = (*stringInt32MapValue)(nil)
-
 var _ Value = (*stringInt32MapValue)(nil)
-
 var _ Getter = (*stringInt32MapValue)(nil)
 
-func newStringInt32MapValue(m *map[string]int32) *stringInt32MapValue {
-	return &stringInt32MapValue{
+func newStringInt32MapValue(m *map[string]int32, sep *string) *stringInt32MapValue {
+	s := &stringInt32MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *stringInt32MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -9620,23 +11627,37 @@ func (v *stringInt32MapValue) IsCumulative() bool {
 
 // -- intInt32MapValue.
 type intInt32MapValue struct {
-	value *map[int]int32
+	value     *map[int]int32
+	separator string
 }
 
 var _ RepeatableFlag = (*intInt32MapValue)(nil)
-
 var _ Value = (*intInt32MapValue)(nil)
-
 var _ Getter = (*intInt32MapValue)(nil)
 
-func newIntInt32MapValue(m *map[int]int32) *intInt32MapValue {
-	return &intInt32MapValue{
+func newIntInt32MapValue(m *map[int]int32, sep *string) *intInt32MapValue {
+	s := &intInt32MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *intInt32MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -9692,23 +11713,37 @@ func (v *intInt32MapValue) IsCumulative() bool {
 
 // -- int8Int32MapValue.
 type int8Int32MapValue struct {
-	value *map[int8]int32
+	value     *map[int8]int32
+	separator string
 }
 
 var _ RepeatableFlag = (*int8Int32MapValue)(nil)
-
 var _ Value = (*int8Int32MapValue)(nil)
-
 var _ Getter = (*int8Int32MapValue)(nil)
 
-func newInt8Int32MapValue(m *map[int8]int32) *int8Int32MapValue {
-	return &int8Int32MapValue{
+func newInt8Int32MapValue(m *map[int8]int32, sep *string) *int8Int32MapValue {
+	s := &int8Int32MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int8Int32MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -9764,23 +11799,37 @@ func (v *int8Int32MapValue) IsCumulative() bool {
 
 // -- int16Int32MapValue.
 type int16Int32MapValue struct {
-	value *map[int16]int32
+	value     *map[int16]int32
+	separator string
 }
 
 var _ RepeatableFlag = (*int16Int32MapValue)(nil)
-
 var _ Value = (*int16Int32MapValue)(nil)
-
 var _ Getter = (*int16Int32MapValue)(nil)
 
-func newInt16Int32MapValue(m *map[int16]int32) *int16Int32MapValue {
-	return &int16Int32MapValue{
+func newInt16Int32MapValue(m *map[int16]int32, sep *string) *int16Int32MapValue {
+	s := &int16Int32MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int16Int32MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -9836,23 +11885,37 @@ func (v *int16Int32MapValue) IsCumulative() bool {
 
 // -- int32Int32MapValue.
 type int32Int32MapValue struct {
-	value *map[int32]int32
+	value     *map[int32]int32
+	separator string
 }
 
 var _ RepeatableFlag = (*int32Int32MapValue)(nil)
-
 var _ Value = (*int32Int32MapValue)(nil)
-
 var _ Getter = (*int32Int32MapValue)(nil)
 
-func newInt32Int32MapValue(m *map[int32]int32) *int32Int32MapValue {
-	return &int32Int32MapValue{
+func newInt32Int32MapValue(m *map[int32]int32, sep *string) *int32Int32MapValue {
+	s := &int32Int32MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int32Int32MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -9908,23 +11971,37 @@ func (v *int32Int32MapValue) IsCumulative() bool {
 
 // -- int64Int32MapValue.
 type int64Int32MapValue struct {
-	value *map[int64]int32
+	value     *map[int64]int32
+	separator string
 }
 
 var _ RepeatableFlag = (*int64Int32MapValue)(nil)
-
 var _ Value = (*int64Int32MapValue)(nil)
-
 var _ Getter = (*int64Int32MapValue)(nil)
 
-func newInt64Int32MapValue(m *map[int64]int32) *int64Int32MapValue {
-	return &int64Int32MapValue{
+func newInt64Int32MapValue(m *map[int64]int32, sep *string) *int64Int32MapValue {
+	s := &int64Int32MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int64Int32MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -9980,23 +12057,37 @@ func (v *int64Int32MapValue) IsCumulative() bool {
 
 // -- uintInt32MapValue.
 type uintInt32MapValue struct {
-	value *map[uint]int32
+	value     *map[uint]int32
+	separator string
 }
 
 var _ RepeatableFlag = (*uintInt32MapValue)(nil)
-
 var _ Value = (*uintInt32MapValue)(nil)
-
 var _ Getter = (*uintInt32MapValue)(nil)
 
-func newUintInt32MapValue(m *map[uint]int32) *uintInt32MapValue {
-	return &uintInt32MapValue{
+func newUintInt32MapValue(m *map[uint]int32, sep *string) *uintInt32MapValue {
+	s := &uintInt32MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uintInt32MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -10052,23 +12143,37 @@ func (v *uintInt32MapValue) IsCumulative() bool {
 
 // -- uint8Int32MapValue.
 type uint8Int32MapValue struct {
-	value *map[uint8]int32
+	value     *map[uint8]int32
+	separator string
 }
 
 var _ RepeatableFlag = (*uint8Int32MapValue)(nil)
-
 var _ Value = (*uint8Int32MapValue)(nil)
-
 var _ Getter = (*uint8Int32MapValue)(nil)
 
-func newUint8Int32MapValue(m *map[uint8]int32) *uint8Int32MapValue {
-	return &uint8Int32MapValue{
+func newUint8Int32MapValue(m *map[uint8]int32, sep *string) *uint8Int32MapValue {
+	s := &uint8Int32MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint8Int32MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -10124,23 +12229,37 @@ func (v *uint8Int32MapValue) IsCumulative() bool {
 
 // -- uint16Int32MapValue.
 type uint16Int32MapValue struct {
-	value *map[uint16]int32
+	value     *map[uint16]int32
+	separator string
 }
 
 var _ RepeatableFlag = (*uint16Int32MapValue)(nil)
-
 var _ Value = (*uint16Int32MapValue)(nil)
-
 var _ Getter = (*uint16Int32MapValue)(nil)
 
-func newUint16Int32MapValue(m *map[uint16]int32) *uint16Int32MapValue {
-	return &uint16Int32MapValue{
+func newUint16Int32MapValue(m *map[uint16]int32, sep *string) *uint16Int32MapValue {
+	s := &uint16Int32MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint16Int32MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -10196,23 +12315,37 @@ func (v *uint16Int32MapValue) IsCumulative() bool {
 
 // -- uint32Int32MapValue.
 type uint32Int32MapValue struct {
-	value *map[uint32]int32
+	value     *map[uint32]int32
+	separator string
 }
 
 var _ RepeatableFlag = (*uint32Int32MapValue)(nil)
-
 var _ Value = (*uint32Int32MapValue)(nil)
-
 var _ Getter = (*uint32Int32MapValue)(nil)
 
-func newUint32Int32MapValue(m *map[uint32]int32) *uint32Int32MapValue {
-	return &uint32Int32MapValue{
+func newUint32Int32MapValue(m *map[uint32]int32, sep *string) *uint32Int32MapValue {
+	s := &uint32Int32MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint32Int32MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -10268,23 +12401,37 @@ func (v *uint32Int32MapValue) IsCumulative() bool {
 
 // -- uint64Int32MapValue.
 type uint64Int32MapValue struct {
-	value *map[uint64]int32
+	value     *map[uint64]int32
+	separator string
 }
 
 var _ RepeatableFlag = (*uint64Int32MapValue)(nil)
-
 var _ Value = (*uint64Int32MapValue)(nil)
-
 var _ Getter = (*uint64Int32MapValue)(nil)
 
-func newUint64Int32MapValue(m *map[uint64]int32) *uint64Int32MapValue {
-	return &uint64Int32MapValue{
+func newUint64Int32MapValue(m *map[uint64]int32, sep *string) *uint64Int32MapValue {
+	s := &uint64Int32MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint64Int32MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -10344,7 +12491,6 @@ type int64Value struct {
 }
 
 var _ Value = (*int64Value)(nil)
-
 var _ Getter = (*int64Value)(nil)
 
 func newInt64Value(p *int64) *int64Value {
@@ -10352,18 +12498,22 @@ func newInt64Value(p *int64) *int64Value {
 }
 
 func (v *int64Value) Set(s string) error {
+
 	parsed, err := strconv.ParseInt(s, 0, 64)
 	if err == nil {
+
 		*v.value = parsed
 
 		return nil
 	}
 
 	return err
+
 }
 
 func (v *int64Value) Get() any {
 	if v != nil && v.value != nil {
+
 		return *v.value
 	}
 
@@ -10372,6 +12522,7 @@ func (v *int64Value) Get() any {
 
 func (v *int64Value) String() string {
 	if v != nil && v.value != nil {
+
 		return strconv.FormatInt(*v.value, 10)
 	}
 
@@ -10383,24 +12534,38 @@ func (v *int64Value) Type() string { return "int64" }
 // -- int64Slice Value
 
 type int64SliceValue struct {
-	value   *[]int64
-	changed bool
+	value     *[]int64
+	changed   bool
+	separator string
 }
 
 var _ RepeatableFlag = (*int64SliceValue)(nil)
-
 var _ Value = (*int64SliceValue)(nil)
-
 var _ Getter = (*int64SliceValue)(nil)
 
-func newInt64SliceValue(slice *[]int64) *int64SliceValue {
-	return &int64SliceValue{
+func newInt64SliceValue(slice *[]int64, sep *string) *int64SliceValue {
+	s := &int64SliceValue{
 		value: slice,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int64SliceValue) Set(raw string) error {
-	ss := strings.Split(raw, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var ss []string
+	if separator == "none" {
+		ss = []string{raw}
+	} else {
+		ss = strings.Split(raw, separator)
+	}
 
 	out := make([]int64, len(ss))
 	for i, s := range ss {
@@ -10408,7 +12573,9 @@ func (v *int64SliceValue) Set(raw string) error {
 		if err != nil {
 			return err
 		}
+
 		out[i] = parsed
+
 	}
 
 	if !v.changed {
@@ -10423,6 +12590,7 @@ func (v *int64SliceValue) Set(raw string) error {
 
 func (v *int64SliceValue) Get() any {
 	if v != nil && v.value != nil {
+
 		return *v.value
 	}
 
@@ -10431,6 +12599,7 @@ func (v *int64SliceValue) Get() any {
 
 func (v *int64SliceValue) String() string {
 	if v == nil || v.value == nil {
+
 		return "[]"
 	}
 	out := make([]string, 0, len(*v.value))
@@ -10449,23 +12618,37 @@ func (v *int64SliceValue) IsCumulative() bool {
 
 // -- stringInt64MapValue.
 type stringInt64MapValue struct {
-	value *map[string]int64
+	value     *map[string]int64
+	separator string
 }
 
 var _ RepeatableFlag = (*stringInt64MapValue)(nil)
-
 var _ Value = (*stringInt64MapValue)(nil)
-
 var _ Getter = (*stringInt64MapValue)(nil)
 
-func newStringInt64MapValue(m *map[string]int64) *stringInt64MapValue {
-	return &stringInt64MapValue{
+func newStringInt64MapValue(m *map[string]int64, sep *string) *stringInt64MapValue {
+	s := &stringInt64MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *stringInt64MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -10516,23 +12699,37 @@ func (v *stringInt64MapValue) IsCumulative() bool {
 
 // -- intInt64MapValue.
 type intInt64MapValue struct {
-	value *map[int]int64
+	value     *map[int]int64
+	separator string
 }
 
 var _ RepeatableFlag = (*intInt64MapValue)(nil)
-
 var _ Value = (*intInt64MapValue)(nil)
-
 var _ Getter = (*intInt64MapValue)(nil)
 
-func newIntInt64MapValue(m *map[int]int64) *intInt64MapValue {
-	return &intInt64MapValue{
+func newIntInt64MapValue(m *map[int]int64, sep *string) *intInt64MapValue {
+	s := &intInt64MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *intInt64MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -10588,23 +12785,37 @@ func (v *intInt64MapValue) IsCumulative() bool {
 
 // -- int8Int64MapValue.
 type int8Int64MapValue struct {
-	value *map[int8]int64
+	value     *map[int8]int64
+	separator string
 }
 
 var _ RepeatableFlag = (*int8Int64MapValue)(nil)
-
 var _ Value = (*int8Int64MapValue)(nil)
-
 var _ Getter = (*int8Int64MapValue)(nil)
 
-func newInt8Int64MapValue(m *map[int8]int64) *int8Int64MapValue {
-	return &int8Int64MapValue{
+func newInt8Int64MapValue(m *map[int8]int64, sep *string) *int8Int64MapValue {
+	s := &int8Int64MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int8Int64MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -10660,23 +12871,37 @@ func (v *int8Int64MapValue) IsCumulative() bool {
 
 // -- int16Int64MapValue.
 type int16Int64MapValue struct {
-	value *map[int16]int64
+	value     *map[int16]int64
+	separator string
 }
 
 var _ RepeatableFlag = (*int16Int64MapValue)(nil)
-
 var _ Value = (*int16Int64MapValue)(nil)
-
 var _ Getter = (*int16Int64MapValue)(nil)
 
-func newInt16Int64MapValue(m *map[int16]int64) *int16Int64MapValue {
-	return &int16Int64MapValue{
+func newInt16Int64MapValue(m *map[int16]int64, sep *string) *int16Int64MapValue {
+	s := &int16Int64MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int16Int64MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -10732,23 +12957,37 @@ func (v *int16Int64MapValue) IsCumulative() bool {
 
 // -- int32Int64MapValue.
 type int32Int64MapValue struct {
-	value *map[int32]int64
+	value     *map[int32]int64
+	separator string
 }
 
 var _ RepeatableFlag = (*int32Int64MapValue)(nil)
-
 var _ Value = (*int32Int64MapValue)(nil)
-
 var _ Getter = (*int32Int64MapValue)(nil)
 
-func newInt32Int64MapValue(m *map[int32]int64) *int32Int64MapValue {
-	return &int32Int64MapValue{
+func newInt32Int64MapValue(m *map[int32]int64, sep *string) *int32Int64MapValue {
+	s := &int32Int64MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int32Int64MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -10804,23 +13043,37 @@ func (v *int32Int64MapValue) IsCumulative() bool {
 
 // -- int64Int64MapValue.
 type int64Int64MapValue struct {
-	value *map[int64]int64
+	value     *map[int64]int64
+	separator string
 }
 
 var _ RepeatableFlag = (*int64Int64MapValue)(nil)
-
 var _ Value = (*int64Int64MapValue)(nil)
-
 var _ Getter = (*int64Int64MapValue)(nil)
 
-func newInt64Int64MapValue(m *map[int64]int64) *int64Int64MapValue {
-	return &int64Int64MapValue{
+func newInt64Int64MapValue(m *map[int64]int64, sep *string) *int64Int64MapValue {
+	s := &int64Int64MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int64Int64MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -10876,23 +13129,37 @@ func (v *int64Int64MapValue) IsCumulative() bool {
 
 // -- uintInt64MapValue.
 type uintInt64MapValue struct {
-	value *map[uint]int64
+	value     *map[uint]int64
+	separator string
 }
 
 var _ RepeatableFlag = (*uintInt64MapValue)(nil)
-
 var _ Value = (*uintInt64MapValue)(nil)
-
 var _ Getter = (*uintInt64MapValue)(nil)
 
-func newUintInt64MapValue(m *map[uint]int64) *uintInt64MapValue {
-	return &uintInt64MapValue{
+func newUintInt64MapValue(m *map[uint]int64, sep *string) *uintInt64MapValue {
+	s := &uintInt64MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uintInt64MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -10948,23 +13215,37 @@ func (v *uintInt64MapValue) IsCumulative() bool {
 
 // -- uint8Int64MapValue.
 type uint8Int64MapValue struct {
-	value *map[uint8]int64
+	value     *map[uint8]int64
+	separator string
 }
 
 var _ RepeatableFlag = (*uint8Int64MapValue)(nil)
-
 var _ Value = (*uint8Int64MapValue)(nil)
-
 var _ Getter = (*uint8Int64MapValue)(nil)
 
-func newUint8Int64MapValue(m *map[uint8]int64) *uint8Int64MapValue {
-	return &uint8Int64MapValue{
+func newUint8Int64MapValue(m *map[uint8]int64, sep *string) *uint8Int64MapValue {
+	s := &uint8Int64MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint8Int64MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -11020,23 +13301,37 @@ func (v *uint8Int64MapValue) IsCumulative() bool {
 
 // -- uint16Int64MapValue.
 type uint16Int64MapValue struct {
-	value *map[uint16]int64
+	value     *map[uint16]int64
+	separator string
 }
 
 var _ RepeatableFlag = (*uint16Int64MapValue)(nil)
-
 var _ Value = (*uint16Int64MapValue)(nil)
-
 var _ Getter = (*uint16Int64MapValue)(nil)
 
-func newUint16Int64MapValue(m *map[uint16]int64) *uint16Int64MapValue {
-	return &uint16Int64MapValue{
+func newUint16Int64MapValue(m *map[uint16]int64, sep *string) *uint16Int64MapValue {
+	s := &uint16Int64MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint16Int64MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -11092,23 +13387,37 @@ func (v *uint16Int64MapValue) IsCumulative() bool {
 
 // -- uint32Int64MapValue.
 type uint32Int64MapValue struct {
-	value *map[uint32]int64
+	value     *map[uint32]int64
+	separator string
 }
 
 var _ RepeatableFlag = (*uint32Int64MapValue)(nil)
-
 var _ Value = (*uint32Int64MapValue)(nil)
-
 var _ Getter = (*uint32Int64MapValue)(nil)
 
-func newUint32Int64MapValue(m *map[uint32]int64) *uint32Int64MapValue {
-	return &uint32Int64MapValue{
+func newUint32Int64MapValue(m *map[uint32]int64, sep *string) *uint32Int64MapValue {
+	s := &uint32Int64MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint32Int64MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -11164,23 +13473,37 @@ func (v *uint32Int64MapValue) IsCumulative() bool {
 
 // -- uint64Int64MapValue.
 type uint64Int64MapValue struct {
-	value *map[uint64]int64
+	value     *map[uint64]int64
+	separator string
 }
 
 var _ RepeatableFlag = (*uint64Int64MapValue)(nil)
-
 var _ Value = (*uint64Int64MapValue)(nil)
-
 var _ Getter = (*uint64Int64MapValue)(nil)
 
-func newUint64Int64MapValue(m *map[uint64]int64) *uint64Int64MapValue {
-	return &uint64Int64MapValue{
+func newUint64Int64MapValue(m *map[uint64]int64, sep *string) *uint64Int64MapValue {
+	s := &uint64Int64MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint64Int64MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -11240,7 +13563,6 @@ type float64Value struct {
 }
 
 var _ Value = (*float64Value)(nil)
-
 var _ Getter = (*float64Value)(nil)
 
 func newFloat64Value(p *float64) *float64Value {
@@ -11248,18 +13570,22 @@ func newFloat64Value(p *float64) *float64Value {
 }
 
 func (v *float64Value) Set(s string) error {
+
 	parsed, err := strconv.ParseFloat(s, 64)
 	if err == nil {
+
 		*v.value = parsed
 
 		return nil
 	}
 
 	return err
+
 }
 
 func (v *float64Value) Get() any {
 	if v != nil && v.value != nil {
+
 		return *v.value
 	}
 
@@ -11268,6 +13594,7 @@ func (v *float64Value) Get() any {
 
 func (v *float64Value) String() string {
 	if v != nil && v.value != nil {
+
 		return fmt.Sprintf("%v", *v.value)
 	}
 
@@ -11279,24 +13606,38 @@ func (v *float64Value) Type() string { return "float64" }
 // -- float64Slice Value
 
 type float64SliceValue struct {
-	value   *[]float64
-	changed bool
+	value     *[]float64
+	changed   bool
+	separator string
 }
 
 var _ RepeatableFlag = (*float64SliceValue)(nil)
-
 var _ Value = (*float64SliceValue)(nil)
-
 var _ Getter = (*float64SliceValue)(nil)
 
-func newFloat64SliceValue(slice *[]float64) *float64SliceValue {
-	return &float64SliceValue{
+func newFloat64SliceValue(slice *[]float64, sep *string) *float64SliceValue {
+	s := &float64SliceValue{
 		value: slice,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *float64SliceValue) Set(raw string) error {
-	ss := strings.Split(raw, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var ss []string
+	if separator == "none" {
+		ss = []string{raw}
+	} else {
+		ss = strings.Split(raw, separator)
+	}
 
 	out := make([]float64, len(ss))
 	for i, s := range ss {
@@ -11304,7 +13645,9 @@ func (v *float64SliceValue) Set(raw string) error {
 		if err != nil {
 			return err
 		}
+
 		out[i] = parsed
+
 	}
 
 	if !v.changed {
@@ -11319,6 +13662,7 @@ func (v *float64SliceValue) Set(raw string) error {
 
 func (v *float64SliceValue) Get() any {
 	if v != nil && v.value != nil {
+
 		return *v.value
 	}
 
@@ -11327,6 +13671,7 @@ func (v *float64SliceValue) Get() any {
 
 func (v *float64SliceValue) String() string {
 	if v == nil || v.value == nil {
+
 		return "[]"
 	}
 	out := make([]string, 0, len(*v.value))
@@ -11345,23 +13690,37 @@ func (v *float64SliceValue) IsCumulative() bool {
 
 // -- stringFloat64MapValue.
 type stringFloat64MapValue struct {
-	value *map[string]float64
+	value     *map[string]float64
+	separator string
 }
 
 var _ RepeatableFlag = (*stringFloat64MapValue)(nil)
-
 var _ Value = (*stringFloat64MapValue)(nil)
-
 var _ Getter = (*stringFloat64MapValue)(nil)
 
-func newStringFloat64MapValue(m *map[string]float64) *stringFloat64MapValue {
-	return &stringFloat64MapValue{
+func newStringFloat64MapValue(m *map[string]float64, sep *string) *stringFloat64MapValue {
+	s := &stringFloat64MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *stringFloat64MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -11412,23 +13771,37 @@ func (v *stringFloat64MapValue) IsCumulative() bool {
 
 // -- intFloat64MapValue.
 type intFloat64MapValue struct {
-	value *map[int]float64
+	value     *map[int]float64
+	separator string
 }
 
 var _ RepeatableFlag = (*intFloat64MapValue)(nil)
-
 var _ Value = (*intFloat64MapValue)(nil)
-
 var _ Getter = (*intFloat64MapValue)(nil)
 
-func newIntFloat64MapValue(m *map[int]float64) *intFloat64MapValue {
-	return &intFloat64MapValue{
+func newIntFloat64MapValue(m *map[int]float64, sep *string) *intFloat64MapValue {
+	s := &intFloat64MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *intFloat64MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -11484,23 +13857,37 @@ func (v *intFloat64MapValue) IsCumulative() bool {
 
 // -- int8Float64MapValue.
 type int8Float64MapValue struct {
-	value *map[int8]float64
+	value     *map[int8]float64
+	separator string
 }
 
 var _ RepeatableFlag = (*int8Float64MapValue)(nil)
-
 var _ Value = (*int8Float64MapValue)(nil)
-
 var _ Getter = (*int8Float64MapValue)(nil)
 
-func newInt8Float64MapValue(m *map[int8]float64) *int8Float64MapValue {
-	return &int8Float64MapValue{
+func newInt8Float64MapValue(m *map[int8]float64, sep *string) *int8Float64MapValue {
+	s := &int8Float64MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int8Float64MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -11556,23 +13943,37 @@ func (v *int8Float64MapValue) IsCumulative() bool {
 
 // -- int16Float64MapValue.
 type int16Float64MapValue struct {
-	value *map[int16]float64
+	value     *map[int16]float64
+	separator string
 }
 
 var _ RepeatableFlag = (*int16Float64MapValue)(nil)
-
 var _ Value = (*int16Float64MapValue)(nil)
-
 var _ Getter = (*int16Float64MapValue)(nil)
 
-func newInt16Float64MapValue(m *map[int16]float64) *int16Float64MapValue {
-	return &int16Float64MapValue{
+func newInt16Float64MapValue(m *map[int16]float64, sep *string) *int16Float64MapValue {
+	s := &int16Float64MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int16Float64MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -11628,23 +14029,37 @@ func (v *int16Float64MapValue) IsCumulative() bool {
 
 // -- int32Float64MapValue.
 type int32Float64MapValue struct {
-	value *map[int32]float64
+	value     *map[int32]float64
+	separator string
 }
 
 var _ RepeatableFlag = (*int32Float64MapValue)(nil)
-
 var _ Value = (*int32Float64MapValue)(nil)
-
 var _ Getter = (*int32Float64MapValue)(nil)
 
-func newInt32Float64MapValue(m *map[int32]float64) *int32Float64MapValue {
-	return &int32Float64MapValue{
+func newInt32Float64MapValue(m *map[int32]float64, sep *string) *int32Float64MapValue {
+	s := &int32Float64MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int32Float64MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -11700,23 +14115,37 @@ func (v *int32Float64MapValue) IsCumulative() bool {
 
 // -- int64Float64MapValue.
 type int64Float64MapValue struct {
-	value *map[int64]float64
+	value     *map[int64]float64
+	separator string
 }
 
 var _ RepeatableFlag = (*int64Float64MapValue)(nil)
-
 var _ Value = (*int64Float64MapValue)(nil)
-
 var _ Getter = (*int64Float64MapValue)(nil)
 
-func newInt64Float64MapValue(m *map[int64]float64) *int64Float64MapValue {
-	return &int64Float64MapValue{
+func newInt64Float64MapValue(m *map[int64]float64, sep *string) *int64Float64MapValue {
+	s := &int64Float64MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int64Float64MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -11772,23 +14201,37 @@ func (v *int64Float64MapValue) IsCumulative() bool {
 
 // -- uintFloat64MapValue.
 type uintFloat64MapValue struct {
-	value *map[uint]float64
+	value     *map[uint]float64
+	separator string
 }
 
 var _ RepeatableFlag = (*uintFloat64MapValue)(nil)
-
 var _ Value = (*uintFloat64MapValue)(nil)
-
 var _ Getter = (*uintFloat64MapValue)(nil)
 
-func newUintFloat64MapValue(m *map[uint]float64) *uintFloat64MapValue {
-	return &uintFloat64MapValue{
+func newUintFloat64MapValue(m *map[uint]float64, sep *string) *uintFloat64MapValue {
+	s := &uintFloat64MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uintFloat64MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -11844,23 +14287,37 @@ func (v *uintFloat64MapValue) IsCumulative() bool {
 
 // -- uint8Float64MapValue.
 type uint8Float64MapValue struct {
-	value *map[uint8]float64
+	value     *map[uint8]float64
+	separator string
 }
 
 var _ RepeatableFlag = (*uint8Float64MapValue)(nil)
-
 var _ Value = (*uint8Float64MapValue)(nil)
-
 var _ Getter = (*uint8Float64MapValue)(nil)
 
-func newUint8Float64MapValue(m *map[uint8]float64) *uint8Float64MapValue {
-	return &uint8Float64MapValue{
+func newUint8Float64MapValue(m *map[uint8]float64, sep *string) *uint8Float64MapValue {
+	s := &uint8Float64MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint8Float64MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -11916,23 +14373,37 @@ func (v *uint8Float64MapValue) IsCumulative() bool {
 
 // -- uint16Float64MapValue.
 type uint16Float64MapValue struct {
-	value *map[uint16]float64
+	value     *map[uint16]float64
+	separator string
 }
 
 var _ RepeatableFlag = (*uint16Float64MapValue)(nil)
-
 var _ Value = (*uint16Float64MapValue)(nil)
-
 var _ Getter = (*uint16Float64MapValue)(nil)
 
-func newUint16Float64MapValue(m *map[uint16]float64) *uint16Float64MapValue {
-	return &uint16Float64MapValue{
+func newUint16Float64MapValue(m *map[uint16]float64, sep *string) *uint16Float64MapValue {
+	s := &uint16Float64MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint16Float64MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -11988,23 +14459,37 @@ func (v *uint16Float64MapValue) IsCumulative() bool {
 
 // -- uint32Float64MapValue.
 type uint32Float64MapValue struct {
-	value *map[uint32]float64
+	value     *map[uint32]float64
+	separator string
 }
 
 var _ RepeatableFlag = (*uint32Float64MapValue)(nil)
-
 var _ Value = (*uint32Float64MapValue)(nil)
-
 var _ Getter = (*uint32Float64MapValue)(nil)
 
-func newUint32Float64MapValue(m *map[uint32]float64) *uint32Float64MapValue {
-	return &uint32Float64MapValue{
+func newUint32Float64MapValue(m *map[uint32]float64, sep *string) *uint32Float64MapValue {
+	s := &uint32Float64MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint32Float64MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -12060,23 +14545,37 @@ func (v *uint32Float64MapValue) IsCumulative() bool {
 
 // -- uint64Float64MapValue.
 type uint64Float64MapValue struct {
-	value *map[uint64]float64
+	value     *map[uint64]float64
+	separator string
 }
 
 var _ RepeatableFlag = (*uint64Float64MapValue)(nil)
-
 var _ Value = (*uint64Float64MapValue)(nil)
-
 var _ Getter = (*uint64Float64MapValue)(nil)
 
-func newUint64Float64MapValue(m *map[uint64]float64) *uint64Float64MapValue {
-	return &uint64Float64MapValue{
+func newUint64Float64MapValue(m *map[uint64]float64, sep *string) *uint64Float64MapValue {
+	s := &uint64Float64MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint64Float64MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -12136,7 +14635,6 @@ type float32Value struct {
 }
 
 var _ Value = (*float32Value)(nil)
-
 var _ Getter = (*float32Value)(nil)
 
 func newFloat32Value(p *float32) *float32Value {
@@ -12144,18 +14642,22 @@ func newFloat32Value(p *float32) *float32Value {
 }
 
 func (v *float32Value) Set(s string) error {
+
 	parsed, err := strconv.ParseFloat(s, 32)
 	if err == nil {
+
 		*v.value = (float32)(parsed)
 
 		return nil
 	}
 
 	return err
+
 }
 
 func (v *float32Value) Get() any {
 	if v != nil && v.value != nil {
+
 		return *v.value
 	}
 
@@ -12164,6 +14666,7 @@ func (v *float32Value) Get() any {
 
 func (v *float32Value) String() string {
 	if v != nil && v.value != nil {
+
 		return fmt.Sprintf("%v", *v.value)
 	}
 
@@ -12175,24 +14678,38 @@ func (v *float32Value) Type() string { return "float32" }
 // -- float32Slice Value
 
 type float32SliceValue struct {
-	value   *[]float32
-	changed bool
+	value     *[]float32
+	changed   bool
+	separator string
 }
 
 var _ RepeatableFlag = (*float32SliceValue)(nil)
-
 var _ Value = (*float32SliceValue)(nil)
-
 var _ Getter = (*float32SliceValue)(nil)
 
-func newFloat32SliceValue(slice *[]float32) *float32SliceValue {
-	return &float32SliceValue{
+func newFloat32SliceValue(slice *[]float32, sep *string) *float32SliceValue {
+	s := &float32SliceValue{
 		value: slice,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *float32SliceValue) Set(raw string) error {
-	ss := strings.Split(raw, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var ss []string
+	if separator == "none" {
+		ss = []string{raw}
+	} else {
+		ss = strings.Split(raw, separator)
+	}
 
 	out := make([]float32, len(ss))
 	for i, s := range ss {
@@ -12200,7 +14717,9 @@ func (v *float32SliceValue) Set(raw string) error {
 		if err != nil {
 			return err
 		}
+
 		out[i] = (float32)(parsed)
+
 	}
 
 	if !v.changed {
@@ -12215,6 +14734,7 @@ func (v *float32SliceValue) Set(raw string) error {
 
 func (v *float32SliceValue) Get() any {
 	if v != nil && v.value != nil {
+
 		return *v.value
 	}
 
@@ -12223,6 +14743,7 @@ func (v *float32SliceValue) Get() any {
 
 func (v *float32SliceValue) String() string {
 	if v == nil || v.value == nil {
+
 		return "[]"
 	}
 	out := make([]string, 0, len(*v.value))
@@ -12241,23 +14762,37 @@ func (v *float32SliceValue) IsCumulative() bool {
 
 // -- stringFloat32MapValue.
 type stringFloat32MapValue struct {
-	value *map[string]float32
+	value     *map[string]float32
+	separator string
 }
 
 var _ RepeatableFlag = (*stringFloat32MapValue)(nil)
-
 var _ Value = (*stringFloat32MapValue)(nil)
-
 var _ Getter = (*stringFloat32MapValue)(nil)
 
-func newStringFloat32MapValue(m *map[string]float32) *stringFloat32MapValue {
-	return &stringFloat32MapValue{
+func newStringFloat32MapValue(m *map[string]float32, sep *string) *stringFloat32MapValue {
+	s := &stringFloat32MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *stringFloat32MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -12308,23 +14843,37 @@ func (v *stringFloat32MapValue) IsCumulative() bool {
 
 // -- intFloat32MapValue.
 type intFloat32MapValue struct {
-	value *map[int]float32
+	value     *map[int]float32
+	separator string
 }
 
 var _ RepeatableFlag = (*intFloat32MapValue)(nil)
-
 var _ Value = (*intFloat32MapValue)(nil)
-
 var _ Getter = (*intFloat32MapValue)(nil)
 
-func newIntFloat32MapValue(m *map[int]float32) *intFloat32MapValue {
-	return &intFloat32MapValue{
+func newIntFloat32MapValue(m *map[int]float32, sep *string) *intFloat32MapValue {
+	s := &intFloat32MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *intFloat32MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -12380,23 +14929,37 @@ func (v *intFloat32MapValue) IsCumulative() bool {
 
 // -- int8Float32MapValue.
 type int8Float32MapValue struct {
-	value *map[int8]float32
+	value     *map[int8]float32
+	separator string
 }
 
 var _ RepeatableFlag = (*int8Float32MapValue)(nil)
-
 var _ Value = (*int8Float32MapValue)(nil)
-
 var _ Getter = (*int8Float32MapValue)(nil)
 
-func newInt8Float32MapValue(m *map[int8]float32) *int8Float32MapValue {
-	return &int8Float32MapValue{
+func newInt8Float32MapValue(m *map[int8]float32, sep *string) *int8Float32MapValue {
+	s := &int8Float32MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int8Float32MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -12452,23 +15015,37 @@ func (v *int8Float32MapValue) IsCumulative() bool {
 
 // -- int16Float32MapValue.
 type int16Float32MapValue struct {
-	value *map[int16]float32
+	value     *map[int16]float32
+	separator string
 }
 
 var _ RepeatableFlag = (*int16Float32MapValue)(nil)
-
 var _ Value = (*int16Float32MapValue)(nil)
-
 var _ Getter = (*int16Float32MapValue)(nil)
 
-func newInt16Float32MapValue(m *map[int16]float32) *int16Float32MapValue {
-	return &int16Float32MapValue{
+func newInt16Float32MapValue(m *map[int16]float32, sep *string) *int16Float32MapValue {
+	s := &int16Float32MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int16Float32MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -12524,23 +15101,37 @@ func (v *int16Float32MapValue) IsCumulative() bool {
 
 // -- int32Float32MapValue.
 type int32Float32MapValue struct {
-	value *map[int32]float32
+	value     *map[int32]float32
+	separator string
 }
 
 var _ RepeatableFlag = (*int32Float32MapValue)(nil)
-
 var _ Value = (*int32Float32MapValue)(nil)
-
 var _ Getter = (*int32Float32MapValue)(nil)
 
-func newInt32Float32MapValue(m *map[int32]float32) *int32Float32MapValue {
-	return &int32Float32MapValue{
+func newInt32Float32MapValue(m *map[int32]float32, sep *string) *int32Float32MapValue {
+	s := &int32Float32MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int32Float32MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -12596,23 +15187,37 @@ func (v *int32Float32MapValue) IsCumulative() bool {
 
 // -- int64Float32MapValue.
 type int64Float32MapValue struct {
-	value *map[int64]float32
+	value     *map[int64]float32
+	separator string
 }
 
 var _ RepeatableFlag = (*int64Float32MapValue)(nil)
-
 var _ Value = (*int64Float32MapValue)(nil)
-
 var _ Getter = (*int64Float32MapValue)(nil)
 
-func newInt64Float32MapValue(m *map[int64]float32) *int64Float32MapValue {
-	return &int64Float32MapValue{
+func newInt64Float32MapValue(m *map[int64]float32, sep *string) *int64Float32MapValue {
+	s := &int64Float32MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int64Float32MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -12668,23 +15273,37 @@ func (v *int64Float32MapValue) IsCumulative() bool {
 
 // -- uintFloat32MapValue.
 type uintFloat32MapValue struct {
-	value *map[uint]float32
+	value     *map[uint]float32
+	separator string
 }
 
 var _ RepeatableFlag = (*uintFloat32MapValue)(nil)
-
 var _ Value = (*uintFloat32MapValue)(nil)
-
 var _ Getter = (*uintFloat32MapValue)(nil)
 
-func newUintFloat32MapValue(m *map[uint]float32) *uintFloat32MapValue {
-	return &uintFloat32MapValue{
+func newUintFloat32MapValue(m *map[uint]float32, sep *string) *uintFloat32MapValue {
+	s := &uintFloat32MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uintFloat32MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -12740,23 +15359,37 @@ func (v *uintFloat32MapValue) IsCumulative() bool {
 
 // -- uint8Float32MapValue.
 type uint8Float32MapValue struct {
-	value *map[uint8]float32
+	value     *map[uint8]float32
+	separator string
 }
 
 var _ RepeatableFlag = (*uint8Float32MapValue)(nil)
-
 var _ Value = (*uint8Float32MapValue)(nil)
-
 var _ Getter = (*uint8Float32MapValue)(nil)
 
-func newUint8Float32MapValue(m *map[uint8]float32) *uint8Float32MapValue {
-	return &uint8Float32MapValue{
+func newUint8Float32MapValue(m *map[uint8]float32, sep *string) *uint8Float32MapValue {
+	s := &uint8Float32MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint8Float32MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -12812,23 +15445,37 @@ func (v *uint8Float32MapValue) IsCumulative() bool {
 
 // -- uint16Float32MapValue.
 type uint16Float32MapValue struct {
-	value *map[uint16]float32
+	value     *map[uint16]float32
+	separator string
 }
 
 var _ RepeatableFlag = (*uint16Float32MapValue)(nil)
-
 var _ Value = (*uint16Float32MapValue)(nil)
-
 var _ Getter = (*uint16Float32MapValue)(nil)
 
-func newUint16Float32MapValue(m *map[uint16]float32) *uint16Float32MapValue {
-	return &uint16Float32MapValue{
+func newUint16Float32MapValue(m *map[uint16]float32, sep *string) *uint16Float32MapValue {
+	s := &uint16Float32MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint16Float32MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -12884,23 +15531,37 @@ func (v *uint16Float32MapValue) IsCumulative() bool {
 
 // -- uint32Float32MapValue.
 type uint32Float32MapValue struct {
-	value *map[uint32]float32
+	value     *map[uint32]float32
+	separator string
 }
 
 var _ RepeatableFlag = (*uint32Float32MapValue)(nil)
-
 var _ Value = (*uint32Float32MapValue)(nil)
-
 var _ Getter = (*uint32Float32MapValue)(nil)
 
-func newUint32Float32MapValue(m *map[uint32]float32) *uint32Float32MapValue {
-	return &uint32Float32MapValue{
+func newUint32Float32MapValue(m *map[uint32]float32, sep *string) *uint32Float32MapValue {
+	s := &uint32Float32MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint32Float32MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -12956,23 +15617,37 @@ func (v *uint32Float32MapValue) IsCumulative() bool {
 
 // -- uint64Float32MapValue.
 type uint64Float32MapValue struct {
-	value *map[uint64]float32
+	value     *map[uint64]float32
+	separator string
 }
 
 var _ RepeatableFlag = (*uint64Float32MapValue)(nil)
-
 var _ Value = (*uint64Float32MapValue)(nil)
-
 var _ Getter = (*uint64Float32MapValue)(nil)
 
-func newUint64Float32MapValue(m *map[uint64]float32) *uint64Float32MapValue {
-	return &uint64Float32MapValue{
+func newUint64Float32MapValue(m *map[uint64]float32, sep *string) *uint64Float32MapValue {
+	s := &uint64Float32MapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint64Float32MapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -13032,7 +15707,6 @@ type durationValue struct {
 }
 
 var _ Value = (*durationValue)(nil)
-
 var _ Getter = (*durationValue)(nil)
 
 func newDurationValue(p *time.Duration) *durationValue {
@@ -13040,18 +15714,22 @@ func newDurationValue(p *time.Duration) *durationValue {
 }
 
 func (v *durationValue) Set(s string) error {
+
 	parsed, err := time.ParseDuration(s)
 	if err == nil {
+
 		*v.value = parsed
 
 		return nil
 	}
 
 	return err
+
 }
 
 func (v *durationValue) Get() any {
 	if v != nil && v.value != nil {
+
 		return *v.value
 	}
 
@@ -13060,6 +15738,7 @@ func (v *durationValue) Get() any {
 
 func (v *durationValue) String() string {
 	if v != nil && v.value != nil {
+
 		return (*v.value).String()
 	}
 
@@ -13071,24 +15750,38 @@ func (v *durationValue) Type() string { return "duration" }
 // -- time.DurationSlice Value
 
 type durationSliceValue struct {
-	value   *[]time.Duration
-	changed bool
+	value     *[]time.Duration
+	changed   bool
+	separator string
 }
 
 var _ RepeatableFlag = (*durationSliceValue)(nil)
-
 var _ Value = (*durationSliceValue)(nil)
-
 var _ Getter = (*durationSliceValue)(nil)
 
-func newDurationSliceValue(slice *[]time.Duration) *durationSliceValue {
-	return &durationSliceValue{
+func newDurationSliceValue(slice *[]time.Duration, sep *string) *durationSliceValue {
+	s := &durationSliceValue{
 		value: slice,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *durationSliceValue) Set(raw string) error {
-	ss := strings.Split(raw, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var ss []string
+	if separator == "none" {
+		ss = []string{raw}
+	} else {
+		ss = strings.Split(raw, separator)
+	}
 
 	out := make([]time.Duration, len(ss))
 	for i, s := range ss {
@@ -13096,7 +15789,9 @@ func (v *durationSliceValue) Set(raw string) error {
 		if err != nil {
 			return err
 		}
+
 		out[i] = parsed
+
 	}
 
 	if !v.changed {
@@ -13111,6 +15806,7 @@ func (v *durationSliceValue) Set(raw string) error {
 
 func (v *durationSliceValue) Get() any {
 	if v != nil && v.value != nil {
+
 		return *v.value
 	}
 
@@ -13119,6 +15815,7 @@ func (v *durationSliceValue) Get() any {
 
 func (v *durationSliceValue) String() string {
 	if v == nil || v.value == nil {
+
 		return "[]"
 	}
 	out := make([]string, 0, len(*v.value))
@@ -13137,23 +15834,37 @@ func (v *durationSliceValue) IsCumulative() bool {
 
 // -- stringDurationMapValue.
 type stringDurationMapValue struct {
-	value *map[string]time.Duration
+	value     *map[string]time.Duration
+	separator string
 }
 
 var _ RepeatableFlag = (*stringDurationMapValue)(nil)
-
 var _ Value = (*stringDurationMapValue)(nil)
-
 var _ Getter = (*stringDurationMapValue)(nil)
 
-func newStringDurationMapValue(m *map[string]time.Duration) *stringDurationMapValue {
-	return &stringDurationMapValue{
+func newStringDurationMapValue(m *map[string]time.Duration, sep *string) *stringDurationMapValue {
+	s := &stringDurationMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *stringDurationMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -13204,23 +15915,37 @@ func (v *stringDurationMapValue) IsCumulative() bool {
 
 // -- intDurationMapValue.
 type intDurationMapValue struct {
-	value *map[int]time.Duration
+	value     *map[int]time.Duration
+	separator string
 }
 
 var _ RepeatableFlag = (*intDurationMapValue)(nil)
-
 var _ Value = (*intDurationMapValue)(nil)
-
 var _ Getter = (*intDurationMapValue)(nil)
 
-func newIntDurationMapValue(m *map[int]time.Duration) *intDurationMapValue {
-	return &intDurationMapValue{
+func newIntDurationMapValue(m *map[int]time.Duration, sep *string) *intDurationMapValue {
+	s := &intDurationMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *intDurationMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -13276,23 +16001,37 @@ func (v *intDurationMapValue) IsCumulative() bool {
 
 // -- int8DurationMapValue.
 type int8DurationMapValue struct {
-	value *map[int8]time.Duration
+	value     *map[int8]time.Duration
+	separator string
 }
 
 var _ RepeatableFlag = (*int8DurationMapValue)(nil)
-
 var _ Value = (*int8DurationMapValue)(nil)
-
 var _ Getter = (*int8DurationMapValue)(nil)
 
-func newInt8DurationMapValue(m *map[int8]time.Duration) *int8DurationMapValue {
-	return &int8DurationMapValue{
+func newInt8DurationMapValue(m *map[int8]time.Duration, sep *string) *int8DurationMapValue {
+	s := &int8DurationMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int8DurationMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -13348,23 +16087,37 @@ func (v *int8DurationMapValue) IsCumulative() bool {
 
 // -- int16DurationMapValue.
 type int16DurationMapValue struct {
-	value *map[int16]time.Duration
+	value     *map[int16]time.Duration
+	separator string
 }
 
 var _ RepeatableFlag = (*int16DurationMapValue)(nil)
-
 var _ Value = (*int16DurationMapValue)(nil)
-
 var _ Getter = (*int16DurationMapValue)(nil)
 
-func newInt16DurationMapValue(m *map[int16]time.Duration) *int16DurationMapValue {
-	return &int16DurationMapValue{
+func newInt16DurationMapValue(m *map[int16]time.Duration, sep *string) *int16DurationMapValue {
+	s := &int16DurationMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int16DurationMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -13420,23 +16173,37 @@ func (v *int16DurationMapValue) IsCumulative() bool {
 
 // -- int32DurationMapValue.
 type int32DurationMapValue struct {
-	value *map[int32]time.Duration
+	value     *map[int32]time.Duration
+	separator string
 }
 
 var _ RepeatableFlag = (*int32DurationMapValue)(nil)
-
 var _ Value = (*int32DurationMapValue)(nil)
-
 var _ Getter = (*int32DurationMapValue)(nil)
 
-func newInt32DurationMapValue(m *map[int32]time.Duration) *int32DurationMapValue {
-	return &int32DurationMapValue{
+func newInt32DurationMapValue(m *map[int32]time.Duration, sep *string) *int32DurationMapValue {
+	s := &int32DurationMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int32DurationMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -13492,23 +16259,37 @@ func (v *int32DurationMapValue) IsCumulative() bool {
 
 // -- int64DurationMapValue.
 type int64DurationMapValue struct {
-	value *map[int64]time.Duration
+	value     *map[int64]time.Duration
+	separator string
 }
 
 var _ RepeatableFlag = (*int64DurationMapValue)(nil)
-
 var _ Value = (*int64DurationMapValue)(nil)
-
 var _ Getter = (*int64DurationMapValue)(nil)
 
-func newInt64DurationMapValue(m *map[int64]time.Duration) *int64DurationMapValue {
-	return &int64DurationMapValue{
+func newInt64DurationMapValue(m *map[int64]time.Duration, sep *string) *int64DurationMapValue {
+	s := &int64DurationMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int64DurationMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -13564,23 +16345,37 @@ func (v *int64DurationMapValue) IsCumulative() bool {
 
 // -- uintDurationMapValue.
 type uintDurationMapValue struct {
-	value *map[uint]time.Duration
+	value     *map[uint]time.Duration
+	separator string
 }
 
 var _ RepeatableFlag = (*uintDurationMapValue)(nil)
-
 var _ Value = (*uintDurationMapValue)(nil)
-
 var _ Getter = (*uintDurationMapValue)(nil)
 
-func newUintDurationMapValue(m *map[uint]time.Duration) *uintDurationMapValue {
-	return &uintDurationMapValue{
+func newUintDurationMapValue(m *map[uint]time.Duration, sep *string) *uintDurationMapValue {
+	s := &uintDurationMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uintDurationMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -13636,23 +16431,37 @@ func (v *uintDurationMapValue) IsCumulative() bool {
 
 // -- uint8DurationMapValue.
 type uint8DurationMapValue struct {
-	value *map[uint8]time.Duration
+	value     *map[uint8]time.Duration
+	separator string
 }
 
 var _ RepeatableFlag = (*uint8DurationMapValue)(nil)
-
 var _ Value = (*uint8DurationMapValue)(nil)
-
 var _ Getter = (*uint8DurationMapValue)(nil)
 
-func newUint8DurationMapValue(m *map[uint8]time.Duration) *uint8DurationMapValue {
-	return &uint8DurationMapValue{
+func newUint8DurationMapValue(m *map[uint8]time.Duration, sep *string) *uint8DurationMapValue {
+	s := &uint8DurationMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint8DurationMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -13708,23 +16517,37 @@ func (v *uint8DurationMapValue) IsCumulative() bool {
 
 // -- uint16DurationMapValue.
 type uint16DurationMapValue struct {
-	value *map[uint16]time.Duration
+	value     *map[uint16]time.Duration
+	separator string
 }
 
 var _ RepeatableFlag = (*uint16DurationMapValue)(nil)
-
 var _ Value = (*uint16DurationMapValue)(nil)
-
 var _ Getter = (*uint16DurationMapValue)(nil)
 
-func newUint16DurationMapValue(m *map[uint16]time.Duration) *uint16DurationMapValue {
-	return &uint16DurationMapValue{
+func newUint16DurationMapValue(m *map[uint16]time.Duration, sep *string) *uint16DurationMapValue {
+	s := &uint16DurationMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint16DurationMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -13780,23 +16603,37 @@ func (v *uint16DurationMapValue) IsCumulative() bool {
 
 // -- uint32DurationMapValue.
 type uint32DurationMapValue struct {
-	value *map[uint32]time.Duration
+	value     *map[uint32]time.Duration
+	separator string
 }
 
 var _ RepeatableFlag = (*uint32DurationMapValue)(nil)
-
 var _ Value = (*uint32DurationMapValue)(nil)
-
 var _ Getter = (*uint32DurationMapValue)(nil)
 
-func newUint32DurationMapValue(m *map[uint32]time.Duration) *uint32DurationMapValue {
-	return &uint32DurationMapValue{
+func newUint32DurationMapValue(m *map[uint32]time.Duration, sep *string) *uint32DurationMapValue {
+	s := &uint32DurationMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint32DurationMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -13852,23 +16689,37 @@ func (v *uint32DurationMapValue) IsCumulative() bool {
 
 // -- uint64DurationMapValue.
 type uint64DurationMapValue struct {
-	value *map[uint64]time.Duration
+	value     *map[uint64]time.Duration
+	separator string
 }
 
 var _ RepeatableFlag = (*uint64DurationMapValue)(nil)
-
 var _ Value = (*uint64DurationMapValue)(nil)
-
 var _ Getter = (*uint64DurationMapValue)(nil)
 
-func newUint64DurationMapValue(m *map[uint64]time.Duration) *uint64DurationMapValue {
-	return &uint64DurationMapValue{
+func newUint64DurationMapValue(m *map[uint64]time.Duration, sep *string) *uint64DurationMapValue {
+	s := &uint64DurationMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint64DurationMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -13928,7 +16779,6 @@ type ipValue struct {
 }
 
 var _ Value = (*ipValue)(nil)
-
 var _ Getter = (*ipValue)(nil)
 
 func newIPValue(p *net.IP) *ipValue {
@@ -13936,18 +16786,22 @@ func newIPValue(p *net.IP) *ipValue {
 }
 
 func (v *ipValue) Set(s string) error {
+
 	parsed, err := parseIP(s)
 	if err == nil {
+
 		*v.value = parsed
 
 		return nil
 	}
 
 	return err
+
 }
 
 func (v *ipValue) Get() any {
 	if v != nil && v.value != nil {
+
 		return *v.value
 	}
 
@@ -13956,6 +16810,7 @@ func (v *ipValue) Get() any {
 
 func (v *ipValue) String() string {
 	if v != nil && v.value != nil {
+
 		return v.value.String()
 	}
 
@@ -13967,24 +16822,38 @@ func (v *ipValue) Type() string { return "ip" }
 // -- net.IPSlice Value
 
 type ipSliceValue struct {
-	value   *[]net.IP
-	changed bool
+	value     *[]net.IP
+	changed   bool
+	separator string
 }
 
 var _ RepeatableFlag = (*ipSliceValue)(nil)
-
 var _ Value = (*ipSliceValue)(nil)
-
 var _ Getter = (*ipSliceValue)(nil)
 
-func newIPSliceValue(slice *[]net.IP) *ipSliceValue {
-	return &ipSliceValue{
+func newIPSliceValue(slice *[]net.IP, sep *string) *ipSliceValue {
+	s := &ipSliceValue{
 		value: slice,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *ipSliceValue) Set(raw string) error {
-	ss := strings.Split(raw, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var ss []string
+	if separator == "none" {
+		ss = []string{raw}
+	} else {
+		ss = strings.Split(raw, separator)
+	}
 
 	out := make([]net.IP, len(ss))
 	for i, s := range ss {
@@ -13992,7 +16861,9 @@ func (v *ipSliceValue) Set(raw string) error {
 		if err != nil {
 			return err
 		}
+
 		out[i] = parsed
+
 	}
 
 	if !v.changed {
@@ -14007,6 +16878,7 @@ func (v *ipSliceValue) Set(raw string) error {
 
 func (v *ipSliceValue) Get() any {
 	if v != nil && v.value != nil {
+
 		return *v.value
 	}
 
@@ -14015,6 +16887,7 @@ func (v *ipSliceValue) Get() any {
 
 func (v *ipSliceValue) String() string {
 	if v == nil || v.value == nil {
+
 		return "[]"
 	}
 	out := make([]string, 0, len(*v.value))
@@ -14033,23 +16906,37 @@ func (v *ipSliceValue) IsCumulative() bool {
 
 // -- stringIPMapValue.
 type stringIPMapValue struct {
-	value *map[string]net.IP
+	value     *map[string]net.IP
+	separator string
 }
 
 var _ RepeatableFlag = (*stringIPMapValue)(nil)
-
 var _ Value = (*stringIPMapValue)(nil)
-
 var _ Getter = (*stringIPMapValue)(nil)
 
-func newStringIPMapValue(m *map[string]net.IP) *stringIPMapValue {
-	return &stringIPMapValue{
+func newStringIPMapValue(m *map[string]net.IP, sep *string) *stringIPMapValue {
+	s := &stringIPMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *stringIPMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -14100,23 +16987,37 @@ func (v *stringIPMapValue) IsCumulative() bool {
 
 // -- intIPMapValue.
 type intIPMapValue struct {
-	value *map[int]net.IP
+	value     *map[int]net.IP
+	separator string
 }
 
 var _ RepeatableFlag = (*intIPMapValue)(nil)
-
 var _ Value = (*intIPMapValue)(nil)
-
 var _ Getter = (*intIPMapValue)(nil)
 
-func newIntIPMapValue(m *map[int]net.IP) *intIPMapValue {
-	return &intIPMapValue{
+func newIntIPMapValue(m *map[int]net.IP, sep *string) *intIPMapValue {
+	s := &intIPMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *intIPMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -14172,23 +17073,37 @@ func (v *intIPMapValue) IsCumulative() bool {
 
 // -- int8IPMapValue.
 type int8IPMapValue struct {
-	value *map[int8]net.IP
+	value     *map[int8]net.IP
+	separator string
 }
 
 var _ RepeatableFlag = (*int8IPMapValue)(nil)
-
 var _ Value = (*int8IPMapValue)(nil)
-
 var _ Getter = (*int8IPMapValue)(nil)
 
-func newInt8IPMapValue(m *map[int8]net.IP) *int8IPMapValue {
-	return &int8IPMapValue{
+func newInt8IPMapValue(m *map[int8]net.IP, sep *string) *int8IPMapValue {
+	s := &int8IPMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int8IPMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -14244,23 +17159,37 @@ func (v *int8IPMapValue) IsCumulative() bool {
 
 // -- int16IPMapValue.
 type int16IPMapValue struct {
-	value *map[int16]net.IP
+	value     *map[int16]net.IP
+	separator string
 }
 
 var _ RepeatableFlag = (*int16IPMapValue)(nil)
-
 var _ Value = (*int16IPMapValue)(nil)
-
 var _ Getter = (*int16IPMapValue)(nil)
 
-func newInt16IPMapValue(m *map[int16]net.IP) *int16IPMapValue {
-	return &int16IPMapValue{
+func newInt16IPMapValue(m *map[int16]net.IP, sep *string) *int16IPMapValue {
+	s := &int16IPMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int16IPMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -14316,23 +17245,37 @@ func (v *int16IPMapValue) IsCumulative() bool {
 
 // -- int32IPMapValue.
 type int32IPMapValue struct {
-	value *map[int32]net.IP
+	value     *map[int32]net.IP
+	separator string
 }
 
 var _ RepeatableFlag = (*int32IPMapValue)(nil)
-
 var _ Value = (*int32IPMapValue)(nil)
-
 var _ Getter = (*int32IPMapValue)(nil)
 
-func newInt32IPMapValue(m *map[int32]net.IP) *int32IPMapValue {
-	return &int32IPMapValue{
+func newInt32IPMapValue(m *map[int32]net.IP, sep *string) *int32IPMapValue {
+	s := &int32IPMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int32IPMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -14388,23 +17331,37 @@ func (v *int32IPMapValue) IsCumulative() bool {
 
 // -- int64IPMapValue.
 type int64IPMapValue struct {
-	value *map[int64]net.IP
+	value     *map[int64]net.IP
+	separator string
 }
 
 var _ RepeatableFlag = (*int64IPMapValue)(nil)
-
 var _ Value = (*int64IPMapValue)(nil)
-
 var _ Getter = (*int64IPMapValue)(nil)
 
-func newInt64IPMapValue(m *map[int64]net.IP) *int64IPMapValue {
-	return &int64IPMapValue{
+func newInt64IPMapValue(m *map[int64]net.IP, sep *string) *int64IPMapValue {
+	s := &int64IPMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int64IPMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -14460,23 +17417,37 @@ func (v *int64IPMapValue) IsCumulative() bool {
 
 // -- uintIPMapValue.
 type uintIPMapValue struct {
-	value *map[uint]net.IP
+	value     *map[uint]net.IP
+	separator string
 }
 
 var _ RepeatableFlag = (*uintIPMapValue)(nil)
-
 var _ Value = (*uintIPMapValue)(nil)
-
 var _ Getter = (*uintIPMapValue)(nil)
 
-func newUintIPMapValue(m *map[uint]net.IP) *uintIPMapValue {
-	return &uintIPMapValue{
+func newUintIPMapValue(m *map[uint]net.IP, sep *string) *uintIPMapValue {
+	s := &uintIPMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uintIPMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -14532,23 +17503,37 @@ func (v *uintIPMapValue) IsCumulative() bool {
 
 // -- uint8IPMapValue.
 type uint8IPMapValue struct {
-	value *map[uint8]net.IP
+	value     *map[uint8]net.IP
+	separator string
 }
 
 var _ RepeatableFlag = (*uint8IPMapValue)(nil)
-
 var _ Value = (*uint8IPMapValue)(nil)
-
 var _ Getter = (*uint8IPMapValue)(nil)
 
-func newUint8IPMapValue(m *map[uint8]net.IP) *uint8IPMapValue {
-	return &uint8IPMapValue{
+func newUint8IPMapValue(m *map[uint8]net.IP, sep *string) *uint8IPMapValue {
+	s := &uint8IPMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint8IPMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -14604,23 +17589,37 @@ func (v *uint8IPMapValue) IsCumulative() bool {
 
 // -- uint16IPMapValue.
 type uint16IPMapValue struct {
-	value *map[uint16]net.IP
+	value     *map[uint16]net.IP
+	separator string
 }
 
 var _ RepeatableFlag = (*uint16IPMapValue)(nil)
-
 var _ Value = (*uint16IPMapValue)(nil)
-
 var _ Getter = (*uint16IPMapValue)(nil)
 
-func newUint16IPMapValue(m *map[uint16]net.IP) *uint16IPMapValue {
-	return &uint16IPMapValue{
+func newUint16IPMapValue(m *map[uint16]net.IP, sep *string) *uint16IPMapValue {
+	s := &uint16IPMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint16IPMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -14676,23 +17675,37 @@ func (v *uint16IPMapValue) IsCumulative() bool {
 
 // -- uint32IPMapValue.
 type uint32IPMapValue struct {
-	value *map[uint32]net.IP
+	value     *map[uint32]net.IP
+	separator string
 }
 
 var _ RepeatableFlag = (*uint32IPMapValue)(nil)
-
 var _ Value = (*uint32IPMapValue)(nil)
-
 var _ Getter = (*uint32IPMapValue)(nil)
 
-func newUint32IPMapValue(m *map[uint32]net.IP) *uint32IPMapValue {
-	return &uint32IPMapValue{
+func newUint32IPMapValue(m *map[uint32]net.IP, sep *string) *uint32IPMapValue {
+	s := &uint32IPMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint32IPMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -14748,23 +17761,37 @@ func (v *uint32IPMapValue) IsCumulative() bool {
 
 // -- uint64IPMapValue.
 type uint64IPMapValue struct {
-	value *map[uint64]net.IP
+	value     *map[uint64]net.IP
+	separator string
 }
 
 var _ RepeatableFlag = (*uint64IPMapValue)(nil)
-
 var _ Value = (*uint64IPMapValue)(nil)
-
 var _ Getter = (*uint64IPMapValue)(nil)
 
-func newUint64IPMapValue(m *map[uint64]net.IP) *uint64IPMapValue {
-	return &uint64IPMapValue{
+func newUint64IPMapValue(m *map[uint64]net.IP, sep *string) *uint64IPMapValue {
+	s := &uint64IPMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint64IPMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -14824,7 +17851,6 @@ type hexBytesValue struct {
 }
 
 var _ Value = (*hexBytesValue)(nil)
-
 var _ Getter = (*hexBytesValue)(nil)
 
 func newHexBytesValue(p *HexBytes) *hexBytesValue {
@@ -14832,18 +17858,22 @@ func newHexBytesValue(p *HexBytes) *hexBytesValue {
 }
 
 func (v *hexBytesValue) Set(s string) error {
+
 	parsed, err := hex.DecodeString(s)
 	if err == nil {
+
 		*v.value = parsed
 
 		return nil
 	}
 
 	return err
+
 }
 
 func (v *hexBytesValue) Get() any {
 	if v != nil && v.value != nil {
+
 		return *v.value
 	}
 
@@ -14852,6 +17882,7 @@ func (v *hexBytesValue) Get() any {
 
 func (v *hexBytesValue) String() string {
 	if v != nil && v.value != nil {
+
 		return fmt.Sprintf("%x", *v.value)
 	}
 
@@ -14863,24 +17894,38 @@ func (v *hexBytesValue) Type() string { return "hexBytes" }
 // -- HexBytesSlice Value
 
 type hexBytesSliceValue struct {
-	value   *[]HexBytes
-	changed bool
+	value     *[]HexBytes
+	changed   bool
+	separator string
 }
 
 var _ RepeatableFlag = (*hexBytesSliceValue)(nil)
-
 var _ Value = (*hexBytesSliceValue)(nil)
-
 var _ Getter = (*hexBytesSliceValue)(nil)
 
-func newHexBytesSliceValue(slice *[]HexBytes) *hexBytesSliceValue {
-	return &hexBytesSliceValue{
+func newHexBytesSliceValue(slice *[]HexBytes, sep *string) *hexBytesSliceValue {
+	s := &hexBytesSliceValue{
 		value: slice,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *hexBytesSliceValue) Set(raw string) error {
-	ss := strings.Split(raw, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var ss []string
+	if separator == "none" {
+		ss = []string{raw}
+	} else {
+		ss = strings.Split(raw, separator)
+	}
 
 	out := make([]HexBytes, len(ss))
 	for i, s := range ss {
@@ -14888,7 +17933,9 @@ func (v *hexBytesSliceValue) Set(raw string) error {
 		if err != nil {
 			return err
 		}
+
 		out[i] = parsed
+
 	}
 
 	if !v.changed {
@@ -14903,6 +17950,7 @@ func (v *hexBytesSliceValue) Set(raw string) error {
 
 func (v *hexBytesSliceValue) Get() any {
 	if v != nil && v.value != nil {
+
 		return *v.value
 	}
 
@@ -14911,6 +17959,7 @@ func (v *hexBytesSliceValue) Get() any {
 
 func (v *hexBytesSliceValue) String() string {
 	if v == nil || v.value == nil {
+
 		return "[]"
 	}
 	out := make([]string, 0, len(*v.value))
@@ -14929,23 +17978,37 @@ func (v *hexBytesSliceValue) IsCumulative() bool {
 
 // -- stringHexBytesMapValue.
 type stringHexBytesMapValue struct {
-	value *map[string]HexBytes
+	value     *map[string]HexBytes
+	separator string
 }
 
 var _ RepeatableFlag = (*stringHexBytesMapValue)(nil)
-
 var _ Value = (*stringHexBytesMapValue)(nil)
-
 var _ Getter = (*stringHexBytesMapValue)(nil)
 
-func newStringHexBytesMapValue(m *map[string]HexBytes) *stringHexBytesMapValue {
-	return &stringHexBytesMapValue{
+func newStringHexBytesMapValue(m *map[string]HexBytes, sep *string) *stringHexBytesMapValue {
+	s := &stringHexBytesMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *stringHexBytesMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -14996,23 +18059,37 @@ func (v *stringHexBytesMapValue) IsCumulative() bool {
 
 // -- intHexBytesMapValue.
 type intHexBytesMapValue struct {
-	value *map[int]HexBytes
+	value     *map[int]HexBytes
+	separator string
 }
 
 var _ RepeatableFlag = (*intHexBytesMapValue)(nil)
-
 var _ Value = (*intHexBytesMapValue)(nil)
-
 var _ Getter = (*intHexBytesMapValue)(nil)
 
-func newIntHexBytesMapValue(m *map[int]HexBytes) *intHexBytesMapValue {
-	return &intHexBytesMapValue{
+func newIntHexBytesMapValue(m *map[int]HexBytes, sep *string) *intHexBytesMapValue {
+	s := &intHexBytesMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *intHexBytesMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -15068,23 +18145,37 @@ func (v *intHexBytesMapValue) IsCumulative() bool {
 
 // -- int8HexBytesMapValue.
 type int8HexBytesMapValue struct {
-	value *map[int8]HexBytes
+	value     *map[int8]HexBytes
+	separator string
 }
 
 var _ RepeatableFlag = (*int8HexBytesMapValue)(nil)
-
 var _ Value = (*int8HexBytesMapValue)(nil)
-
 var _ Getter = (*int8HexBytesMapValue)(nil)
 
-func newInt8HexBytesMapValue(m *map[int8]HexBytes) *int8HexBytesMapValue {
-	return &int8HexBytesMapValue{
+func newInt8HexBytesMapValue(m *map[int8]HexBytes, sep *string) *int8HexBytesMapValue {
+	s := &int8HexBytesMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int8HexBytesMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -15140,23 +18231,37 @@ func (v *int8HexBytesMapValue) IsCumulative() bool {
 
 // -- int16HexBytesMapValue.
 type int16HexBytesMapValue struct {
-	value *map[int16]HexBytes
+	value     *map[int16]HexBytes
+	separator string
 }
 
 var _ RepeatableFlag = (*int16HexBytesMapValue)(nil)
-
 var _ Value = (*int16HexBytesMapValue)(nil)
-
 var _ Getter = (*int16HexBytesMapValue)(nil)
 
-func newInt16HexBytesMapValue(m *map[int16]HexBytes) *int16HexBytesMapValue {
-	return &int16HexBytesMapValue{
+func newInt16HexBytesMapValue(m *map[int16]HexBytes, sep *string) *int16HexBytesMapValue {
+	s := &int16HexBytesMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int16HexBytesMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -15212,23 +18317,37 @@ func (v *int16HexBytesMapValue) IsCumulative() bool {
 
 // -- int32HexBytesMapValue.
 type int32HexBytesMapValue struct {
-	value *map[int32]HexBytes
+	value     *map[int32]HexBytes
+	separator string
 }
 
 var _ RepeatableFlag = (*int32HexBytesMapValue)(nil)
-
 var _ Value = (*int32HexBytesMapValue)(nil)
-
 var _ Getter = (*int32HexBytesMapValue)(nil)
 
-func newInt32HexBytesMapValue(m *map[int32]HexBytes) *int32HexBytesMapValue {
-	return &int32HexBytesMapValue{
+func newInt32HexBytesMapValue(m *map[int32]HexBytes, sep *string) *int32HexBytesMapValue {
+	s := &int32HexBytesMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int32HexBytesMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -15284,23 +18403,37 @@ func (v *int32HexBytesMapValue) IsCumulative() bool {
 
 // -- int64HexBytesMapValue.
 type int64HexBytesMapValue struct {
-	value *map[int64]HexBytes
+	value     *map[int64]HexBytes
+	separator string
 }
 
 var _ RepeatableFlag = (*int64HexBytesMapValue)(nil)
-
 var _ Value = (*int64HexBytesMapValue)(nil)
-
 var _ Getter = (*int64HexBytesMapValue)(nil)
 
-func newInt64HexBytesMapValue(m *map[int64]HexBytes) *int64HexBytesMapValue {
-	return &int64HexBytesMapValue{
+func newInt64HexBytesMapValue(m *map[int64]HexBytes, sep *string) *int64HexBytesMapValue {
+	s := &int64HexBytesMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int64HexBytesMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -15356,23 +18489,37 @@ func (v *int64HexBytesMapValue) IsCumulative() bool {
 
 // -- uintHexBytesMapValue.
 type uintHexBytesMapValue struct {
-	value *map[uint]HexBytes
+	value     *map[uint]HexBytes
+	separator string
 }
 
 var _ RepeatableFlag = (*uintHexBytesMapValue)(nil)
-
 var _ Value = (*uintHexBytesMapValue)(nil)
-
 var _ Getter = (*uintHexBytesMapValue)(nil)
 
-func newUintHexBytesMapValue(m *map[uint]HexBytes) *uintHexBytesMapValue {
-	return &uintHexBytesMapValue{
+func newUintHexBytesMapValue(m *map[uint]HexBytes, sep *string) *uintHexBytesMapValue {
+	s := &uintHexBytesMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uintHexBytesMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -15428,23 +18575,37 @@ func (v *uintHexBytesMapValue) IsCumulative() bool {
 
 // -- uint8HexBytesMapValue.
 type uint8HexBytesMapValue struct {
-	value *map[uint8]HexBytes
+	value     *map[uint8]HexBytes
+	separator string
 }
 
 var _ RepeatableFlag = (*uint8HexBytesMapValue)(nil)
-
 var _ Value = (*uint8HexBytesMapValue)(nil)
-
 var _ Getter = (*uint8HexBytesMapValue)(nil)
 
-func newUint8HexBytesMapValue(m *map[uint8]HexBytes) *uint8HexBytesMapValue {
-	return &uint8HexBytesMapValue{
+func newUint8HexBytesMapValue(m *map[uint8]HexBytes, sep *string) *uint8HexBytesMapValue {
+	s := &uint8HexBytesMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint8HexBytesMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -15500,23 +18661,37 @@ func (v *uint8HexBytesMapValue) IsCumulative() bool {
 
 // -- uint16HexBytesMapValue.
 type uint16HexBytesMapValue struct {
-	value *map[uint16]HexBytes
+	value     *map[uint16]HexBytes
+	separator string
 }
 
 var _ RepeatableFlag = (*uint16HexBytesMapValue)(nil)
-
 var _ Value = (*uint16HexBytesMapValue)(nil)
-
 var _ Getter = (*uint16HexBytesMapValue)(nil)
 
-func newUint16HexBytesMapValue(m *map[uint16]HexBytes) *uint16HexBytesMapValue {
-	return &uint16HexBytesMapValue{
+func newUint16HexBytesMapValue(m *map[uint16]HexBytes, sep *string) *uint16HexBytesMapValue {
+	s := &uint16HexBytesMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint16HexBytesMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -15572,23 +18747,37 @@ func (v *uint16HexBytesMapValue) IsCumulative() bool {
 
 // -- uint32HexBytesMapValue.
 type uint32HexBytesMapValue struct {
-	value *map[uint32]HexBytes
+	value     *map[uint32]HexBytes
+	separator string
 }
 
 var _ RepeatableFlag = (*uint32HexBytesMapValue)(nil)
-
 var _ Value = (*uint32HexBytesMapValue)(nil)
-
 var _ Getter = (*uint32HexBytesMapValue)(nil)
 
-func newUint32HexBytesMapValue(m *map[uint32]HexBytes) *uint32HexBytesMapValue {
-	return &uint32HexBytesMapValue{
+func newUint32HexBytesMapValue(m *map[uint32]HexBytes, sep *string) *uint32HexBytesMapValue {
+	s := &uint32HexBytesMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint32HexBytesMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -15644,23 +18833,37 @@ func (v *uint32HexBytesMapValue) IsCumulative() bool {
 
 // -- uint64HexBytesMapValue.
 type uint64HexBytesMapValue struct {
-	value *map[uint64]HexBytes
+	value     *map[uint64]HexBytes
+	separator string
 }
 
 var _ RepeatableFlag = (*uint64HexBytesMapValue)(nil)
-
 var _ Value = (*uint64HexBytesMapValue)(nil)
-
 var _ Getter = (*uint64HexBytesMapValue)(nil)
 
-func newUint64HexBytesMapValue(m *map[uint64]HexBytes) *uint64HexBytesMapValue {
-	return &uint64HexBytesMapValue{
+func newUint64HexBytesMapValue(m *map[uint64]HexBytes, sep *string) *uint64HexBytesMapValue {
+	s := &uint64HexBytesMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint64HexBytesMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -15720,7 +18923,6 @@ type regexpValue struct {
 }
 
 var _ Value = (*regexpValue)(nil)
-
 var _ Getter = (*regexpValue)(nil)
 
 func newRegexpValue(p **regexp.Regexp) *regexpValue {
@@ -15728,18 +18930,22 @@ func newRegexpValue(p **regexp.Regexp) *regexpValue {
 }
 
 func (v *regexpValue) Set(s string) error {
+
 	parsed, err := regexp.Compile(s)
 	if err == nil {
+
 		*v.value = parsed
 
 		return nil
 	}
 
 	return err
+
 }
 
 func (v *regexpValue) Get() any {
 	if v != nil && v.value != nil {
+
 		return *v.value
 	}
 
@@ -15748,6 +18954,7 @@ func (v *regexpValue) Get() any {
 
 func (v *regexpValue) String() string {
 	if v != nil && v.value != nil {
+
 		return (**v.value).String()
 	}
 
@@ -15759,24 +18966,38 @@ func (v *regexpValue) Type() string { return "regexp" }
 // -- *regexp.RegexpSlice Value
 
 type regexpSliceValue struct {
-	value   *[]*regexp.Regexp
-	changed bool
+	value     *[]*regexp.Regexp
+	changed   bool
+	separator string
 }
 
 var _ RepeatableFlag = (*regexpSliceValue)(nil)
-
 var _ Value = (*regexpSliceValue)(nil)
-
 var _ Getter = (*regexpSliceValue)(nil)
 
-func newRegexpSliceValue(slice *[]*regexp.Regexp) *regexpSliceValue {
-	return &regexpSliceValue{
+func newRegexpSliceValue(slice *[]*regexp.Regexp, sep *string) *regexpSliceValue {
+	s := &regexpSliceValue{
 		value: slice,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *regexpSliceValue) Set(raw string) error {
-	ss := strings.Split(raw, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var ss []string
+	if separator == "none" {
+		ss = []string{raw}
+	} else {
+		ss = strings.Split(raw, separator)
+	}
 
 	out := make([]*regexp.Regexp, len(ss))
 	for i, s := range ss {
@@ -15784,7 +19005,9 @@ func (v *regexpSliceValue) Set(raw string) error {
 		if err != nil {
 			return err
 		}
+
 		out[i] = parsed
+
 	}
 
 	if !v.changed {
@@ -15799,6 +19022,7 @@ func (v *regexpSliceValue) Set(raw string) error {
 
 func (v *regexpSliceValue) Get() any {
 	if v != nil && v.value != nil {
+
 		return *v.value
 	}
 
@@ -15807,6 +19031,7 @@ func (v *regexpSliceValue) Get() any {
 
 func (v *regexpSliceValue) String() string {
 	if v == nil || v.value == nil {
+
 		return "[]"
 	}
 	out := make([]string, 0, len(*v.value))
@@ -15825,23 +19050,37 @@ func (v *regexpSliceValue) IsCumulative() bool {
 
 // -- stringRegexpMapValue.
 type stringRegexpMapValue struct {
-	value *map[string]*regexp.Regexp
+	value     *map[string]*regexp.Regexp
+	separator string
 }
 
 var _ RepeatableFlag = (*stringRegexpMapValue)(nil)
-
 var _ Value = (*stringRegexpMapValue)(nil)
-
 var _ Getter = (*stringRegexpMapValue)(nil)
 
-func newStringRegexpMapValue(m *map[string]*regexp.Regexp) *stringRegexpMapValue {
-	return &stringRegexpMapValue{
+func newStringRegexpMapValue(m *map[string]*regexp.Regexp, sep *string) *stringRegexpMapValue {
+	s := &stringRegexpMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *stringRegexpMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -15892,23 +19131,37 @@ func (v *stringRegexpMapValue) IsCumulative() bool {
 
 // -- intRegexpMapValue.
 type intRegexpMapValue struct {
-	value *map[int]*regexp.Regexp
+	value     *map[int]*regexp.Regexp
+	separator string
 }
 
 var _ RepeatableFlag = (*intRegexpMapValue)(nil)
-
 var _ Value = (*intRegexpMapValue)(nil)
-
 var _ Getter = (*intRegexpMapValue)(nil)
 
-func newIntRegexpMapValue(m *map[int]*regexp.Regexp) *intRegexpMapValue {
-	return &intRegexpMapValue{
+func newIntRegexpMapValue(m *map[int]*regexp.Regexp, sep *string) *intRegexpMapValue {
+	s := &intRegexpMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *intRegexpMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -15964,23 +19217,37 @@ func (v *intRegexpMapValue) IsCumulative() bool {
 
 // -- int8RegexpMapValue.
 type int8RegexpMapValue struct {
-	value *map[int8]*regexp.Regexp
+	value     *map[int8]*regexp.Regexp
+	separator string
 }
 
 var _ RepeatableFlag = (*int8RegexpMapValue)(nil)
-
 var _ Value = (*int8RegexpMapValue)(nil)
-
 var _ Getter = (*int8RegexpMapValue)(nil)
 
-func newInt8RegexpMapValue(m *map[int8]*regexp.Regexp) *int8RegexpMapValue {
-	return &int8RegexpMapValue{
+func newInt8RegexpMapValue(m *map[int8]*regexp.Regexp, sep *string) *int8RegexpMapValue {
+	s := &int8RegexpMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int8RegexpMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -16036,23 +19303,37 @@ func (v *int8RegexpMapValue) IsCumulative() bool {
 
 // -- int16RegexpMapValue.
 type int16RegexpMapValue struct {
-	value *map[int16]*regexp.Regexp
+	value     *map[int16]*regexp.Regexp
+	separator string
 }
 
 var _ RepeatableFlag = (*int16RegexpMapValue)(nil)
-
 var _ Value = (*int16RegexpMapValue)(nil)
-
 var _ Getter = (*int16RegexpMapValue)(nil)
 
-func newInt16RegexpMapValue(m *map[int16]*regexp.Regexp) *int16RegexpMapValue {
-	return &int16RegexpMapValue{
+func newInt16RegexpMapValue(m *map[int16]*regexp.Regexp, sep *string) *int16RegexpMapValue {
+	s := &int16RegexpMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int16RegexpMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -16108,23 +19389,37 @@ func (v *int16RegexpMapValue) IsCumulative() bool {
 
 // -- int32RegexpMapValue.
 type int32RegexpMapValue struct {
-	value *map[int32]*regexp.Regexp
+	value     *map[int32]*regexp.Regexp
+	separator string
 }
 
 var _ RepeatableFlag = (*int32RegexpMapValue)(nil)
-
 var _ Value = (*int32RegexpMapValue)(nil)
-
 var _ Getter = (*int32RegexpMapValue)(nil)
 
-func newInt32RegexpMapValue(m *map[int32]*regexp.Regexp) *int32RegexpMapValue {
-	return &int32RegexpMapValue{
+func newInt32RegexpMapValue(m *map[int32]*regexp.Regexp, sep *string) *int32RegexpMapValue {
+	s := &int32RegexpMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int32RegexpMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -16180,23 +19475,37 @@ func (v *int32RegexpMapValue) IsCumulative() bool {
 
 // -- int64RegexpMapValue.
 type int64RegexpMapValue struct {
-	value *map[int64]*regexp.Regexp
+	value     *map[int64]*regexp.Regexp
+	separator string
 }
 
 var _ RepeatableFlag = (*int64RegexpMapValue)(nil)
-
 var _ Value = (*int64RegexpMapValue)(nil)
-
 var _ Getter = (*int64RegexpMapValue)(nil)
 
-func newInt64RegexpMapValue(m *map[int64]*regexp.Regexp) *int64RegexpMapValue {
-	return &int64RegexpMapValue{
+func newInt64RegexpMapValue(m *map[int64]*regexp.Regexp, sep *string) *int64RegexpMapValue {
+	s := &int64RegexpMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int64RegexpMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -16252,23 +19561,37 @@ func (v *int64RegexpMapValue) IsCumulative() bool {
 
 // -- uintRegexpMapValue.
 type uintRegexpMapValue struct {
-	value *map[uint]*regexp.Regexp
+	value     *map[uint]*regexp.Regexp
+	separator string
 }
 
 var _ RepeatableFlag = (*uintRegexpMapValue)(nil)
-
 var _ Value = (*uintRegexpMapValue)(nil)
-
 var _ Getter = (*uintRegexpMapValue)(nil)
 
-func newUintRegexpMapValue(m *map[uint]*regexp.Regexp) *uintRegexpMapValue {
-	return &uintRegexpMapValue{
+func newUintRegexpMapValue(m *map[uint]*regexp.Regexp, sep *string) *uintRegexpMapValue {
+	s := &uintRegexpMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uintRegexpMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -16324,23 +19647,37 @@ func (v *uintRegexpMapValue) IsCumulative() bool {
 
 // -- uint8RegexpMapValue.
 type uint8RegexpMapValue struct {
-	value *map[uint8]*regexp.Regexp
+	value     *map[uint8]*regexp.Regexp
+	separator string
 }
 
 var _ RepeatableFlag = (*uint8RegexpMapValue)(nil)
-
 var _ Value = (*uint8RegexpMapValue)(nil)
-
 var _ Getter = (*uint8RegexpMapValue)(nil)
 
-func newUint8RegexpMapValue(m *map[uint8]*regexp.Regexp) *uint8RegexpMapValue {
-	return &uint8RegexpMapValue{
+func newUint8RegexpMapValue(m *map[uint8]*regexp.Regexp, sep *string) *uint8RegexpMapValue {
+	s := &uint8RegexpMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint8RegexpMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -16396,23 +19733,37 @@ func (v *uint8RegexpMapValue) IsCumulative() bool {
 
 // -- uint16RegexpMapValue.
 type uint16RegexpMapValue struct {
-	value *map[uint16]*regexp.Regexp
+	value     *map[uint16]*regexp.Regexp
+	separator string
 }
 
 var _ RepeatableFlag = (*uint16RegexpMapValue)(nil)
-
 var _ Value = (*uint16RegexpMapValue)(nil)
-
 var _ Getter = (*uint16RegexpMapValue)(nil)
 
-func newUint16RegexpMapValue(m *map[uint16]*regexp.Regexp) *uint16RegexpMapValue {
-	return &uint16RegexpMapValue{
+func newUint16RegexpMapValue(m *map[uint16]*regexp.Regexp, sep *string) *uint16RegexpMapValue {
+	s := &uint16RegexpMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint16RegexpMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -16468,23 +19819,37 @@ func (v *uint16RegexpMapValue) IsCumulative() bool {
 
 // -- uint32RegexpMapValue.
 type uint32RegexpMapValue struct {
-	value *map[uint32]*regexp.Regexp
+	value     *map[uint32]*regexp.Regexp
+	separator string
 }
 
 var _ RepeatableFlag = (*uint32RegexpMapValue)(nil)
-
 var _ Value = (*uint32RegexpMapValue)(nil)
-
 var _ Getter = (*uint32RegexpMapValue)(nil)
 
-func newUint32RegexpMapValue(m *map[uint32]*regexp.Regexp) *uint32RegexpMapValue {
-	return &uint32RegexpMapValue{
+func newUint32RegexpMapValue(m *map[uint32]*regexp.Regexp, sep *string) *uint32RegexpMapValue {
+	s := &uint32RegexpMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint32RegexpMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -16540,23 +19905,37 @@ func (v *uint32RegexpMapValue) IsCumulative() bool {
 
 // -- uint64RegexpMapValue.
 type uint64RegexpMapValue struct {
-	value *map[uint64]*regexp.Regexp
+	value     *map[uint64]*regexp.Regexp
+	separator string
 }
 
 var _ RepeatableFlag = (*uint64RegexpMapValue)(nil)
-
 var _ Value = (*uint64RegexpMapValue)(nil)
-
 var _ Getter = (*uint64RegexpMapValue)(nil)
 
-func newUint64RegexpMapValue(m *map[uint64]*regexp.Regexp) *uint64RegexpMapValue {
-	return &uint64RegexpMapValue{
+func newUint64RegexpMapValue(m *map[uint64]*regexp.Regexp, sep *string) *uint64RegexpMapValue {
+	s := &uint64RegexpMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint64RegexpMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -16616,7 +19995,6 @@ type tcpAddrValue struct {
 }
 
 var _ Value = (*tcpAddrValue)(nil)
-
 var _ Getter = (*tcpAddrValue)(nil)
 
 func newTCPAddrValue(p *net.TCPAddr) *tcpAddrValue {
@@ -16624,18 +20002,22 @@ func newTCPAddrValue(p *net.TCPAddr) *tcpAddrValue {
 }
 
 func (v *tcpAddrValue) Set(s string) error {
+
 	parsed, err := parseTCPAddr(s)
 	if err == nil {
+
 		*v.value = parsed
 
 		return nil
 	}
 
 	return err
+
 }
 
 func (v *tcpAddrValue) Get() any {
 	if v != nil && v.value != nil {
+
 		return *v.value
 	}
 
@@ -16644,6 +20026,7 @@ func (v *tcpAddrValue) Get() any {
 
 func (v *tcpAddrValue) String() string {
 	if v != nil && v.value != nil {
+
 		return v.value.String()
 	}
 
@@ -16655,24 +20038,38 @@ func (v *tcpAddrValue) Type() string { return "tcpAddr" }
 // -- net.TCPAddrSlice Value
 
 type tcpAddrSliceValue struct {
-	value   *[]net.TCPAddr
-	changed bool
+	value     *[]net.TCPAddr
+	changed   bool
+	separator string
 }
 
 var _ RepeatableFlag = (*tcpAddrSliceValue)(nil)
-
 var _ Value = (*tcpAddrSliceValue)(nil)
-
 var _ Getter = (*tcpAddrSliceValue)(nil)
 
-func newTCPAddrSliceValue(slice *[]net.TCPAddr) *tcpAddrSliceValue {
-	return &tcpAddrSliceValue{
+func newTCPAddrSliceValue(slice *[]net.TCPAddr, sep *string) *tcpAddrSliceValue {
+	s := &tcpAddrSliceValue{
 		value: slice,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *tcpAddrSliceValue) Set(raw string) error {
-	ss := strings.Split(raw, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var ss []string
+	if separator == "none" {
+		ss = []string{raw}
+	} else {
+		ss = strings.Split(raw, separator)
+	}
 
 	out := make([]net.TCPAddr, len(ss))
 	for i, s := range ss {
@@ -16680,7 +20077,9 @@ func (v *tcpAddrSliceValue) Set(raw string) error {
 		if err != nil {
 			return err
 		}
+
 		out[i] = parsed
+
 	}
 
 	if !v.changed {
@@ -16695,6 +20094,7 @@ func (v *tcpAddrSliceValue) Set(raw string) error {
 
 func (v *tcpAddrSliceValue) Get() any {
 	if v != nil && v.value != nil {
+
 		return *v.value
 	}
 
@@ -16703,6 +20103,7 @@ func (v *tcpAddrSliceValue) Get() any {
 
 func (v *tcpAddrSliceValue) String() string {
 	if v == nil || v.value == nil {
+
 		return "[]"
 	}
 	out := make([]string, 0, len(*v.value))
@@ -16725,7 +20126,6 @@ type ipNetValue struct {
 }
 
 var _ Value = (*ipNetValue)(nil)
-
 var _ Getter = (*ipNetValue)(nil)
 
 func newIPNetValue(p *net.IPNet) *ipNetValue {
@@ -16733,18 +20133,22 @@ func newIPNetValue(p *net.IPNet) *ipNetValue {
 }
 
 func (v *ipNetValue) Set(s string) error {
+
 	parsed, err := parseIPNet(s)
 	if err == nil {
+
 		*v.value = parsed
 
 		return nil
 	}
 
 	return err
+
 }
 
 func (v *ipNetValue) Get() any {
 	if v != nil && v.value != nil {
+
 		return *v.value
 	}
 
@@ -16753,6 +20157,7 @@ func (v *ipNetValue) Get() any {
 
 func (v *ipNetValue) String() string {
 	if v != nil && v.value != nil {
+
 		return v.value.String()
 	}
 
@@ -16764,24 +20169,38 @@ func (v *ipNetValue) Type() string { return "ipNet" }
 // -- net.IPNetSlice Value
 
 type ipNetSliceValue struct {
-	value   *[]net.IPNet
-	changed bool
+	value     *[]net.IPNet
+	changed   bool
+	separator string
 }
 
 var _ RepeatableFlag = (*ipNetSliceValue)(nil)
-
 var _ Value = (*ipNetSliceValue)(nil)
-
 var _ Getter = (*ipNetSliceValue)(nil)
 
-func newIPNetSliceValue(slice *[]net.IPNet) *ipNetSliceValue {
-	return &ipNetSliceValue{
+func newIPNetSliceValue(slice *[]net.IPNet, sep *string) *ipNetSliceValue {
+	s := &ipNetSliceValue{
 		value: slice,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *ipNetSliceValue) Set(raw string) error {
-	ss := strings.Split(raw, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var ss []string
+	if separator == "none" {
+		ss = []string{raw}
+	} else {
+		ss = strings.Split(raw, separator)
+	}
 
 	out := make([]net.IPNet, len(ss))
 	for i, s := range ss {
@@ -16789,7 +20208,9 @@ func (v *ipNetSliceValue) Set(raw string) error {
 		if err != nil {
 			return err
 		}
+
 		out[i] = parsed
+
 	}
 
 	if !v.changed {
@@ -16804,6 +20225,7 @@ func (v *ipNetSliceValue) Set(raw string) error {
 
 func (v *ipNetSliceValue) Get() any {
 	if v != nil && v.value != nil {
+
 		return *v.value
 	}
 
@@ -16812,6 +20234,7 @@ func (v *ipNetSliceValue) Get() any {
 
 func (v *ipNetSliceValue) String() string {
 	if v == nil || v.value == nil {
+
 		return "[]"
 	}
 	out := make([]string, 0, len(*v.value))
@@ -16830,23 +20253,37 @@ func (v *ipNetSliceValue) IsCumulative() bool {
 
 // -- stringIPNetMapValue.
 type stringIPNetMapValue struct {
-	value *map[string]net.IPNet
+	value     *map[string]net.IPNet
+	separator string
 }
 
 var _ RepeatableFlag = (*stringIPNetMapValue)(nil)
-
 var _ Value = (*stringIPNetMapValue)(nil)
-
 var _ Getter = (*stringIPNetMapValue)(nil)
 
-func newStringIPNetMapValue(m *map[string]net.IPNet) *stringIPNetMapValue {
-	return &stringIPNetMapValue{
+func newStringIPNetMapValue(m *map[string]net.IPNet, sep *string) *stringIPNetMapValue {
+	s := &stringIPNetMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *stringIPNetMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -16897,23 +20334,37 @@ func (v *stringIPNetMapValue) IsCumulative() bool {
 
 // -- intIPNetMapValue.
 type intIPNetMapValue struct {
-	value *map[int]net.IPNet
+	value     *map[int]net.IPNet
+	separator string
 }
 
 var _ RepeatableFlag = (*intIPNetMapValue)(nil)
-
 var _ Value = (*intIPNetMapValue)(nil)
-
 var _ Getter = (*intIPNetMapValue)(nil)
 
-func newIntIPNetMapValue(m *map[int]net.IPNet) *intIPNetMapValue {
-	return &intIPNetMapValue{
+func newIntIPNetMapValue(m *map[int]net.IPNet, sep *string) *intIPNetMapValue {
+	s := &intIPNetMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *intIPNetMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -16969,23 +20420,37 @@ func (v *intIPNetMapValue) IsCumulative() bool {
 
 // -- int8IPNetMapValue.
 type int8IPNetMapValue struct {
-	value *map[int8]net.IPNet
+	value     *map[int8]net.IPNet
+	separator string
 }
 
 var _ RepeatableFlag = (*int8IPNetMapValue)(nil)
-
 var _ Value = (*int8IPNetMapValue)(nil)
-
 var _ Getter = (*int8IPNetMapValue)(nil)
 
-func newInt8IPNetMapValue(m *map[int8]net.IPNet) *int8IPNetMapValue {
-	return &int8IPNetMapValue{
+func newInt8IPNetMapValue(m *map[int8]net.IPNet, sep *string) *int8IPNetMapValue {
+	s := &int8IPNetMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int8IPNetMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -17041,23 +20506,37 @@ func (v *int8IPNetMapValue) IsCumulative() bool {
 
 // -- int16IPNetMapValue.
 type int16IPNetMapValue struct {
-	value *map[int16]net.IPNet
+	value     *map[int16]net.IPNet
+	separator string
 }
 
 var _ RepeatableFlag = (*int16IPNetMapValue)(nil)
-
 var _ Value = (*int16IPNetMapValue)(nil)
-
 var _ Getter = (*int16IPNetMapValue)(nil)
 
-func newInt16IPNetMapValue(m *map[int16]net.IPNet) *int16IPNetMapValue {
-	return &int16IPNetMapValue{
+func newInt16IPNetMapValue(m *map[int16]net.IPNet, sep *string) *int16IPNetMapValue {
+	s := &int16IPNetMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int16IPNetMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -17113,23 +20592,37 @@ func (v *int16IPNetMapValue) IsCumulative() bool {
 
 // -- int32IPNetMapValue.
 type int32IPNetMapValue struct {
-	value *map[int32]net.IPNet
+	value     *map[int32]net.IPNet
+	separator string
 }
 
 var _ RepeatableFlag = (*int32IPNetMapValue)(nil)
-
 var _ Value = (*int32IPNetMapValue)(nil)
-
 var _ Getter = (*int32IPNetMapValue)(nil)
 
-func newInt32IPNetMapValue(m *map[int32]net.IPNet) *int32IPNetMapValue {
-	return &int32IPNetMapValue{
+func newInt32IPNetMapValue(m *map[int32]net.IPNet, sep *string) *int32IPNetMapValue {
+	s := &int32IPNetMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int32IPNetMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -17185,23 +20678,37 @@ func (v *int32IPNetMapValue) IsCumulative() bool {
 
 // -- int64IPNetMapValue.
 type int64IPNetMapValue struct {
-	value *map[int64]net.IPNet
+	value     *map[int64]net.IPNet
+	separator string
 }
 
 var _ RepeatableFlag = (*int64IPNetMapValue)(nil)
-
 var _ Value = (*int64IPNetMapValue)(nil)
-
 var _ Getter = (*int64IPNetMapValue)(nil)
 
-func newInt64IPNetMapValue(m *map[int64]net.IPNet) *int64IPNetMapValue {
-	return &int64IPNetMapValue{
+func newInt64IPNetMapValue(m *map[int64]net.IPNet, sep *string) *int64IPNetMapValue {
+	s := &int64IPNetMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *int64IPNetMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -17257,23 +20764,37 @@ func (v *int64IPNetMapValue) IsCumulative() bool {
 
 // -- uintIPNetMapValue.
 type uintIPNetMapValue struct {
-	value *map[uint]net.IPNet
+	value     *map[uint]net.IPNet
+	separator string
 }
 
 var _ RepeatableFlag = (*uintIPNetMapValue)(nil)
-
 var _ Value = (*uintIPNetMapValue)(nil)
-
 var _ Getter = (*uintIPNetMapValue)(nil)
 
-func newUintIPNetMapValue(m *map[uint]net.IPNet) *uintIPNetMapValue {
-	return &uintIPNetMapValue{
+func newUintIPNetMapValue(m *map[uint]net.IPNet, sep *string) *uintIPNetMapValue {
+	s := &uintIPNetMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uintIPNetMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -17329,23 +20850,37 @@ func (v *uintIPNetMapValue) IsCumulative() bool {
 
 // -- uint8IPNetMapValue.
 type uint8IPNetMapValue struct {
-	value *map[uint8]net.IPNet
+	value     *map[uint8]net.IPNet
+	separator string
 }
 
 var _ RepeatableFlag = (*uint8IPNetMapValue)(nil)
-
 var _ Value = (*uint8IPNetMapValue)(nil)
-
 var _ Getter = (*uint8IPNetMapValue)(nil)
 
-func newUint8IPNetMapValue(m *map[uint8]net.IPNet) *uint8IPNetMapValue {
-	return &uint8IPNetMapValue{
+func newUint8IPNetMapValue(m *map[uint8]net.IPNet, sep *string) *uint8IPNetMapValue {
+	s := &uint8IPNetMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint8IPNetMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -17401,23 +20936,37 @@ func (v *uint8IPNetMapValue) IsCumulative() bool {
 
 // -- uint16IPNetMapValue.
 type uint16IPNetMapValue struct {
-	value *map[uint16]net.IPNet
+	value     *map[uint16]net.IPNet
+	separator string
 }
 
 var _ RepeatableFlag = (*uint16IPNetMapValue)(nil)
-
 var _ Value = (*uint16IPNetMapValue)(nil)
-
 var _ Getter = (*uint16IPNetMapValue)(nil)
 
-func newUint16IPNetMapValue(m *map[uint16]net.IPNet) *uint16IPNetMapValue {
-	return &uint16IPNetMapValue{
+func newUint16IPNetMapValue(m *map[uint16]net.IPNet, sep *string) *uint16IPNetMapValue {
+	s := &uint16IPNetMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint16IPNetMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -17473,23 +21022,37 @@ func (v *uint16IPNetMapValue) IsCumulative() bool {
 
 // -- uint32IPNetMapValue.
 type uint32IPNetMapValue struct {
-	value *map[uint32]net.IPNet
+	value     *map[uint32]net.IPNet
+	separator string
 }
 
 var _ RepeatableFlag = (*uint32IPNetMapValue)(nil)
-
 var _ Value = (*uint32IPNetMapValue)(nil)
-
 var _ Getter = (*uint32IPNetMapValue)(nil)
 
-func newUint32IPNetMapValue(m *map[uint32]net.IPNet) *uint32IPNetMapValue {
-	return &uint32IPNetMapValue{
+func newUint32IPNetMapValue(m *map[uint32]net.IPNet, sep *string) *uint32IPNetMapValue {
+	s := &uint32IPNetMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint32IPNetMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")
@@ -17545,23 +21108,37 @@ func (v *uint32IPNetMapValue) IsCumulative() bool {
 
 // -- uint64IPNetMapValue.
 type uint64IPNetMapValue struct {
-	value *map[uint64]net.IPNet
+	value     *map[uint64]net.IPNet
+	separator string
 }
 
 var _ RepeatableFlag = (*uint64IPNetMapValue)(nil)
-
 var _ Value = (*uint64IPNetMapValue)(nil)
-
 var _ Getter = (*uint64IPNetMapValue)(nil)
 
-func newUint64IPNetMapValue(m *map[uint64]net.IPNet) *uint64IPNetMapValue {
-	return &uint64IPNetMapValue{
+func newUint64IPNetMapValue(m *map[uint64]net.IPNet, sep *string) *uint64IPNetMapValue {
+	s := &uint64IPNetMapValue{
 		value: m,
 	}
+	if sep != nil {
+		s.separator = *sep
+	}
+
+	return s
 }
 
 func (v *uint64IPNetMapValue) Set(val string) error {
-	values := strings.Split(val, ",")
+	separator := v.separator
+	if separator == "" {
+		separator = "," // Default separator
+	}
+
+	var values []string
+	if separator == "none" {
+		values = []string{val}
+	} else {
+		values = strings.Split(val, separator)
+	}
 
 	for _, s := range values {
 		ss := strings.Split(s, ":")

@@ -86,7 +86,7 @@ func (args *Args) scanArg(field reflect.StructField, value reflect.Value, reqAll
 		StartMin: args.totalMin,
 		StartMax: args.totalMax,
 		Value:    value,
-		value:    values.NewValue(value),
+		value:    values.NewValue(value, nil, nil),
 	}
 
 	args.slots = append(args.slots, arg)

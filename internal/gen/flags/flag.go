@@ -32,6 +32,7 @@ func generateTo(src []*parser.Flag, dst flagSet) {
 			usage = fmt.Sprintf("%s (placeholder: %s)", usage, srcFlag.Placeholder)
 		}
 
+		// Register the primary flag.
 		flag := dst.VarPF(val, srcFlag.Name, srcFlag.Short, usage)
 		flag.Annotations = map[string][]string{}
 		flag.NoOptDefVal = strings.Join(srcFlag.OptionalValue, " ")
@@ -39,7 +40,6 @@ func generateTo(src []*parser.Flag, dst flagSet) {
 		if boolFlag, ok := srcFlag.Value.(values.BoolFlag); ok && boolFlag.IsBoolFlag() {
 			flag.NoOptDefVal = "true"
 		} else if srcFlag.Required {
-			// Directly assign the "required" annotation if the flag is required.
 			flag.Annotations["flags"] = []string{"required"}
 		}
 
@@ -50,6 +50,21 @@ func generateTo(src []*parser.Flag, dst flagSet) {
 			if flag.Deprecated == "" {
 				flag.Deprecated = "Deprecated"
 			}
+		}
+
+		// If the flag is negatable, register a hidden --no-<name> variant.
+		if srcFlag.Negatable {
+			noName := "no-" + srcFlag.Name
+			noUsage := "negates --" + srcFlag.Name
+			noVal := &values.Inverter{Target: val}
+
+			noFlag := dst.VarPF(noVal, noName, "", noUsage)
+			noFlag.Hidden = true // The --no- variant is usually hidden from help text.
+			// By setting NoOptDefVal, we tell pflag that this flag can be used
+			// without an explicit argument (e.g., `--no-my-flag`). When this
+			// happens, pflag will pass "true" to the Set method of our Inverter,
+			// which will then correctly invert it to `false`.
+			noFlag.NoOptDefVal = "true"
 		}
 	}
 }

@@ -77,7 +77,7 @@ func isSingleValue(val reflect.Value) bool {
 	// 2. Check if the type is one of the built-in, generated value types.
 	if val.CanAddr() {
 		addr := val.Addr().Interface()
-		if values.ParseGenerated(addr) != nil {
+		if values.ParseGenerated(addr, nil) != nil {
 			return true
 		}
 		if values.ParseGeneratedPtrs(addr) != nil {

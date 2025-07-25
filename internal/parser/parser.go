@@ -86,7 +86,7 @@ func parseSingleFlag(value reflect.Value, field reflect.StructField, opts *Opts)
 		return nil, false, err
 	}
 
-	val, err := newFlagValue(value, field, *tag)
+	val, err := newFlagValue(value, field, *tag, flag.Separator, flag.MapSeparator)
 	if err != nil {
 		return nil, true, err
 	}
@@ -126,8 +126,8 @@ func parseInfo(fld reflect.StructField, opts *Opts) (*Flag, *MultiTag, error) {
 }
 
 // newFlagValue creates a new values.Value for a field and runs initial validation.
-func newFlagValue(value reflect.Value, field reflect.StructField, tag MultiTag) (values.Value, error) {
-	val := values.NewValue(value)
+func newFlagValue(value reflect.Value, field reflect.StructField, tag MultiTag, sep, mapSep *string) (values.Value, error) {
+	val := values.NewValue(value, sep, mapSep)
 
 	// Check if this field was *supposed* to be a flag but failed to implement a supported interface.
 	if markedFlagNotImplementing(tag, val) {
