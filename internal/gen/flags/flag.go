@@ -1,6 +1,7 @@
 package flags
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/spf13/pflag"
@@ -26,7 +27,12 @@ func generateTo(src []*parser.Flag, dst flagSet) {
 			continue
 		}
 
-		flag := dst.VarPF(val, srcFlag.Name, srcFlag.Short, srcFlag.Usage)
+		usage := srcFlag.Usage
+		if srcFlag.Placeholder != "" {
+			usage = fmt.Sprintf("%s (placeholder: %s)", usage, srcFlag.Placeholder)
+		}
+
+		flag := dst.VarPF(val, srcFlag.Name, srcFlag.Short, usage)
 		flag.Annotations = map[string][]string{}
 		flag.NoOptDefVal = strings.Join(srcFlag.OptionalValue, " ")
 
