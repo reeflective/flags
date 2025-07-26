@@ -36,6 +36,9 @@ func parseFlagTag(field reflect.StructField, opts *Opts) (*Flag, *MultiTag, erro
 	}
 
 	// Check if the field is explicitly ignored.
+	if _, isSet := tag.Get("kong"); isSet && tag.GetMany("kong")[0] == "-" {
+		return nil, tag, nil
+	}
 	if _, isSet := tag.Get(opts.FlagTag); isSet && tag.GetMany(opts.FlagTag)[0] == "-" {
 		return nil, tag, nil
 	}

@@ -502,7 +502,8 @@ func NewSimpleCfg() *struct {
 	Name3 string `env:"NAME_THREE"`
 	Name4 *string
 	Name5 string `flag:"-"`
-	name6 string
+	Name6 string `kong:"-"`
+	name7 string
 
 	Addr *net.TCPAddr
 
@@ -514,7 +515,8 @@ func NewSimpleCfg() *struct {
 		Name3 string `env:"NAME_THREE"`
 		Name4 *string
 		Name5 string `flag:"-"`
-		name6 string
+		Name6 string `kong:"-"`
+		name7 string
 
 		Addr *net.TCPAddr
 
@@ -526,7 +528,7 @@ func NewSimpleCfg() *struct {
 		Addr: &net.TCPAddr{
 			IP: net.ParseIP("127.0.0.1"),
 		},
-		name6: "name6_value",
+		name7: "name7_value",
 		Map:   map[string]int{"test": 15},
 	}
 }
