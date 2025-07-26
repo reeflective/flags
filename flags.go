@@ -105,6 +105,11 @@ func WithEnvDivider(divider string) Option {
 	return Option(parser.EnvDivider(divider))
 }
 
+// WithVars adds a map of variables that can be used for expansion in tags.
+func WithVars(vars map[string]string) Option {
+	return Option(parser.WithVars(vars))
+}
+
 // === Validation ===
 
 // ValidateFunc is the core validation function type.

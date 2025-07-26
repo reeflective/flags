@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"strings"
 
 	"github.com/reeflective/flags/internal/errors"
 	"github.com/reeflective/flags/internal/validation"
@@ -14,6 +15,26 @@ import (
 func ParseGroup(value reflect.Value, field reflect.StructField, parentOpts *Opts) ([]*Flag, error) {
 	opts := parentOpts.Copy()
 	tag, _, _ := GetFieldTag(field)
+
+	// Start with the parent's variables.
+	newVars := make(map[string]string)
+	for k, v := range parentOpts.Vars {
+		newVars[k] = v
+	}
+
+	// Add the variables from the current group's `set` tags.
+	for _, setVal := range tag.GetMany("set") {
+		parts := strings.SplitN(setVal, "=", 2)
+		if len(parts) == 2 {
+			newVars[parts[0]] = parts[1]
+		}
+	}
+
+	// Finally, merge the global variables.
+	for k, v := range parentOpts.GlobalVars {
+		newVars[k] = v
+	}
+	opts.Vars = newVars
 
 	// Correctly apply prefixing based on the flatten option.
 	if !field.Anonymous || opts.Flatten {

@@ -58,15 +58,21 @@ func parseFlagTag(field reflect.StructField, opts *Opts) (*Flag, *MultiTag, erro
 		Name:          name,
 		Short:         short,
 		EnvNames:      parseEnvTag(name, field, opts),
-		Usage:         getFlagUsage(tag),
-		Placeholder:   getFlagPlaceholder(tag),
+		Usage:         expandVar(getFlagUsage(tag), opts.Vars),
+		Placeholder:   expandVar(getFlagPlaceholder(tag), opts.Vars),
+		DefValue:      getFlagDefault(tag),
 		Hidden:        isSet(tag, "hidden"),
 		Deprecated:    isSet(tag, "deprecated"),
-		Choices:       getFlagChoices(tag),
-		OptionalValue: tag.GetMany("optional-value"),
+		Choices:       expandStringSlice(getFlagChoices(tag), opts.Vars),
+		OptionalValue: expandStringSlice(tag.GetMany("optional-value"), opts.Vars),
 		Negatable:     isBool(field.Type) && isSet(tag, "negatable"),
 		XORGroup:      getFlagXOR(tag),
 		ANDGroup:      getFlagAND(tag),
+	}
+
+	// Expand variables in default value.
+	if len(flag.DefValue) > 0 {
+		flag.DefValue[0] = expandVar(flag.DefValue[0], opts.Vars)
 	}
 
 	// Add separators if they are present.
@@ -221,6 +227,31 @@ func getFlagAND(tag *MultiTag) []string {
 	}
 
 	return andGroups
+}
+
+func expandVar(s string, vars map[string]string) string {
+	for k, v := range vars {
+		s = strings.ReplaceAll(s, "${"+k+"}", v)
+	}
+
+	return s
+}
+
+func getFlagDefault(tag *MultiTag) []string {
+	val, ok := tag.Get("default")
+	if !ok {
+		return nil
+	}
+
+	return []string{val}
+}
+
+func expandStringSlice(s []string, vars map[string]string) []string {
+	for i, v := range s {
+		s[i] = expandVar(v, vars)
+	}
+
+	return s
 }
 
 func parseEnvTag(flagName string, field reflect.StructField, options *Opts) []string {

@@ -641,21 +641,23 @@ func TestParseFlagTag(t *testing.T) {
 		tag      string
 		expected Flag
 	}{
-		// {
-		// 	name: "Simple long name",
-		// 	tag:  `long:"my-flag"`,
-		// 	expected: Flag{
-		// 		Name: "my-flag",
-		// 	},
-		// },
-		// {
-		// 	name: "Long and short name",
-		// 	tag:  `long:"my-flag" short:"f"`,
-		// 	expected: Flag{
-		// 		Name:  "my-flag",
-		// 		Short: "f",
-		// 	},
-		// },
+		{
+			name: "Simple long name",
+			tag:  `long:"my-flag"`,
+			expected: Flag{
+				Name:     "my-flag",
+				EnvNames: []string{"MY_FLAG"},
+			},
+		},
+		{
+			name: "Long and short name",
+			tag:  `long:"my-flag" short:"f"`,
+			expected: Flag{
+				Name:     "my-flag",
+				Short:    "f",
+				EnvNames: []string{"MY_FLAG"},
+			},
+		},
 		{
 			name: "Comma-separated env vars",
 			tag:  `long:"my-flag" env:"MY_VAR,OLD_VAR"`,
@@ -716,4 +718,64 @@ func TestParseFlagTag(t *testing.T) {
 			assert.Equal(t, tt.expected.ANDGroup, flag.ANDGroup)
 		})
 	}
+}
+
+func TestVariableExpansion(t *testing.T) {
+	t.Parallel()
+
+	// Test case for variables set via `set` tag.
+	t.Run("Tag-based variables", func(t *testing.T) {
+		t.Parallel()
+		cfg := &varExpansionConfig{}
+		flags, err := parse(cfg, ParseAll())
+		require.NoError(t, err)
+		require.Len(t, flags, 6)
+
+		// Assertions for the main group with variables
+		assert.Equal(t, "default", flags[0].DefValue[0])
+		assert.Equal(t, "placeholder", flags[1].Placeholder)
+		assert.Equal(t, "Usage is usage", flags[2].Usage)
+		assert.Equal(t, []string{"A", "B"}, flags[3].Choices)
+		assert.Equal(t, []string{"default"}, flags[4].OptionalValue)
+
+		// Assertion for the sibling group to ensure no variable leakage
+		assert.Equal(t, "${default_var}", flags[5].DefValue[0])
+	})
+
+	// New test case for variables set via functional option.
+	t.Run("Option-based variables", func(t *testing.T) {
+		t.Parallel()
+		cfg := &varExpansionConfig{}
+		vars := map[string]string{
+			"default_var":     "from_option",
+			"placeholder_var": "from_option",
+			"usage_var":       "from_option",
+			"choice1":         "C",
+			"choice2":         "D",
+		}
+		flags, err := parse(cfg, ParseAll(), WithVars(vars))
+		require.NoError(t, err)
+		require.Len(t, flags, 6)
+
+		// Assertions for the main group with variables
+		assert.Equal(t, "from_option", flags[0].DefValue[0])
+		assert.Equal(t, "from_option", flags[1].Placeholder)
+		assert.Equal(t, "Usage is from_option", flags[2].Usage)
+		assert.Equal(t, []string{"C", "D"}, flags[3].Choices)
+		assert.Equal(t, []string{"from_option"}, flags[4].OptionalValue)
+	})
+}
+
+type varExpansionConfig struct {
+	Group struct {
+		Default       string `default:"${default_var}"     long:"default"`
+		Placeholder   string `long:"placeholder"           placeholder:"${placeholder_var}"`
+		Usage         string `help:"Usage is ${usage_var}" long:"usage"`
+		Choices       string `enum:"${choice1},${choice2}" long:"choices"`
+		OptionalValue string `long:"optional"              optional-value:"${default_var}"`
+	} `group:"group" set:"default_var=default" set:"placeholder_var=placeholder" set:"usage_var=usage" set:"choice1=A" set:"choice2=B"`
+
+	SiblingGroup struct {
+		Default string `default:"${default_var}" long:"default"` // Should not be expanded
+	} `group:"sibling"`
 }

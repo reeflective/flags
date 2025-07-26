@@ -45,6 +45,12 @@ type Opts struct {
 
 	// FlagFunc is a generic function that can be applied to each flag.
 	FlagFunc FlagFunc
+
+	// Vars is a map of variables that can be used for expansion.
+	Vars map[string]string
+
+	// GlobalVars is a map of variables that are applied globally.
+	GlobalVars map[string]string
 }
 
 // DefOpts returns the default parsing options.
@@ -55,6 +61,8 @@ func DefOpts() *Opts {
 		FlagDivider: "-",
 		EnvDivider:  "_",
 		Flatten:     false,
+		Vars:        make(map[string]string),
+		GlobalVars:  make(map[string]string),
 	}
 }
 
@@ -70,7 +78,11 @@ func (o *Opts) Apply(optFuncs ...OptFunc) *Opts {
 // Copy returns a copy of the options.
 func (o *Opts) Copy() *Opts {
 	cpy := *o
-
+	cpy.Vars = make(map[string]string)
+	for k, v := range o.Vars {
+		cpy.Vars[k] = v
+	}
+	// GlobalVars are not copied, they are global.
 	return &cpy
 }
 
@@ -113,4 +125,13 @@ func Validator(val validation.ValidateFunc) OptFunc {
 // FlagHandler sets the handler function for flags.
 func FlagHandler(val FlagFunc) OptFunc {
 	return func(opt *Opts) { opt.FlagFunc = val }
+}
+
+// WithVars adds a map of variables for expansion.
+func WithVars(vars map[string]string) OptFunc {
+	return func(opt *Opts) {
+		for k, v := range vars {
+			opt.GlobalVars[k] = v
+		}
+	}
 }
