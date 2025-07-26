@@ -348,5 +348,20 @@ func applyFlagRules(ctx *context) error {
 		}
 	}
 
+	// Group flags by their AND group names.
+	andGroups := make(map[string][]string)
+	for _, flag := range ctx.Flags {
+		for _, group := range flag.ANDGroup {
+			andGroups[group] = append(andGroups[group], flag.Name)
+		}
+	}
+
+	// Mark each AND group as required together.
+	for _, flagsInGroup := range andGroups {
+		if len(flagsInGroup) > 1 {
+			ctx.cmd.MarkFlagsRequiredTogether(flagsInGroup...)
+		}
+	}
+
 	return nil
 }

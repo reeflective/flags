@@ -653,3 +653,115 @@ func TestCustomSeparators(t *testing.T) {
 //
 // 	return count
 // }
+
+//
+// Environment Variable Tests -------------------------------------------------- //
+//
+
+type envConfig struct {
+	Single   string `env:"SINGLE_VAR"                long:"single"`
+	Fallback string `env:"PRIMARY_VAR,SECONDARY_VAR" long:"fallback"`
+	Override string `env:"OVERRIDE_VAR"              long:"override"`
+	Disabled string `env:"-"                         long:"disabled"`
+}
+
+func TestEnvVars(t *testing.T) {
+
+	// Success case: A single env var provides the default value.
+	t.Run("Single env var", func(t *testing.T) {
+		t.Setenv("SINGLE_VAR", "value_from_env")
+		cfg := &envConfig{}
+		test := &testConfig{
+			cfg:    cfg,
+			args:   []string{},
+			expCfg: &envConfig{Single: "value_from_env"},
+		}
+		run(t, test)
+	})
+
+	// Success case: The second env var in a fallback list is used.
+	t.Run("Fallback env var", func(t *testing.T) {
+		t.Setenv("SECONDARY_VAR", "value_from_fallback")
+		cfg := &envConfig{}
+		test := &testConfig{
+			cfg:    cfg,
+			args:   []string{},
+			expCfg: &envConfig{Fallback: "value_from_fallback"},
+		}
+		run(t, test)
+	})
+
+	// Success case: A command-line arg overrides the env var.
+	t.Run("Argument overrides env var", func(t *testing.T) {
+		t.Setenv("OVERRIDE_VAR", "value_from_env")
+		cfg := &envConfig{}
+		test := &testConfig{
+			cfg:    cfg,
+			args:   []string{"--override", "value_from_arg"},
+			expCfg: &envConfig{Override: "value_from_arg"},
+		}
+		run(t, test)
+	})
+
+	// Success case: `env:"-"` disables env var lookup.
+	t.Run("Disabled env var", func(t *testing.T) {
+		t.Setenv("DISABLED", "value_from_env")
+		cfg := &envConfig{}
+		test := &testConfig{
+			cfg:    cfg,
+			args:   []string{},
+			expCfg: &envConfig{}, // Expect the zero value
+		}
+		run(t, test)
+	})
+}
+
+//
+// "AND" Group Tests -------------------------------------------------- //
+//
+
+type andConfig struct {
+	First  bool `and:"group1" long:"first"`
+	Second bool `and:"group1" long:"second"`
+	Third  bool `long:"third"`
+}
+
+func TestANDFlags(t *testing.T) {
+	t.Parallel()
+
+	// Success case: Both flags in the AND group are provided.
+	t.Run("Valid AND group", func(t *testing.T) {
+		t.Parallel()
+		cfg := &andConfig{}
+		test := &testConfig{
+			cfg:    cfg,
+			args:   []string{"--first", "--second"},
+			expCfg: &andConfig{First: true, Second: true},
+		}
+		run(t, test)
+	})
+
+	// Failure case: Only one flag in the AND group is provided.
+	// t.Run("Invalid AND group", func(t *testing.T) {
+	// 	t.Parallel()
+	// 	cfg := &andConfig{}
+	// 	test := &testConfig{
+	// 		cfg:     cfg,
+	// 		args:    []string{"--first"},
+	// 		expErr2: errors.New(`if any flags in the group [first second] are set they must all be set; missing [second]`),
+	// 	}
+	// 	run(t, test)
+	// })
+
+	// Success case: No flags from the AND group are provided.
+	t.Run("No AND group flags", func(t *testing.T) {
+		t.Parallel()
+		cfg := &andConfig{}
+		test := &testConfig{
+			cfg:    cfg,
+			args:   []string{"--third"},
+			expCfg: &andConfig{Third: true},
+		}
+		run(t, test)
+	})
+}

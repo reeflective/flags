@@ -11,7 +11,7 @@ import (
 type Flag struct {
 	Name          string       // name as it appears on command line
 	Short         string       // optional short name
-	EnvName       string       // OS Environment-based name
+	EnvNames      []string     // OS Environment-based names
 	Usage         string       // help message
 	Placeholder   string       // placeholder for the flag's value
 	Value         values.Value // value as set
@@ -25,6 +25,7 @@ type Flag struct {
 	Separator     *string      // Custom separator for slice values.
 	MapSeparator  *string      // Custom separator for map values.
 	XORGroup      []string     // Mutually exclusive flag groups.
+	ANDGroup      []string     // "AND" flag groups.
 }
 
 // parseFlagTag parses the struct tag for a given field and returns a Flag object.
@@ -56,6 +57,7 @@ func parseFlagTag(field reflect.StructField, opts *Opts) (*Flag, *MultiTag, erro
 	flag := &Flag{
 		Name:          name,
 		Short:         short,
+		EnvNames:      parseEnvTag(name, field, opts),
 		Usage:         getFlagUsage(tag),
 		Placeholder:   getFlagPlaceholder(tag),
 		Hidden:        isSet(tag, "hidden"),
@@ -64,6 +66,7 @@ func parseFlagTag(field reflect.StructField, opts *Opts) (*Flag, *MultiTag, erro
 		OptionalValue: tag.GetMany("optional-value"),
 		Negatable:     isBool(field.Type) && isSet(tag, "negatable"),
 		XORGroup:      getFlagXOR(tag),
+		ANDGroup:      getFlagAND(tag),
 	}
 
 	// Add separators if they are present.
@@ -209,40 +212,64 @@ func getFlagXOR(tag *MultiTag) []string {
 	return xorGroups
 }
 
-func parseEnvTag(flagName string, field reflect.StructField, options *Opts) string {
-	ignoreEnvPrefix := false
-	envVar := FlagToEnv(flagName, options.FlagDivider, options.EnvDivider)
+func getFlagAND(tag *MultiTag) []string {
+	var andGroups []string
 
-	if envTags := strings.Split(field.Tag.Get(DefaultEnvTag), ","); len(envTags) > 0 {
-		switch envName := envTags[0]; envName {
-		case "-":
-			// if tag is `env:"-"` then won't fill flag from environment
-			envVar = ""
-		case "":
-			// if tag is `env:""` then env var will be taken from flag name
-		default:
-			// if tag is `env:"NAME"` then env var is envPrefix_flagPrefix_NAME
-			// if tag is `env:"~NAME"` then env var is NAME
-			if strings.HasPrefix(envName, "~") {
-				envVar = envName[1:]
-				ignoreEnvPrefix = true
-			} else {
-				envVar = envName
-				if options.Prefix != "" {
-					envVar = FlagToEnv(
-						options.Prefix,
-						options.FlagDivider,
-						options.EnvDivider) + envVar
-				}
+	andTags := tag.GetMany("and")
+	for _, and := range andTags {
+		andGroups = append(andGroups, strings.Split(and, ",")...)
+	}
+
+	return andGroups
+}
+
+func parseEnvTag(flagName string, field reflect.StructField, options *Opts) []string {
+	envTag := field.Tag.Get(DefaultEnvTag)
+	if envTag == "" {
+		// If no tag, generate a default name.
+		envVar := FlagToEnv(flagName, options.FlagDivider, options.EnvDivider)
+		if options.EnvPrefix != "" {
+			envVar = options.EnvPrefix + envVar
+		}
+
+		return []string{envVar}
+	}
+
+	if envTag == "-" {
+		return nil // `env:"-"` disables env var lookup entirely.
+	}
+
+	var envNames []string
+	envVars := strings.Split(envTag, ",")
+
+	for _, envName := range envVars {
+		envName = strings.TrimSpace(envName)
+		if envName == "" {
+			// If the tag is `env:""`, generate from the flag name.
+			envName = FlagToEnv(flagName, options.FlagDivider, options.EnvDivider)
+		}
+
+		ignorePrefixes := false
+		if strings.HasPrefix(envName, "~") {
+			envName = envName[1:]
+			ignorePrefixes = true
+		}
+
+		// Apply prefixes only if they are not being ignored.
+		if !ignorePrefixes {
+			// First, the struct-level flag prefix.
+			if options.Prefix != "" {
+				envName = FlagToEnv(options.Prefix, options.FlagDivider, options.EnvDivider) + envName
+			}
+			// Then, the global env prefix.
+			if options.EnvPrefix != "" {
+				envName = options.EnvPrefix + envName
 			}
 		}
+		envNames = append(envNames, envName)
 	}
 
-	if envVar != "" && options.EnvPrefix != "" && !ignoreEnvPrefix {
-		envVar = options.EnvPrefix + envVar
-	}
-
-	return envVar
+	return envNames
 }
 
 func isSet(tag *MultiTag, key string) bool {

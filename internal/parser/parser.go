@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+	"os"
 	"reflect"
 
 	"github.com/reeflective/flags/internal/errors"
@@ -99,6 +100,18 @@ func parseSingleFlag(value reflect.Value, field reflect.StructField, opts *Opts)
 	}
 
 	flag.Value = val
+
+	// Set default value from environment variables if available.
+	for _, env := range flag.EnvNames {
+		if envVal, ok := os.LookupEnv(env); ok {
+			if err := val.Set(envVal); err != nil {
+				return nil, true, fmt.Errorf("failed to set default value from env var %s: %w", env, err)
+			}
+
+			break // Stop after finding the first one.
+		}
+	}
+
 	if val.String() != "" {
 		flag.DefValue = append(flag.DefValue, val.String())
 	}
@@ -120,7 +133,7 @@ func parseInfo(fld reflect.StructField, opts *Opts) (*Flag, *MultiTag, error) {
 		return flag, tag, err
 	}
 
-	flag.EnvName = parseEnvTag(flag.Name, fld, opts)
+	flag.EnvNames = parseEnvTag(flag.Name, fld, opts)
 
 	return flag, tag, err
 }

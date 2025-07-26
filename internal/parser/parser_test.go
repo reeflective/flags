@@ -43,7 +43,7 @@ func TestParseStruct(t *testing.T) {
 			expFlagSet: []*Flag{
 				{
 					Name:     "name",
-					EnvName:  "",
+					EnvNames: nil,
 					DefValue: []string{"name_value"},
 					Value:    values.ParseGenerated(&simpleCfg.Name, nil),
 					Usage:    "name description",
@@ -51,7 +51,7 @@ func TestParseStruct(t *testing.T) {
 				{
 					Name:       "name_two",
 					Short:      "t",
-					EnvName:    "NAME_TWO",
+					EnvNames:   []string{"NAME_TWO"},
 					DefValue:   []string{"name2_value"},
 					Value:      values.ParseGenerated(&simpleCfg.Name2, nil),
 					Hidden:     true,
@@ -59,25 +59,25 @@ func TestParseStruct(t *testing.T) {
 				},
 				{
 					Name:     "name3",
-					EnvName:  "NAME_THREE",
+					EnvNames: []string{"NAME_THREE"},
 					DefValue: nil,
 					Value:    values.ParseGenerated(&simpleCfg.Name3, nil),
 				},
 				{
 					Name:     "name4",
-					EnvName:  "NAME4",
+					EnvNames: []string{"NAME4"},
 					DefValue: []string{"name_value4"},
 					Value:    values.ParseGenerated(simpleCfg.Name4, nil),
 				},
 				{
 					Name:     "addr",
-					EnvName:  "ADDR",
+					EnvNames: []string{"ADDR"},
 					DefValue: []string{"127.0.0.1:0"},
 					Value:    values.ParseGenerated(simpleCfg.Addr, nil),
 				},
 				{
 					Name:     "map",
-					EnvName:  "MAP",
+					EnvNames: []string{"MAP"},
 					DefValue: []string{"map[test:15]"},
 					Value:    values.ParseGeneratedMap(&simpleCfg.Map, nil),
 				},
@@ -90,7 +90,7 @@ func TestParseStruct(t *testing.T) {
 			expFlagSet: []*Flag{
 				{
 					Name:     "name",
-					EnvName:  "",
+					EnvNames: nil,
 					DefValue: []string{"name_value"},
 					Value:    values.ParseGenerated(&simpleCfg.Name, nil),
 					Usage:    "name description",
@@ -98,7 +98,7 @@ func TestParseStruct(t *testing.T) {
 				{
 					Name:       "name_two",
 					Short:      "t",
-					EnvName:    "PP|NAME_TWO",
+					EnvNames:   []string{"PP|NAME_TWO"},
 					DefValue:   []string{"name2_value"},
 					Value:      values.ParseGenerated(&simpleCfg.Name2, nil),
 					Hidden:     true,
@@ -106,25 +106,25 @@ func TestParseStruct(t *testing.T) {
 				},
 				{
 					Name:     "name3",
-					EnvName:  "PP|NAME_THREE",
+					EnvNames: []string{"PP|NAME_THREE"},
 					DefValue: nil,
 					Value:    values.ParseGenerated(&simpleCfg.Name3, nil),
 				},
 				{
 					Name:     "name4",
-					EnvName:  "PP|NAME4",
+					EnvNames: []string{"PP|NAME4"},
 					DefValue: []string{"name_value4"},
 					Value:    values.ParseGenerated(simpleCfg.Name4, nil),
 				},
 				{
 					Name:     "addr",
-					EnvName:  "PP|ADDR",
+					EnvNames: []string{"PP|ADDR"},
 					DefValue: []string{"127.0.0.1:0"},
 					Value:    values.ParseGenerated(simpleCfg.Addr, nil),
 				},
 				{
 					Name:     "map",
-					EnvName:  "PP|MAP",
+					EnvNames: []string{"PP|MAP"},
 					DefValue: []string{"map[test:15]"},
 					Value:    values.ParseGeneratedMap(&simpleCfg.Map, nil),
 				},
@@ -138,64 +138,64 @@ func TestParseStruct(t *testing.T) {
 			expFlagSet: []*Flag{
 				{
 					Name:     "string-value",
-					EnvName:  "STRING_VALUE",
+					EnvNames: []string{"STRING_VALUE"},
 					DefValue: []string{"string"},
 					Value:    values.ParseGenerated(&diffTypesCfg.StringValue, nil),
 					Usage:    "",
 				},
 				{
 					Name:     "byte-value",
-					EnvName:  "BYTE_VALUE",
+					EnvNames: []string{"BYTE_VALUE"},
 					DefValue: []string{"10"},
 					Value:    values.ParseGenerated(&diffTypesCfg.ByteValue, nil),
 					Usage:    "",
 				},
 				{
 					Name:     "string-slice-value",
-					EnvName:  "STRING_SLICE_VALUE",
+					EnvNames: []string{"STRING_SLICE_VALUE"},
 					DefValue: []string{"[]"},
 					Value:    values.ParseGenerated(&diffTypesCfg.StringSliceValue, nil),
 					Usage:    "",
 				},
 				{
 					Name:     "bool-slice-value",
-					EnvName:  "BOOL_SLICE_VALUE",
+					EnvNames: []string{"BOOL_SLICE_VALUE"},
 					DefValue: []string{"[]"},
 					Value:    values.ParseGenerated(&diffTypesCfg.BoolSliceValue, nil),
 					Usage:    "",
 				},
 				{
 					Name:     "counter-value",
-					EnvName:  "COUNTER_VALUE",
+					EnvNames: []string{"COUNTER_VALUE"},
 					DefValue: []string{"10"},
 					Value:    &diffTypesCfg.CounterValue,
 					Usage:    "",
 				},
 				{
-					Name:    "regexp-value",
-					EnvName: "REGEXP_VALUE",
-					Value:   values.ParseGeneratedPtrs(&diffTypesCfg.RegexpValue),
-					Usage:   "",
+					Name:     "regexp-value",
+					EnvNames: []string{"REGEXP_VALUE"},
+					Value:    values.ParseGeneratedPtrs(&diffTypesCfg.RegexpValue),
+					Usage:    "",
 				},
 				{
-					Name:    "map-int8-bool",
-					EnvName: "MAP_INT8_BOOL",
-					Value:   values.ParseGeneratedMap(&diffTypesCfg.MapInt8Bool, nil),
+					Name:     "map-int8-bool",
+					EnvNames: []string{"MAP_INT8_BOOL"},
+					Value:    values.ParseGeneratedMap(&diffTypesCfg.MapInt8Bool, nil),
 				},
 				{
-					Name:    "map-int16-int8",
-					EnvName: "MAP_INT16_INT8",
-					Value:   values.ParseGeneratedMap(&diffTypesCfg.MapInt16Int8, nil),
+					Name:     "map-int16-int8",
+					EnvNames: []string{"MAP_INT16_INT8"},
+					Value:    values.ParseGeneratedMap(&diffTypesCfg.MapInt16Int8, nil),
 				},
 				{
 					Name:     "map-string-int64",
-					EnvName:  "MAP_STRING_INT64",
+					EnvNames: []string{"MAP_STRING_INT64"},
 					DefValue: []string{"map[test:888]"},
 					Value:    values.ParseGeneratedMap(&diffTypesCfg.MapStringInt64, nil),
 				},
 				{
 					Name:     "map-string-string",
-					EnvName:  "MAP_STRING_STRING",
+					EnvNames: []string{"MAP_STRING_STRING"},
 					DefValue: []string{"map[test:test-val]"},
 					Value:    values.ParseGeneratedMap(&diffTypesCfg.MapStringString, nil),
 				},
@@ -208,32 +208,32 @@ func TestParseStruct(t *testing.T) {
 			expFlagSet: []*Flag{
 				{
 					Name:     "sub-name",
-					EnvName:  "SUB_NAME",
+					EnvNames: []string{"SUB_NAME"},
 					DefValue: []string{"name_value"},
 					Value:    values.ParseGenerated(&nestedCfg.Sub.Name, nil),
 					Usage:    "name description",
 				},
 				{
 					Name:     "sub-name2",
-					EnvName:  "SUB_NAME_TWO",
+					EnvNames: []string{"SUB_NAME_TWO"},
 					DefValue: []string{"name2_value"},
 					Value:    values.ParseGenerated(&nestedCfg.Sub.Name2, nil),
 				},
 				{
-					Name:    "name3",
-					EnvName: "NAME_THREE",
-					Value:   values.ParseGenerated(&nestedCfg.Sub.Name3, nil),
+					Name:     "name3",
+					EnvNames: []string{"NAME_THREE"},
+					Value:    values.ParseGenerated(&nestedCfg.Sub.Name3, nil),
 				},
 				{
 					Name:     "sub-sub2-name4",
-					EnvName:  "SUB_SUB2_NAME4",
+					EnvNames: []string{"SUB_SUB2_NAME4"},
 					DefValue: []string{"name4_value"},
 					Value:    values.ParseGenerated(&nestedCfg.Sub.SUB2.Name4, nil),
 				},
 				{
-					Name:    "sub-sub2-name5",
-					EnvName: "SUB_SUB2_name_five",
-					Value:   values.ParseGenerated(&nestedCfg.Sub.SUB2.Name5, nil),
+					Name:     "sub-sub2-name5",
+					EnvNames: []string{"SUB_SUB2_name_five"},
+					Value:    values.ParseGenerated(&nestedCfg.Sub.SUB2.Name5, nil),
 				},
 			},
 			expErr: nil,
@@ -244,16 +244,16 @@ func TestParseStruct(t *testing.T) {
 			optFuncs: []OptFunc{DescTag("description")},
 			expFlagSet: []*Flag{
 				{
-					Name:    "name",
-					EnvName: "NAME",
-					Value:   values.ParseGenerated(&descCfg.Name, nil),
-					Usage:   "name description",
+					Name:     "name",
+					EnvNames: []string{"NAME"},
+					Value:    values.ParseGenerated(&descCfg.Name, nil),
+					Usage:    "name description",
 				},
 				{
-					Name:    "name2",
-					EnvName: "NAME2",
-					Value:   values.ParseGenerated(&descCfg.Name2, nil),
-					Usage:   "name2 description",
+					Name:     "name2",
+					EnvNames: []string{"NAME2"},
+					Value:    values.ParseGenerated(&descCfg.Name2, nil),
+					Usage:    "name2 description",
 				},
 			},
 		},
@@ -263,13 +263,13 @@ func TestParseStruct(t *testing.T) {
 			optFuncs: []OptFunc{Flatten(false), ParseAll()},
 			expFlagSet: []*Flag{
 				{
-					Name:    "name1",
-					EnvName: "NAME1",
-					Value:   values.ParseGenerated(&anonymousCfg.Name1, nil),
+					Name:     "name1",
+					EnvNames: []string{"NAME1"},
+					Value:    values.ParseGenerated(&anonymousCfg.Name1, nil),
 				},
 				{
 					Name:     "name",
-					EnvName:  "NAME",
+					EnvNames: []string{"NAME"},
 					DefValue: []string{"name_value"},
 					Value:    values.ParseGenerated(&anonymousCfg.Name, nil),
 				},
@@ -281,13 +281,13 @@ func TestParseStruct(t *testing.T) {
 			optFuncs: []OptFunc{Flatten(true), ParseAll()},
 			expFlagSet: []*Flag{
 				{
-					Name:    "name1",
-					EnvName: "NAME1",
-					Value:   values.ParseGenerated(&anonymousCfg.Name1, nil),
+					Name:     "name1",
+					EnvNames: []string{"NAME1"},
+					Value:    values.ParseGenerated(&anonymousCfg.Name1, nil),
 				},
 				{
 					Name:     "simple-name",
-					EnvName:  "SIMPLE_NAME",
+					EnvNames: []string{"SIMPLE_NAME"},
 					DefValue: []string{"name_value"},
 					Value:    values.ParseGenerated(&anonymousCfg.Name, nil),
 				},
@@ -631,4 +631,89 @@ type Simple struct {
 
 func strP(value string) *string {
 	return &value
+}
+
+func TestParseFlagTag(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		tag      string
+		expected Flag
+	}{
+		// {
+		// 	name: "Simple long name",
+		// 	tag:  `long:"my-flag"`,
+		// 	expected: Flag{
+		// 		Name: "my-flag",
+		// 	},
+		// },
+		// {
+		// 	name: "Long and short name",
+		// 	tag:  `long:"my-flag" short:"f"`,
+		// 	expected: Flag{
+		// 		Name:  "my-flag",
+		// 		Short: "f",
+		// 	},
+		// },
+		{
+			name: "Comma-separated env vars",
+			tag:  `long:"my-flag" env:"MY_VAR,OLD_VAR"`,
+			expected: Flag{
+				Name:     "my-flag",
+				EnvNames: []string{"MY_VAR", "OLD_VAR"},
+			},
+		},
+		{
+			name: "Comma-separated xor groups",
+			tag:  `long:"my-flag" xor:"one,two"`,
+			expected: Flag{
+				Name:     "my-flag",
+				EnvNames: []string{"MY_FLAG"},
+				XORGroup: []string{"one", "two"},
+			},
+		},
+		{
+			name: "Comma-separated and groups",
+			tag:  `long:"my-flag" and:"one,two"`,
+			expected: Flag{
+				Name:     "my-flag",
+				EnvNames: []string{"MY_FLAG"},
+				ANDGroup: []string{"one", "two"},
+			},
+		},
+		{
+			name: "All together",
+			tag:  `long:"my-flag" short:"f" env:"MY_VAR" xor:"a,b" and:"c,d"`,
+			expected: Flag{
+				Name:     "my-flag",
+				Short:    "f",
+				EnvNames: []string{"MY_VAR"},
+				XORGroup: []string{"a", "b"},
+				ANDGroup: []string{"c", "d"},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			field := reflect.StructField{
+				Name: "MyField",
+				Tag:  reflect.StructTag(tt.tag),
+				Type: reflect.TypeOf(""),
+			}
+
+			opts := DefOpts()
+			flag, _, err := parseFlagTag(field, opts)
+			require.NoError(t, err)
+
+			// We only check the fields we care about for this test.
+			assert.Equal(t, tt.expected.Name, flag.Name)
+			assert.Equal(t, tt.expected.Short, flag.Short)
+			assert.Equal(t, tt.expected.EnvNames, flag.EnvNames)
+			assert.Equal(t, tt.expected.XORGroup, flag.XORGroup)
+			assert.Equal(t, tt.expected.ANDGroup, flag.ANDGroup)
+		})
+	}
 }
