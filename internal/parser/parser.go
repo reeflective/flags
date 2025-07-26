@@ -61,7 +61,7 @@ func ParseField(value reflect.Value, field reflect.StructField, opts *Opts) ([]*
 	}
 
 	// Check if the field is a struct group and parse it recursively if so.
-	if isOptionGroup(value) && opts.ParseAll {
+	if field.Anonymous || (isOptionGroup(value) && opts.ParseAll) {
 		flags, err := ParseGroup(value, field, opts)
 
 		return flags, true, err

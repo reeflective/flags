@@ -14,8 +14,8 @@ import (
 // (eg, options grouped in a struct), but just declares them at the root level.
 type BasicOptions struct {
 	// First flag tags notation
-	Path    string            `complete:"Files"                                                                    description:"a path used by your command"                                                  long:"path"  optional-value:"/home/user" short:"p"`
-	Files   []string          `complete:"Files"                                                                    desc:"A list of files, with repeated flags or comma-separated items"                       long:"files" short:"f"`
+	Path    string            `complete:"Files"                                                                    description:"a path used by your command"                                                  long:"path"  optional-value:"/home/user" short:"p"        xor:"filesystem"`
+	Files   []string          `complete:"Files"                                                                    desc:"A list of files, with repeated flags or comma-separated items"                       long:"files" short:"f"                   xor:"filesystem"`
 	Elems   map[string]string `choice:"user:host machine:testing another:target"                                   description:"A map[string]string flag, can be repeated or used with comma-separated items" long:"elems" short:"e"`
 	Check   bool              `description:"a boolean checker, can be used in an option stacking, like -cp <path>" long:"check"                                                                               short:"c"`
 	Machine Machine           `description:"A type that implements user@host (multipart) completion"               long:"machine"                                                                             short:"m"`

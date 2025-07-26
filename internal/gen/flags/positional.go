@@ -25,6 +25,22 @@ func positionals(ctx *context, stag *parser.MultiTag, val reflect.Value) (bool, 
 		return true, err
 	}
 
+	// Check if any of the positional arguments are passthrough.
+	isPassthrough := false
+	for _, arg := range positionals.Positionals() {
+		if arg.Passthrough {
+			isPassthrough = true
+
+			break
+		}
+	}
+
+	// If we have a passthrough argument, we need to tell cobra to stop parsing flags
+	// as soon as it encounters the first non-flag argument.
+	if isPassthrough {
+		ctx.cmd.Flags().SetInterspersed(false)
+	}
+
 	// Finally, assemble all the parsers into our cobra Args function.
 	ctx.cmd.Args = func(cmd *cobra.Command, args []string) error {
 		// Apply the words on the all/some of the positional fields,

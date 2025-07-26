@@ -548,6 +548,70 @@ func TestPositionalDoubleDashFail(t *testing.T) {
 }
 
 //
+// Passthrough Arguments Tests -------------------------------------------------- //
+//
+
+// A valid struct for testing passthrough arguments.
+type PassthroughConfig struct {
+	Positional struct {
+		First  string   `positional-arg-name:"first" required:"1"`
+		Second []string `passthrough:""`
+	} `positional-args:"true"`
+}
+
+// An invalid struct where the passthrough field is not a slice of strings.
+type invalidPassthroughTypeConfig struct {
+	Positional struct {
+		First  string `positional-arg-name:"first"`
+		Second string `passthrough:""`
+	} `positional-args:"true"`
+}
+
+// An invalid struct where the passthrough field is not the last argument.
+type invalidPassthroughPositionConfig struct {
+	Positional struct {
+		First  []string `passthrough:""`
+		Second string   `positional-arg-name:"second"`
+	} `positional-args:"true"`
+}
+
+func TestPassthroughArgs(t *testing.T) {
+	t.Parallel()
+
+	// Success case: Valid passthrough argument captures remaining args.
+	t.Run("Valid passthrough", func(t *testing.T) {
+		t.Parallel()
+		cfg := &PassthroughConfig{}
+		cmd, err := newCommandWithArgs(cfg, []string{"first-arg", "second-arg", "--third-arg", "fourth-arg"})
+		require.NoError(t, err)
+
+		err = cmd.Execute()
+		require.NoError(t, err)
+
+		require.Equal(t, "first-arg", cfg.Positional.First)
+		require.Equal(t, []string{"second-arg", "--third-arg", "fourth-arg"}, cfg.Positional.Second)
+	})
+
+	// Failure case: Passthrough argument is not a []string.
+	t.Run("Invalid type", func(t *testing.T) {
+		t.Parallel()
+		cfg := &invalidPassthroughTypeConfig{}
+		_, err := Generate(cfg)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "passthrough argument Second must be of type []string")
+	})
+
+	// Failure case: Passthrough argument is not the last positional argument.
+	t.Run("Invalid position", func(t *testing.T) {
+		t.Parallel()
+		cfg := &invalidPassthroughPositionConfig{}
+		_, err := Generate(cfg)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "passthrough argument First must be the last positional argument")
+	})
+}
+
+//
 // Helpers --------------------------------------------------------------- //
 //
 
@@ -565,7 +629,7 @@ func newCommandWithArgs(data any, args []string) (*cobra.Command, error) {
 
 	// by default our root command has name os.Args[1],
 	// which makes it fail, so only remove it when we
-	// find in the args sequence
+	// find it in the args sequence
 	if strings.Contains(cmd.Name(), "cobra.test") {
 		cmd.Use = ""
 	}

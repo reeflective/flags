@@ -24,6 +24,9 @@ func flags(ctx *context) parser.Handler {
 			return false, nil
 		}
 
+		// Collect the parsed flags for post-processing.
+		ctx.Flags = append(ctx.Flags, flagSet...)
+
 		// Put these flags into the command's flagset.
 		generateTo(flagSet, ctx.cmd.Flags())
 
@@ -69,7 +72,10 @@ func handleFlagGroup(ctx *context, val reflect.Value, fld *reflect.StructField, 
 		return err // The error is already wrapped by ParseGroup.
 	}
 
-	// 2. Generate the parsed flags into the command's flag set.
+	// 2. Collect the parsed flags for post-processing (e.g., XOR).
+	ctx.Flags = append(ctx.Flags, flags...)
+
+	// 3. Generate the parsed flags into the command's flag set.
 	// The 'persistent' tag is handled here, in the generation step.
 	if persistent, _ := tag.Get("persistent"); persistent != "" {
 		generateTo(flags, ctx.cmd.PersistentFlags())

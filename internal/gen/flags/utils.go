@@ -11,4 +11,5 @@ type context struct {
 	cmd   *cobra.Command
 	group *cobra.Group
 	opts  *parser.Opts
+	Flags []*parser.Flag // Collect all parsed flags for post-processing.
 }

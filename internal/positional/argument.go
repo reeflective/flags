@@ -35,16 +35,17 @@ func WithWordConsumer(args *Args, consumer WordConsumer) *Args {
 // many places, so that we can parse/convert and make informed
 // decisions on how to handle those tasks.
 type Arg struct {
-	Index     int             // The position in the struct (n'th struct field used as a slot)
-	Name      string          // name of the argument, either tag name or struct field
-	Minimum   int             // minimum number of arguments we want.
-	Maximum   int             // Maximum number of args we want (-1: infinite)
-	StartMin  int             // Index of first positional word for which we are used
-	StartMax  int             // if previous positional slots are full, this replaces startAt
-	Tag       parser.MultiTag // struct tag
-	Value     reflect.Value   // A reference to the field value itself
-	value     values.Value
-	Validator func(val string) error
+	Index       int             // The position in the struct (n'th struct field used as a slot)
+	Name        string          // name of the argument, either tag name or struct field
+	Minimum     int             // minimum number of arguments we want.
+	Maximum     int             // Maximum number of args we want (-1: infinite)
+	StartMin    int             // Index of first positional word for which we are used
+	StartMax    int             // if previous positional slots are full, this replaces startAt
+	Tag         parser.MultiTag // struct tag
+	Value       reflect.Value   // A reference to the field value itself
+	value       values.Value
+	Validator   func(val string) error
+	Passthrough bool
 }
 
 // Args contains an entire list of positional argument "slots" (struct fields)

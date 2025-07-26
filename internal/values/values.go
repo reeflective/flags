@@ -171,25 +171,6 @@ func (v *boolValue) IsBoolFlag() bool { return true }
 
 // === Custom parsers
 
-// func parseMap(value reflect.Value) Value {
-// 	mapType := value.Type()
-// 	keyKind := value.Type().Key().Kind()
-//
-// 	// check that map key is string or integer
-// 	if !slices.Contains(mapAllowedKinds, keyKind) {
-// 		return nil
-// 	}
-//
-// 	if value.IsNil() {
-// 		value.Set(reflect.MakeMap(mapType))
-// 	}
-//
-// 	valueInterface := value.Addr().Interface()
-// 	val := ParseGeneratedMap(valueInterface)
-//
-// 	return val
-// }
-
 func parseIP(s string) (net.IP, error) {
 	ip := net.ParseIP(strings.TrimSpace(s))
 	if ip == nil {

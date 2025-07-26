@@ -53,6 +53,11 @@ func Bind(cmd *cobra.Command, data any, opts ...parser.OptFunc) error {
 		cmd.RunE = unknownSubcommandAction
 	} else {
 		setRuns(cmd, data)
+
+		// After scanning, apply rules that span multiple flags, like XOR.
+		if err := applyFlagRules(ctx); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -96,6 +101,9 @@ func scanRoot(ctx *context) parser.Handler {
 func command(parentCtx *context, tag *parser.MultiTag, val reflect.Value) (bool, error) {
 	// Parse the command name on struct tag...
 	name, _ := tag.Get("command")
+	if name == "" {
+		name, _ = tag.Get("cmd")
+	}
 	if len(name) == 0 {
 		return false, nil
 	}
@@ -123,6 +131,15 @@ func command(parentCtx *context, tag *parser.MultiTag, val reflect.Value) (bool,
 	if err := parser.Scan(data, scanner); err != nil {
 		return true, fmt.Errorf("failed to scan subcommand %s: %w", name, err)
 	}
+
+	// Apply the flag rules (like XOR) to the subcommand's collected flags.
+	if err := applyFlagRules(subCtx); err != nil {
+		return true, err
+	}
+
+	// Propagate the subcommand's flags up to the parent context so that
+	// rules spanning across groups can be resolved.
+	parentCtx.Flags = append(parentCtx.Flags, subCtx.Flags...)
 
 	// Bind the various pre/run/post implementations of our command.
 	if _, isSet := tag.Get("subcommands-optional"); !isSet && subc.HasSubCommands() {
@@ -262,4 +279,24 @@ func setPostRuns(cmd *cobra.Command, data any) {
 			return runner.PostRunE(getRemainingArgs(c))
 		}
 	}
+}
+
+// applyFlagRules iterates over collected flags and applies cross-cutting rules.
+func applyFlagRules(ctx *context) error {
+	// Group flags by their XOR group names.
+	xorGroups := make(map[string][]string)
+	for _, flag := range ctx.Flags {
+		for _, group := range flag.XORGroup {
+			xorGroups[group] = append(xorGroups[group], flag.Name)
+		}
+	}
+
+	// Mark each XOR group as mutually exclusive on the command itself.
+	for _, flagsInGroup := range xorGroups {
+		if len(flagsInGroup) > 1 {
+			ctx.cmd.MarkFlagsMutuallyExclusive(flagsInGroup...)
+		}
+	}
+
+	return nil
 }

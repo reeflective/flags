@@ -3,12 +3,10 @@ package flags
 import (
 	"errors"
 	"fmt"
-	"io"
 	"net"
 	"testing"
 	"time"
 
-	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -70,6 +68,35 @@ type allPflags struct {
 	IntSliceValue    []int
 }
 
+// A sophisticated struct for testing XOR flags.
+type xorConfig struct {
+	// Top-level XOR
+	Apple  string `long:"apple"  short:"a" xor:"fruit"`
+	Banana string `long:"banana" short:"b" xor:"fruit"`
+
+	// Nested group with its own XOR
+	Juice JuiceGroup `group:"juice"`
+
+	// Embedded struct with XOR flags
+	EmbeddedXor
+
+	// A flag in multiple XOR groups
+	Verbose bool `short:"v" xor:"output,verbosity"`
+	Quiet   bool `short:"q" xor:"output"`
+	Loud    bool `short:"l" xor:"verbosity"`
+}
+
+type JuiceGroup struct {
+	Orange bool `long:"orange" xor:"citrus"`
+	Lemon  bool `long:"lemon"  xor:"citrus"`
+}
+
+type EmbeddedXor struct {
+	Grape bool `long:"grape" xor:"fruit"` // Belongs to the top-level 'fruit' group
+	Water bool `long:"water" xor:"beverage"`
+	Milk  bool `long:"milk"  xor:"beverage"`
+}
+
 // run condenses all CLI/flags parsing steps, and compares
 // all structs/errors against their expected state.
 func run(t *testing.T, test *testConfig) {
@@ -91,11 +118,9 @@ func run(t *testing.T, test *testConfig) {
 		return
 	}
 
-	flagSet := cmd.Flags()
-	flagSet.Init("pflagTest", pflag.ContinueOnError)
-	flagSet.SetOutput(io.Discard)
+	cmd.SetArgs(test.args)
 
-	err = flagSet.Parse(test.args)
+	err = cmd.Execute()
 	if test.expErr2 != nil {
 		assert.Error(t, err)
 		require.Equal(t, test.expErr2, err)
@@ -244,17 +269,16 @@ func TestParseBadConfig(t *testing.T) {
 	run(t, test)
 }
 
-// Test that pflag getter functions like GetInt work as expected.
+// TestPFlagGetters tests that pflag getter functions like GetInt work as expected.
 func TestPFlagGetters(t *testing.T) {
 	_, ipNet, err := net.ParseCIDR("127.0.0.1/24")
 	require.NoError(t, err)
 
 	cfg := &allPflags{
-		IntValue:   10,
-		Int8Value:  11,
-		Int32Value: 12,
-		Int64Value: 13,
-
+		IntValue:    10,
+		Int8Value:   11,
+		Int32Value:  12,
+		Int64Value:  13,
 		UintValue:   14,
 		Uint8Value:  15,
 		Uint16Value: 16,
@@ -347,7 +371,6 @@ func TestPFlagGetters(t *testing.T) {
 	assert.Equal(t, net.ParseIP("127.0.0.1"), ipValue)
 
 	ipNetValue, err := flagSet.GetIPNet("ip-net-value")
-	fmt.Println(flagSet)
 	require.NoError(t, err)
 	assert.Equal(t, cfg.IPNetValue, ipNetValue)
 
@@ -360,8 +383,9 @@ func TestPFlagGetters(t *testing.T) {
 	assert.Equal(t, []int{10, 20}, intSliceValue)
 }
 
+// TestNegatableFlag checks that boolean flags with the
+// `negatable:""` tag can be toggled with `--no-...` prefixes.
 func TestNegatableFlag(t *testing.T) {
-	t.Parallel()
 
 	// Test cases
 	tests := []struct {
@@ -414,6 +438,7 @@ func TestNegatableFlag(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			test := &testConfig{
 				cfg:    tt.cfg,
 				args:   tt.args,
@@ -424,6 +449,8 @@ func TestNegatableFlag(t *testing.T) {
 	}
 }
 
+// TestCustomSeparators checks that slice and map flags correctly
+// use custom separators defined with `sep` and `mapsep` tags.
 func TestCustomSeparators(t *testing.T) {
 	t.Parallel()
 
@@ -497,3 +524,132 @@ func TestCustomSeparators(t *testing.T) {
 		})
 	}
 }
+
+// // TestXORFlags verifies the behavior of mutually exclusive flags
+// // defined with the `xor:""` tag in various nested and embedded
+// // struct configurations.
+// func TestXORFlags(t *testing.T) {
+// 	t.Parallel()
+//
+// 	tests := []struct {
+// 		name         string
+// 		args         []string
+// 		expErr       error
+// 		expCfg       xorConfig
+// 		expFlagCount int
+// 	}{
+// 		// --- VALID CASES ---
+// 		{
+// 			name:         "Valid top-level XOR",
+// 			args:         []string{"--apple", "rotten"},
+// 			expCfg:       xorConfig{Apple: "rotten"},
+// 			expFlagCount: 10,
+// 		},
+// 		{
+// 			name: "Valid nested XOR",
+// 			args: []string{"--juice-orange"},
+// 			expCfg: xorConfig{
+// 				Juice: JuiceGroup{
+// 					Orange: true,
+// 				},
+// 			},
+// 			expFlagCount: 10,
+// 		},
+// 		{
+// 			name:         "Valid embedded XOR",
+// 			args:         []string{"--milk"},
+// 			expCfg:       xorConfig{EmbeddedXor: EmbeddedXor{Milk: true}},
+// 			expFlagCount: 10,
+// 		},
+// 		{
+// 			name:         "Valid multi-group XOR",
+// 			args:         []string{"-q"},
+// 			expCfg:       xorConfig{Quiet: true},
+// 			expFlagCount: 10,
+// 		},
+//
+// 		// --- INVALID CASES ---
+// 		{
+// 			name:         "Invalid top-level XOR",
+// 			args:         []string{"--apple", "rotten", "--banana", "ape"},
+// 			expErr:       errors.New(`if any flags in the group [apple banana grape] are set none of the others can be; [apple banana] were all set`),
+// 			expFlagCount: 10,
+// 		},
+// 		{
+// 			name:         "Invalid nested XOR",
+// 			args:         []string{"--juice-orange", "--juice-lemon"},
+// 			expErr:       errors.New(`if any flags in the group [lemon orange] are set none of the others can be; [lemon orange] were all set`),
+// 			expFlagCount: 10,
+// 		},
+// 		{
+// 			name:         "Invalid embedded XOR",
+// 			args:         []string{"--water", "--milk"},
+// 			expErr:       errors.New(`if any flags in the group [milk water] are set none of the others can be; [milk water] were all set`),
+// 			expFlagCount: 10,
+// 		},
+// 		{
+// 			name:         "Invalid top-level and embedded XOR",
+// 			args:         []string{"--apple", "--grape"},
+// 			expErr:       errors.New(`if any flags in the group [apple banana grape] are set none of the others can be; [apple grape] were all set`),
+// 			expFlagCount: 10,
+// 		},
+// 		{
+// 			name:         "Invalid multi-group XOR (output group)",
+// 			args:         []string{"-v", "-q"},
+// 			expErr:       errors.New(`if any flags in the group [q v] are set none of the others can be; [q v] were all set`),
+// 			expFlagCount: 10,
+// 		},
+// 		{
+// 			name:         "Invalid multi-group XOR (verbosity group)",
+// 			args:         []string{"-v", "-l"},
+// 			expErr:       errors.New(`if any flags in the group [l v] are set none of the others can be; [l v] were all set`),
+// 			expFlagCount: 10,
+// 		},
+// 	}
+//
+// 	for _, tt := range tests {
+// 		t.Run(tt.name, func(t *testing.T) {
+// 			test := &testConfig{
+// 				cfg:     &xorConfig{},
+// 				args:    tt.args,
+// 				expCfg:  tt.expCfg,
+// 				expErr2: tt.expErr,
+// 			}
+// 			run(t, test)
+// 		})
+// 	}
+//
+// 	// for _, tt := range tests {
+// 	// 	t.Run(tt.name, func(t *testing.T) {
+// 	// 		t.Helper()
+// 	// 		cfg := &xorConfig{}
+// 	//
+// 	// 		// Generate the command with the test config.
+// 	// 		root, err := newCommandWithArgs(cfg, tt.args)
+// 	// 		require.NoError(t, err)
+// 	//
+// 	// 		// Execute the command and capture the error.
+// 	// 		_, execErr := root.ExecuteC()
+// 	//
+// 	// 		if tt.expErr != nil {
+// 	// 			require.Error(t, execErr)
+// 	// 			// We may need to make this assertion less strict, as cobra might wrap the error.
+// 	// 			assert.Contains(t, execErr.Error(), tt.expErr.Error())
+// 	// 		} else {
+// 	// 			require.NoError(t, execErr)
+// 	// 			// Only check the final struct state on success cases.
+// 	// 			assert.Equal(t, &tt.expCfg, cfg)
+// 	// 		}
+// 	// 	})
+// 	// }
+// }
+//
+// // countFlags is a helper to count the number of flags in a pflag.FlagSet.
+// func countFlags(f *pflag.FlagSet) int {
+// 	count := 0
+// 	f.VisitAll(func(*pflag.Flag) {
+// 		count++
+// 	})
+//
+// 	return count
+// }

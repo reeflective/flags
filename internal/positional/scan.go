@@ -41,6 +41,14 @@ func ScanArgs(val reflect.Value, stag *parser.MultiTag, opts ...parser.OptFunc) 
 		}
 	}
 
+	// Validate passthrough arguments.
+	for i, arg := range args.slots {
+		if arg.Passthrough && i < len(args.slots)-1 {
+			return nil, fmt.Errorf("%w: passthrough argument %s must be the last positional argument",
+				errors.ErrInvalidTag, arg.Name)
+		}
+	}
+
 	// After scanning all fields, validate the configuration.
 	if err := args.validateGreedySlices(); err != nil {
 		return nil, err
@@ -89,6 +97,17 @@ func (args *Args) scanArg(field reflect.StructField, value reflect.Value, reqAll
 		value:    values.NewValue(value, nil, nil),
 	}
 
+	// Check for passthrough tag
+	if _, ok := ptag.Get("passthrough"); ok {
+		// Passthrough argument must be a slice of strings.
+		if field.Type.Kind() != reflect.Slice || field.Type.Elem().Kind() != reflect.String {
+			return fmt.Errorf("%w: passthrough argument %s must be of type []string",
+				errors.ErrInvalidTag, field.Name)
+		}
+		arg.Passthrough = true
+		arg.Maximum = -1
+	}
+
 	args.slots = append(args.slots, arg)
 	args.totalMin += minArgs // min is never < 0
 
@@ -111,7 +130,6 @@ func (args *Args) scanArg(field reflect.StructField, value reflect.Value, reqAll
 	// Set up any validations.
 	if validator := validation.Setup(value, field, choices, opt.Validator); validator != nil {
 		arg.Validator = validator
-		// val = values.NewValidator(val, validator)
 	}
 
 	return nil

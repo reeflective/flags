@@ -54,7 +54,7 @@ func DefOpts() *Opts {
 		FlagTag:     "flag",
 		FlagDivider: "-",
 		EnvDivider:  "_",
-		Flatten:     true,
+		Flatten:     false,
 	}
 }
 

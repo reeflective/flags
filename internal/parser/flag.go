@@ -24,6 +24,7 @@ type Flag struct {
 	Negatable     bool         // If true, a --no-<name> flag is generated.
 	Separator     *string      // Custom separator for slice values.
 	MapSeparator  *string      // Custom separator for map values.
+	XORGroup      []string     // Mutually exclusive flag groups.
 }
 
 // parseFlagTag parses the struct tag for a given field and returns a Flag object.
@@ -62,6 +63,7 @@ func parseFlagTag(field reflect.StructField, opts *Opts) (*Flag, *MultiTag, erro
 		Choices:       getFlagChoices(tag),
 		OptionalValue: tag.GetMany("optional-value"),
 		Negatable:     isBool(field.Type) && isSet(tag, "negatable"),
+		XORGroup:      getFlagXOR(tag),
 	}
 
 	// Add separators if they are present.
@@ -194,6 +196,17 @@ func getFlagChoices(tag *MultiTag) []string {
 	}
 
 	return choices
+}
+
+func getFlagXOR(tag *MultiTag) []string {
+	var xorGroups []string
+
+	xorTags := tag.GetMany("xor")
+	for _, xor := range xorTags {
+		xorGroups = append(xorGroups, strings.Split(xor, ",")...)
+	}
+
+	return xorGroups
 }
 
 func parseEnvTag(flagName string, field reflect.StructField, options *Opts) string {
