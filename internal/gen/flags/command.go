@@ -219,6 +219,7 @@ func newCommand(name string, mtag *parser.MultiTag) *cobra.Command {
 
 	subc.Long, _ = mtag.Get("long-description")
 	subc.Aliases = mtag.GetMany("alias")
+	subc.Aliases = append(subc.Aliases, mtag.GetMany("aliases")...)
 	_, subc.Hidden = mtag.Get("hidden")
 
 	return subc

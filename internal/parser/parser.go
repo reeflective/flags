@@ -36,20 +36,31 @@ func ParseGroup(value reflect.Value, field reflect.StructField, parentOpts *Opts
 	}
 	opts.Vars = newVars
 
-	// Correctly apply prefixing based on the flatten option.
-	if !field.Anonymous || opts.Flatten {
+	_, isEmbed := tag.Get("embed")
+
+	// Apply prefixing for nested groups, but not for embedded or anonymous structs (unless flattened).
+	if (!field.Anonymous && !isEmbed) || opts.Flatten {
 		baseName := CamelToFlag(field.Name, opts.FlagDivider)
 		opts.Prefix = opts.Prefix + baseName + opts.FlagDivider
 	}
 
 	// Handle tag-based namespacing, which can override the above.
-	if delim, ok := tag.Get("namespace-delimiter"); ok {
-		if namespace, ok := tag.Get("namespace"); ok {
-			opts.Prefix = namespace + delim
-		}
+	delim, ok := tag.Get("namespace-delimiter")
+	if !ok || delim == "" {
+		delim = "."
 	}
+
+	// if delim, ok := tag.Get("namespace-delimiter"); ok {
+	if namespace, ok := tag.Get("namespace"); ok {
+		opts.Prefix = namespace + delim
+	} else if prefix, ok := tag.Get("prefix"); ok {
+		opts.Prefix = prefix + delim
+	}
+	// }
 	if envNamespace, ok := tag.Get("env-namespace"); ok {
 		opts.EnvPrefix = envNamespace
+	} else if envPrefix, ok := tag.Get("envprefix"); ok {
+		opts.EnvPrefix = envPrefix
 	}
 
 	ptrVal := EnsureAddr(value)

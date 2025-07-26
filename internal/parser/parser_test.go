@@ -450,6 +450,154 @@ func TestFlatten(t *testing.T) {
 	assert.False(t, opt.Flatten)
 }
 
+func TestParseFlagTag(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		tag      string
+		expected Flag
+	}{
+		{
+			name: "Simple long name",
+			tag:  `long:"my-flag"`,
+			expected: Flag{
+				Name:     "my-flag",
+				EnvNames: []string{"MY_FLAG"},
+			},
+		},
+		{
+			name: "Long and short name",
+			tag:  `long:"my-flag" short:"f"`,
+			expected: Flag{
+				Name:     "my-flag",
+				Short:    "f",
+				EnvNames: []string{"MY_FLAG"},
+			},
+		},
+		{
+			name: "Comma-separated env vars",
+			tag:  `long:"my-flag" env:"MY_VAR,OLD_VAR"`,
+			expected: Flag{
+				Name:     "my-flag",
+				EnvNames: []string{"MY_VAR", "OLD_VAR"},
+			},
+		},
+		{
+			name: "Comma-separated xor groups",
+			tag:  `long:"my-flag" xor:"one,two"`,
+			expected: Flag{
+				Name:     "my-flag",
+				EnvNames: []string{"MY_FLAG"},
+				XORGroup: []string{"one", "two"},
+			},
+		},
+		{
+			name: "Comma-separated and groups",
+			tag:  `long:"my-flag" and:"one,two"`,
+			expected: Flag{
+				Name:     "my-flag",
+				EnvNames: []string{"MY_FLAG"},
+				ANDGroup: []string{"one", "two"},
+			},
+		},
+		{
+			name: "All together",
+			tag:  `long:"my-flag" short:"f" env:"MY_VAR" xor:"a,b" and:"c,d"`,
+			expected: Flag{
+				Name:     "my-flag",
+				Short:    "f",
+				EnvNames: []string{"MY_VAR"},
+				XORGroup: []string{"a", "b"},
+				ANDGroup: []string{"c", "d"},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			field := reflect.StructField{
+				Name: "MyField",
+				Tag:  reflect.StructTag(tt.tag),
+				Type: reflect.TypeOf(""),
+			}
+
+			opts := DefOpts()
+			flag, _, err := parseFlagTag(field, opts)
+			require.NoError(t, err)
+
+			// We only check the fields we care about for this test.
+			assert.Equal(t, tt.expected.Name, flag.Name)
+			assert.Equal(t, tt.expected.Short, flag.Short)
+			assert.Equal(t, tt.expected.EnvNames, flag.EnvNames)
+			assert.Equal(t, tt.expected.XORGroup, flag.XORGroup)
+			assert.Equal(t, tt.expected.ANDGroup, flag.ANDGroup)
+		})
+	}
+}
+
+func TestVariableExpansion(t *testing.T) {
+	t.Parallel()
+
+	// Test case for variables set via `set` tag.
+	t.Run("Tag-based variables", func(t *testing.T) {
+		t.Parallel()
+		cfg := &varExpansionConfig{}
+		flags, err := parse(cfg, ParseAll())
+		require.NoError(t, err)
+		require.Len(t, flags, 6)
+
+		// Assertions for the main group with variables
+		assert.Equal(t, "default", flags[0].DefValue[0])
+		assert.Equal(t, "placeholder", flags[1].Placeholder)
+		assert.Equal(t, "Usage is usage", flags[2].Usage)
+		assert.Equal(t, []string{"A", "B"}, flags[3].Choices)
+		assert.Equal(t, []string{"default"}, flags[4].OptionalValue)
+
+		// Assertion for the sibling group to ensure no variable leakage
+		assert.Equal(t, "${default_var}", flags[5].DefValue[0])
+	})
+
+	// New test case for variables set via functional option.
+	t.Run("Option-based variables", func(t *testing.T) {
+		t.Parallel()
+		cfg := &varExpansionConfig{}
+		vars := map[string]string{
+			"default_var":     "from_option",
+			"placeholder_var": "from_option",
+			"usage_var":       "from_option",
+			"choice1":         "C",
+			"choice2":         "D",
+		}
+		flags, err := parse(cfg, ParseAll(), WithVars(vars))
+		require.NoError(t, err)
+		require.Len(t, flags, 6)
+
+		// Assertions for the main group with variables
+		assert.Equal(t, "from_option", flags[0].DefValue[0])
+		assert.Equal(t, "from_option", flags[1].Placeholder)
+		assert.Equal(t, "Usage is from_option", flags[2].Usage)
+		assert.Equal(t, []string{"C", "D"}, flags[3].Choices)
+		assert.Equal(t, []string{"from_option"}, flags[4].OptionalValue)
+	})
+}
+
+func TestEmbedTag(t *testing.T) {
+	t.Parallel()
+
+	cfg := &embedConfig{}
+	flags, err := parse(cfg, ParseAll())
+	require.NoError(t, err)
+	require.Len(t, flags, 2)
+
+	// Assert that the embedded flag has no prefix.
+	assert.Equal(t, "flag1", flags[0].Name)
+
+	// Assert that the normal group flag has a prefix.
+	assert.Equal(t, "normal-flag2", flags[1].Name)
+}
+
 // parse is the single, intelligent entry point for parsing a struct into flags.
 // It uses a unified recursive approach to correctly handle nested groups and
 // avoid the double-parsing of anonymous fields that plagued the previous implementation.
@@ -631,143 +779,6 @@ type Simple struct {
 	Name string
 }
 
-func strP(value string) *string {
-	return &value
-}
-
-func TestParseFlagTag(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name     string
-		tag      string
-		expected Flag
-	}{
-		{
-			name: "Simple long name",
-			tag:  `long:"my-flag"`,
-			expected: Flag{
-				Name:     "my-flag",
-				EnvNames: []string{"MY_FLAG"},
-			},
-		},
-		{
-			name: "Long and short name",
-			tag:  `long:"my-flag" short:"f"`,
-			expected: Flag{
-				Name:     "my-flag",
-				Short:    "f",
-				EnvNames: []string{"MY_FLAG"},
-			},
-		},
-		{
-			name: "Comma-separated env vars",
-			tag:  `long:"my-flag" env:"MY_VAR,OLD_VAR"`,
-			expected: Flag{
-				Name:     "my-flag",
-				EnvNames: []string{"MY_VAR", "OLD_VAR"},
-			},
-		},
-		{
-			name: "Comma-separated xor groups",
-			tag:  `long:"my-flag" xor:"one,two"`,
-			expected: Flag{
-				Name:     "my-flag",
-				EnvNames: []string{"MY_FLAG"},
-				XORGroup: []string{"one", "two"},
-			},
-		},
-		{
-			name: "Comma-separated and groups",
-			tag:  `long:"my-flag" and:"one,two"`,
-			expected: Flag{
-				Name:     "my-flag",
-				EnvNames: []string{"MY_FLAG"},
-				ANDGroup: []string{"one", "two"},
-			},
-		},
-		{
-			name: "All together",
-			tag:  `long:"my-flag" short:"f" env:"MY_VAR" xor:"a,b" and:"c,d"`,
-			expected: Flag{
-				Name:     "my-flag",
-				Short:    "f",
-				EnvNames: []string{"MY_VAR"},
-				XORGroup: []string{"a", "b"},
-				ANDGroup: []string{"c", "d"},
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			field := reflect.StructField{
-				Name: "MyField",
-				Tag:  reflect.StructTag(tt.tag),
-				Type: reflect.TypeOf(""),
-			}
-
-			opts := DefOpts()
-			flag, _, err := parseFlagTag(field, opts)
-			require.NoError(t, err)
-
-			// We only check the fields we care about for this test.
-			assert.Equal(t, tt.expected.Name, flag.Name)
-			assert.Equal(t, tt.expected.Short, flag.Short)
-			assert.Equal(t, tt.expected.EnvNames, flag.EnvNames)
-			assert.Equal(t, tt.expected.XORGroup, flag.XORGroup)
-			assert.Equal(t, tt.expected.ANDGroup, flag.ANDGroup)
-		})
-	}
-}
-
-func TestVariableExpansion(t *testing.T) {
-	t.Parallel()
-
-	// Test case for variables set via `set` tag.
-	t.Run("Tag-based variables", func(t *testing.T) {
-		t.Parallel()
-		cfg := &varExpansionConfig{}
-		flags, err := parse(cfg, ParseAll())
-		require.NoError(t, err)
-		require.Len(t, flags, 6)
-
-		// Assertions for the main group with variables
-		assert.Equal(t, "default", flags[0].DefValue[0])
-		assert.Equal(t, "placeholder", flags[1].Placeholder)
-		assert.Equal(t, "Usage is usage", flags[2].Usage)
-		assert.Equal(t, []string{"A", "B"}, flags[3].Choices)
-		assert.Equal(t, []string{"default"}, flags[4].OptionalValue)
-
-		// Assertion for the sibling group to ensure no variable leakage
-		assert.Equal(t, "${default_var}", flags[5].DefValue[0])
-	})
-
-	// New test case for variables set via functional option.
-	t.Run("Option-based variables", func(t *testing.T) {
-		t.Parallel()
-		cfg := &varExpansionConfig{}
-		vars := map[string]string{
-			"default_var":     "from_option",
-			"placeholder_var": "from_option",
-			"usage_var":       "from_option",
-			"choice1":         "C",
-			"choice2":         "D",
-		}
-		flags, err := parse(cfg, ParseAll(), WithVars(vars))
-		require.NoError(t, err)
-		require.Len(t, flags, 6)
-
-		// Assertions for the main group with variables
-		assert.Equal(t, "from_option", flags[0].DefValue[0])
-		assert.Equal(t, "from_option", flags[1].Placeholder)
-		assert.Equal(t, "Usage is from_option", flags[2].Usage)
-		assert.Equal(t, []string{"C", "D"}, flags[3].Choices)
-		assert.Equal(t, []string{"from_option"}, flags[4].OptionalValue)
-	})
-}
-
 type varExpansionConfig struct {
 	Group struct {
 		Default       string `default:"${default_var}"     long:"default"`
@@ -780,4 +791,17 @@ type varExpansionConfig struct {
 	SiblingGroup struct {
 		Default string `default:"${default_var}" long:"default"` // Should not be expanded
 	} `group:"sibling"`
+}
+
+type embedConfig struct {
+	Embedded struct {
+		Flag1 string `long:"flag1"`
+	} `embed:""`
+	Normal struct {
+		Flag2 string `long:"flag2"`
+	} `group:"normal"`
+}
+
+func strP(value string) *string {
+	return &value
 }

@@ -109,6 +109,11 @@ func getFlagName(field reflect.StructField, tag *MultiTag, opts *Opts) (string, 
 		long = name
 	}
 
+	// Layer on Kong's 'name' alias for long name.
+	if name, isSet := tag.Get("name"); isSet {
+		long = name
+	}
+
 	// Layer on standard 'long' and 'short' tags, which take precedence if present.
 	if l, ok := tag.Get("long"); ok {
 		long = l
