@@ -8,8 +8,9 @@ import (
 
 // context holds all the necessary information for scanning and building a command.
 type context struct {
-	cmd   *cobra.Command
-	group *cobra.Group
-	opts  *parser.Opts
-	Flags []*parser.Flag // Collect all parsed flags for post-processing.
+	cmd            *cobra.Command
+	group          *cobra.Group
+	opts           *parser.Opts
+	Flags          []*parser.Flag // Collect all parsed flags for post-processing.
+	defaultCommand *cobra.Command
 }

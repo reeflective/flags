@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 
 	"github.com/reeflective/flags/internal/errors"
 	"github.com/reeflective/flags/internal/interfaces"
@@ -150,6 +151,55 @@ func command(parentCtx *context, tag *parser.MultiTag, val reflect.Value) (bool,
 
 	// And bind this subcommand back to us
 	parentCtx.cmd.AddCommand(subc)
+
+	// Check if this subcommand is marked as the default.
+	if defaultVal, isDefault := tag.Get("default"); isDefault {
+		// Ensure another default command hasn't already been set.
+		if parentCtx.defaultCommand != nil {
+			return true, fmt.Errorf("cannot set '%s' as default command, '%s' is already the default",
+				subc.Name(), parentCtx.defaultCommand.Name())
+		}
+
+		// Set this command as the default on the parent's context.
+		parentCtx.defaultCommand = subc
+
+		// Add the subcommand's flags to the parent's flag set, but hide them.
+		subc.Flags().VisitAll(func(f *pflag.Flag) {
+			f.Hidden = true
+			parentCtx.cmd.Flags().AddFlag(f)
+		})
+
+		// Create the RunE function for the parent to execute the default command.
+		parentCtx.cmd.RunE = func(cmd *cobra.Command, args []string) error {
+			// If default:"1", no args are allowed.
+			if defaultVal == "1" && len(args) > 0 {
+				// Let cobra handle the "unknown command" error by returning nothing.
+				return nil
+			}
+
+			// Find the default subcommand.
+			var defaultCmd *cobra.Command
+			for _, sub := range cmd.Commands() {
+				if sub.Name() == subc.Name() {
+					defaultCmd = sub
+
+					break
+				}
+			}
+
+			if defaultCmd == nil {
+				// This should not happen if generation is correct.
+				return fmt.Errorf("default command %s not found", subc.Name())
+			}
+
+			// Directly invoke the default subcommand's RunE, if it exists.
+			if defaultCmd.RunE != nil {
+				return defaultCmd.RunE(defaultCmd, args)
+			}
+
+			return nil
+		}
+	}
 
 	return true, nil
 }

@@ -342,3 +342,82 @@ func TestSubcommandsRequiredUsage(t *testing.T) {
 	err = root.Execute()
 	test.Error(err)
 }
+
+//
+// Default Command Tests ----------------------------------------------------- //
+//
+
+type defaultCommandRoot struct {
+	Run  runCommand  `command:"run"  default:"withargs"`
+	Test testCommand `command:"test"`
+}
+
+type runCommand struct {
+	Value string `long:"value"`
+}
+
+func (r *runCommand) Execute(args []string) error {
+	if len(args) > 0 {
+		r.Value = args[0]
+	}
+
+	return nil
+}
+
+type simpleDefaultCommandRoot struct {
+	Run  runCommand  `command:"run"  default:"1"`
+	Test testCommand `command:"test"`
+}
+
+type invalidDoubleDefaultCommandRoot struct {
+	Run  runCommand `command:"run"  default:"1"`
+	Test runCommand `command:"test" default:"1"`
+}
+
+func TestDefaultCommand(t *testing.T) {
+	t.Parallel()
+
+	// Success case: `default:"withargs"` should execute the default command with args.
+	t.Run("With args success", func(t *testing.T) {
+		t.Parallel()
+		cfg := &defaultCommandRoot{}
+		cmd, err := newCommandWithArgs(cfg, []string{"--value=foo"})
+		require.NoError(t, err)
+
+		err = cmd.Execute()
+		require.NoError(t, err)
+		assert.Equal(t, "foo", cfg.Run.Value)
+	})
+
+	// Success case: `default:"1"` should execute the default command with no args.
+	t.Run("Simple default success", func(t *testing.T) {
+		t.Parallel()
+		cfg := &simpleDefaultCommandRoot{}
+		cmd, err := newCommandWithArgs(cfg, []string{})
+		require.NoError(t, err)
+
+		err = cmd.Execute()
+		require.NoError(t, err)
+	})
+
+	// Failure case: `default:"1"` should fail if args are provided.
+	t.Run("Simple default with args fail", func(t *testing.T) {
+		t.Parallel()
+		cfg := &simpleDefaultCommandRoot{}
+		cmd, err := newCommandWithArgs(cfg, []string{"some-arg"})
+		require.NoError(t, err)
+
+		err = cmd.Execute()
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "unknown subcommand \"some-arg\"")
+	})
+
+	// Failure case: Two default commands should cause an error.
+	t.Run("Double default fail", func(t *testing.T) {
+		t.Parallel()
+		cfg := &invalidDoubleDefaultCommandRoot{}
+		_, err := Generate(cfg)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "cannot set 'test' as default command, 'run' is already the default")
+	})
+}
