@@ -16,7 +16,8 @@ func group(comps *carapace.Carapace, cmd *cobra.Command, val reflect.Value, fiel
 	mtag, skip, err := parser.GetFieldTag(*field)
 	if err != nil {
 		return true, fmt.Errorf("%w: %s", errors.ErrInvalidTag, err.Error())
-	} else if skip {
+	}
+	if skip {
 		return false, nil
 	}
 
@@ -27,51 +28,55 @@ func group(comps *carapace.Carapace, cmd *cobra.Command, val reflect.Value, fiel
 		return false, nil
 	}
 
-	// If we have to work on this struct, check pointers n stuff
-	var ptrval reflect.Value
+	// Ensure we have a non-nil pointer to the struct value.
+	ptrval := parser.EnsureAddr(val)
+	data := ptrval.Interface()
 
-	if val.Kind() == reflect.Ptr {
-		ptrval = val
-		if ptrval.IsNil() {
-			ptrval.Set(reflect.New(ptrval.Type().Elem()))
-		}
-	} else {
-		ptrval = val.Addr()
-	}
-
-	// A group of options ("group" is the legacy name)
+	// Handle legacy flag groups.
 	if legacyIsSet && legacyGroup != "" {
-		// Scan the struct recursively for flags within this group
-		groupFlagScanner := flagComps(comps, newFlagSetComps()) // Create a new FlagSetComps for this group
-		if err := parser.Scan(ptrval.Interface(), groupFlagScanner); err != nil {
-			return true, err
-		}
+		err := scanFlagGroup(comps, data)
 
-		return true, nil
+		return true, err
 	}
 
-	// Or a group of commands and options
+	// Handle command groups.
 	if commandsIsSet {
-		var group *cobra.Group
-		if !isStringFalsy(commandGroup) {
-			group = &cobra.Group{
-				Title: commandGroup,
-				ID:    commandGroup,
-			}
-			cmd.AddGroup(group)
-		}
+		err := scanCommandGroup(cmd, comps, data, commandGroup)
 
-		// Parse for commands
-		compScanner := completionScanner(cmd, comps, newFlagSetComps()) // Pass a new FlagSetComps
-		if err := parser.Scan(ptrval.Interface(), compScanner); err != nil {
-			return true, err
-		}
-
-		return true, nil
+		return true, err
 	}
 
-	// If we are here, we didn't find a command or a group.
 	return false, nil
+}
+
+// scanFlagGroup scans a struct for flags and registers their completions.
+func scanFlagGroup(comps *carapace.Carapace, data any) error {
+	// Scan the struct recursively for flags within this group.
+	groupFlagScanner := flagComps(comps, newFlagSetComps())
+	if err := parser.Scan(data, groupFlagScanner); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// scanCommandGroup scans a struct for commands and flags, adding them to a cobra.Group.
+func scanCommandGroup(cmd *cobra.Command, comps *carapace.Carapace, data any, groupName string) error {
+	if !isStringFalsy(groupName) {
+		group := &cobra.Group{
+			Title: groupName,
+			ID:    groupName,
+		}
+		cmd.AddGroup(group)
+	}
+
+	// Parse for commands and their completions.
+	compScanner := completionScanner(cmd, comps, newFlagSetComps())
+	if err := parser.Scan(data, compScanner); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // addFlagComps scans a struct (potentially nested), for a set of flags, and without

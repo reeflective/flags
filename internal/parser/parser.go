@@ -16,26 +16,56 @@ func ParseGroup(value reflect.Value, field reflect.StructField, parentOpts *Opts
 	opts := parentOpts.Copy()
 	tag, _, _ := GetFieldTag(field)
 
-	// Start with the parent's variables.
+	// Prepare variables and namespacing for the group.
+	opts.Vars = prepareGroupVars(tag, parentOpts)
+	applyGroupNamespacing(opts, field, tag)
+
+	// Scan the group for flags.
+	var flags []*Flag
+	scanner := func(val reflect.Value, sfield *reflect.StructField) (bool, error) {
+		fieldFlags, found, err := ParseField(val, *sfield, opts)
+		if err != nil {
+			return false, err
+		}
+		if found {
+			flags = append(flags, fieldFlags...)
+		}
+
+		return true, nil
+	}
+
+	ptrVal := EnsureAddr(value)
+	if err := Scan(ptrVal.Interface(), scanner); err != nil {
+		return nil, err
+	}
+
+	// Apply post-parsing modifications like XOR prefixing.
+	applyXORPrefix(flags, field, tag, opts)
+
+	return flags, nil
+}
+
+// prepareGroupVars merges variables from parent options, group tags, and global variables.
+func prepareGroupVars(tag *MultiTag, parentOpts *Opts) map[string]string {
 	newVars := make(map[string]string)
 	for k, v := range parentOpts.Vars {
 		newVars[k] = v
 	}
-
-	// Add the variables from the current group's `set` tags.
 	for _, setVal := range tag.GetMany("set") {
 		parts := strings.SplitN(setVal, "=", 2)
 		if len(parts) == 2 {
 			newVars[parts[0]] = parts[1]
 		}
 	}
-
-	// Finally, merge the global variables.
 	for k, v := range parentOpts.GlobalVars {
 		newVars[k] = v
 	}
-	opts.Vars = newVars
 
+	return newVars
+}
+
+// applyGroupNamespacing modifies the options' prefixes based on group structure and tags.
+func applyGroupNamespacing(opts *Opts, field reflect.StructField, tag *MultiTag) {
 	_, isEmbed := tag.Get("embed")
 
 	// Apply prefixing for nested groups, but not for embedded or anonymous structs (unless flattened).
@@ -50,52 +80,30 @@ func ParseGroup(value reflect.Value, field reflect.StructField, parentOpts *Opts
 		delim = "."
 	}
 
-	// if delim, ok := tag.Get("namespace-delimiter"); ok {
 	if namespace, ok := tag.Get("namespace"); ok {
 		opts.Prefix = namespace + delim
 	} else if prefix, ok := tag.Get("prefix"); ok {
 		opts.Prefix = prefix + delim
 	}
-	// }
+
 	if envNamespace, ok := tag.Get("env-namespace"); ok {
 		opts.EnvPrefix = envNamespace
 	} else if envPrefix, ok := tag.Get("envprefix"); ok {
 		opts.EnvPrefix = envPrefix
 	}
+}
 
-	ptrVal := EnsureAddr(value)
-	data := ptrVal.Interface()
-
-	var flags []*Flag
-	scanner := func(val reflect.Value, sfield *reflect.StructField) (bool, error) {
-		fieldFlags, found, err := ParseField(val, *sfield, opts)
-		if err != nil {
-			return false, err
-		}
-		if found {
-			flags = append(flags, fieldFlags...)
-		}
-
-		return true, nil
-	}
-
-	if err := Scan(data, scanner); err != nil {
-		return nil, err
-	}
-
-	// Apply XOR prefix if present.
+// applyXORPrefix adds a prefix to the names of flags within an XOR group.
+func applyXORPrefix(flags []*Flag, field reflect.StructField, tag *MultiTag, opts *Opts) {
 	if xorPrefix, ok := tag.Get("xorprefix"); ok {
 		fieldPrefix := CamelToFlag(field.Name, opts.FlagDivider) + opts.FlagDivider
 		for _, flag := range flags {
 			if len(flag.XORGroup) > 0 {
-				// Remove the field name prefix before adding the xorprefix.
 				flag.Name = strings.TrimPrefix(flag.Name, fieldPrefix)
 				flag.Name = xorPrefix + opts.FlagDivider + flag.Name
 			}
 		}
 	}
-
-	return flags, nil
 }
 
 // ParseField parses a single struct field. It acts as a dispatcher, checking if
@@ -172,7 +180,7 @@ func parseInfo(fld reflect.StructField, opts *Opts) (*Flag, *MultiTag, error) {
 		return nil, nil, nil
 	}
 
-	flag, tag, err := parseFlagTag(fld, opts)
+	flag, tag, err := parseFlag(fld, opts)
 	if flag == nil || err != nil {
 		return flag, tag, err
 	}

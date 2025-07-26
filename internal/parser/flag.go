@@ -28,55 +28,75 @@ type Flag struct {
 	ANDGroup      []string     // "AND" flag groups.
 }
 
-// parseFlagTag parses the struct tag for a given field and returns a Flag object.
-func parseFlagTag(field reflect.StructField, opts *Opts) (*Flag, *MultiTag, error) {
+// parseFlag parses the struct tag for a given field and returns a Flag object.
+func parseFlag(field reflect.StructField, opts *Opts) (*Flag, *MultiTag, error) {
 	tag, skip, err := GetFieldTag(field)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	// Check if the field is explicitly ignored.
-	if _, isSet := tag.Get("kong"); isSet && tag.GetMany("kong")[0] == "-" {
+	// Check if the field should be skipped.
+	if shouldSkipField(tag, skip, opts) {
 		return nil, tag, nil
-	}
-	if _, isSet := tag.Get(opts.FlagTag); isSet && tag.GetMany(opts.FlagTag)[0] == "-" {
-		return nil, tag, nil
-	}
-	if _, isSet := tag.Get("no-flag"); isSet {
-		return nil, tag, nil
-	}
-	if skip && !opts.ParseAll {
-		return nil, nil, nil
 	}
 
 	// Get the flag name and potential short name.
 	name, short := getFlagName(field, tag, opts)
-
 	if name == "" && short == "" {
 		return nil, tag, nil
 	}
 
-	// Build the flag with all its metadata.
-	flag := &Flag{
+	// Build the initial flag from tags.
+	flag := buildFlag(name, short, field, tag, opts)
+
+	// Apply final modifications and expansions.
+	finalizeFlag(flag, tag, opts)
+
+	return flag, tag, nil
+}
+
+// shouldSkipField checks if a field should be ignored based on its tags.
+func shouldSkipField(tag *MultiTag, skip bool, opts *Opts) bool {
+	if val, isSet := tag.Get("kong"); isSet && val == "-" {
+		return true
+	}
+	if val, isSet := tag.Get(opts.FlagTag); isSet && val == "-" {
+		return true
+	}
+	if _, isSet := tag.Get("no-flag"); isSet {
+		return true
+	}
+
+	return skip && !opts.ParseAll
+}
+
+// buildFlag constructs the initial Flag struct from parsed tag information.
+func buildFlag(name, short string, field reflect.StructField, tag *MultiTag, opts *Opts) *Flag {
+	return &Flag{
 		Name:          name,
 		Short:         short,
 		EnvNames:      parseEnvTag(name, field, opts),
-		Usage:         expandVar(getFlagUsage(tag), opts.Vars),
-		Placeholder:   expandVar(getFlagPlaceholder(tag), opts.Vars),
+		Usage:         getFlagUsage(tag),
+		Placeholder:   getFlagPlaceholder(tag),
 		DefValue:      getFlagDefault(tag),
 		Hidden:        isSet(tag, "hidden"),
 		Deprecated:    isSet(tag, "deprecated"),
-		Choices:       expandStringSlice(getFlagChoices(tag), opts.Vars),
-		OptionalValue: expandStringSlice(tag.GetMany("optional-value"), opts.Vars),
+		Choices:       getFlagChoices(tag),
+		OptionalValue: tag.GetMany("optional-value"),
 		Negatable:     getFlagNegatable(field, tag),
 		XORGroup:      getFlagXOR(tag),
 		ANDGroup:      getFlagAND(tag),
 	}
+}
 
-	// Expand variables in default value.
-	if len(flag.DefValue) > 0 {
-		flag.DefValue[0] = expandVar(flag.DefValue[0], opts.Vars)
-	}
+// finalizeFlag applies variable expansions and final settings to a Flag.
+func finalizeFlag(flag *Flag, tag *MultiTag, opts *Opts) {
+	// Expand variables in usage, placeholder, default value, and choices.
+	flag.Usage = expandVar(flag.Usage, opts.Vars)
+	flag.Placeholder = expandVar(flag.Placeholder, opts.Vars)
+	flag.DefValue = expandStringSlice(flag.DefValue, opts.Vars)
+	flag.Choices = expandStringSlice(flag.Choices, opts.Vars)
+	flag.OptionalValue = expandStringSlice(flag.OptionalValue, opts.Vars)
 
 	// Add separators if they are present.
 	if sep, ok := tag.Get("sep"); ok {
@@ -86,10 +106,9 @@ func parseFlagTag(field reflect.StructField, opts *Opts) (*Flag, *MultiTag, erro
 		flag.MapSeparator = &mapsep
 	}
 
-	required, _ := tag.Get("required")
-	flag.Required = isSet(tag, "required") && IsStringFalsy(required)
-
-	return flag, tag, nil
+	// Determine if the flag is required.
+	requiredVal, _ := tag.Get("required")
+	flag.Required = isSet(tag, "required") && !IsStringFalsy(requiredVal)
 }
 
 func isBool(t reflect.Type) bool {
@@ -103,11 +122,6 @@ func isBool(t reflect.Type) bool {
 func getFlagName(field reflect.StructField, tag *MultiTag, opts *Opts) (string, string) {
 	// Start with values from sflags format, which can include the ignore-prefix tilde.
 	long, short, ignorePrefix := parseSFlag(tag, opts)
-
-	// Layer on Kong's 'name' alias for long name.
-	if name, isSet := tag.Get("name"); isSet {
-		long = name
-	}
 
 	// Layer on Kong's 'name' alias for long name.
 	if name, isSet := tag.Get("name"); isSet {

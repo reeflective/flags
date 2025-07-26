@@ -524,7 +524,7 @@ func TestParseFlagTag(t *testing.T) {
 			}
 
 			opts := DefOpts()
-			flag, _, err := parseFlagTag(field, opts)
+			flag, _, err := parseFlag(field, opts)
 			require.NoError(t, err)
 
 			// We only check the fields we care about for this test.

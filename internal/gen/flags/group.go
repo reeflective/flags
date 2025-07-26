@@ -6,7 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	flagerrors "github.com/reeflective/flags/internal/errors"
+	"github.com/reeflective/flags/internal/errors"
 	"github.com/reeflective/flags/internal/parser"
 )
 
@@ -41,7 +41,7 @@ func flags(ctx *context) parser.Handler {
 func flagsGroup(ctx *context, val reflect.Value, field *reflect.StructField) (bool, error) {
 	mtag, skip, err := parser.GetFieldTag(*field)
 	if err != nil {
-		return true, fmt.Errorf("%w: %s", flagerrors.ErrParse, err.Error())
+		return true, fmt.Errorf("%w: %s", errors.ErrParse, err.Error())
 	}
 	if skip {
 		return false, nil

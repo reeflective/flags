@@ -2,7 +2,6 @@ package flags
 
 import (
 	"fmt"
-	"os"
 	"reflect"
 	"strings"
 
@@ -13,90 +12,6 @@ import (
 	"github.com/reeflective/flags/internal/interfaces"
 	"github.com/reeflective/flags/internal/parser"
 )
-
-// Generate returns a root cobra Command to be used directly as an entry-point.
-// If any error arises in the scanning process, this function will return a nil
-// command and the error.
-func Generate(data any, opts ...parser.OptFunc) (*cobra.Command, error) {
-	cmd := &cobra.Command{
-		Use:              os.Args[0],
-		Annotations:      map[string]string{},
-		TraverseChildren: true,
-	}
-
-	// Scan the struct and bind all commands to this root.
-	if err := Bind(cmd, data, opts...); err != nil {
-		return nil, err
-	}
-
-	return cmd, nil
-}
-
-// Bind scans the struct and binds all commands/flags to the command given in parameter.
-func Bind(cmd *cobra.Command, data any, opts ...parser.OptFunc) error {
-	// Create the initial options from the functions provided.
-	ctx := &context{
-		cmd:  cmd,
-		opts: parser.DefOpts().Apply(opts...),
-	}
-
-	// Make a scan handler that will run various scans on all
-	// the struct fields, with arbitrary levels of nesting.
-	scanner := scanRoot(ctx)
-
-	// And scan the struct recursively, for arg/option groups and subcommands
-	if err := parser.Scan(data, scanner); err != nil {
-		return fmt.Errorf("%w: %w", errors.ErrParse, err)
-	}
-
-	// Subcommands, optional or not
-	if cmd.HasSubCommands() {
-		cmd.RunE = unknownSubcommandAction
-	} else {
-		setRuns(cmd, data)
-
-		// After scanning, apply rules that span multiple flags, like XOR.
-		if err := applyFlagRules(ctx); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// scanRoot is in charge of building a recursive scanner, working on a given struct field at a time,
-// checking for arguments, subcommands and option groups.
-func scanRoot(ctx *context) parser.Handler {
-	handler := func(val reflect.Value, sfield *reflect.StructField) (bool, error) {
-		// Parse the tag or die tryin. We should find one, or we're not interested.
-		mtag, _, err := parser.GetFieldTag(*sfield)
-		if err != nil {
-			return true, fmt.Errorf("%w: %s", errors.ErrInvalidTag, err.Error())
-		}
-
-		// If the field is marked as -one or more- positional arguments, we
-		// return either on a successful scan of them, or with an error doing so.
-		if found, err := positionals(ctx, mtag, val); found || err != nil {
-			return found, err
-		}
-
-		// Else, if the field is marked as a subcommand, we either return on
-		// a successful scan of the subcommand, or with an error doing so.
-		if found, err := command(ctx, mtag, val); found || err != nil {
-			return found, err
-		}
-
-		// Else, if the field is a struct group of options
-		if found, err := flagsGroup(ctx, val, sfield); found || err != nil {
-			return found, err
-		}
-
-		// Else, try scanning the field as a simple option flag
-		return flags(ctx)(val, sfield)
-	}
-
-	return handler
-}
 
 // command finds if a field is marked as a subcommand, and if yes, scans it.
 func command(parentCtx *context, tag *parser.MultiTag, val reflect.Value) (bool, error) {
@@ -109,38 +24,54 @@ func command(parentCtx *context, tag *parser.MultiTag, val reflect.Value) (bool,
 		return false, nil
 	}
 
-	// Get a guaranteed non-nil pointer to the struct value.
-	ptrVal := parser.EnsureAddr(val)
-	data := ptrVal.Interface()
+	// Create and configure the subcommand
+	subc, data := createSubcommand(parentCtx, name, tag, val)
 
-	// Always populate the maximum amount of information
-	// in the new subcommand, so that when it scans recursively,
-	// we can have a more granular context.
-	subc := newCommand(name, tag)
-
-	// Set the group to which the subcommand belongs
-	tagged, _ := tag.Get("group")
-	setGroup(parentCtx.cmd, subc, parentCtx.group, tagged)
-
-	// Scan the struct recursively, for arg/option groups and subcommands
-	subCtx := &context{
-		cmd:   subc,
-		group: parentCtx.group,
-		opts:  parentCtx.opts,
-	}
-	scanner := scanRoot(subCtx)
-	if err := parser.Scan(data, scanner); err != nil {
-		return true, fmt.Errorf("failed to scan subcommand %s: %w", name, err)
-	}
-
-	// Apply the flag rules (like XOR) to the subcommand's collected flags.
-	if err := applyFlagRules(subCtx); err != nil {
+	// Scan the subcommand for its own flags, groups, and further subcommands.
+	subCtx, err := scanSubcommand(parentCtx, subc, data, tag)
+	if err != nil {
 		return true, err
 	}
 
-	// Propagate the subcommand's flags up to the parent context so that
-	// rules spanning across groups can be resolved.
-	parentCtx.Flags = append(parentCtx.Flags, subCtx.Flags...)
+	// Bind the subcommand to the parent and handle default command logic.
+	if err := bindSubcommand(parentCtx, subCtx, tag); err != nil {
+		return true, err
+	}
+
+	return true, nil
+}
+
+// createSubcommand initializes a new cobra.Command for a subcommand field.
+func createSubcommand(ctx *context, name string, tag *parser.MultiTag, val reflect.Value) (*cobra.Command, any) {
+	ptrVal := parser.EnsureAddr(val)
+	data := ptrVal.Interface()
+
+	subc := newCommand(name, tag)
+
+	tagged, _ := tag.Get("group")
+	setGroup(ctx.cmd, subc, ctx.group, tagged)
+
+	return subc, data
+}
+
+// scanSubcommand recursively scans a subcommand's struct, applies flag rules, and sets its run functions.
+func scanSubcommand(ctx *context, subc *cobra.Command, data any, tag *parser.MultiTag) (*context, error) {
+	subCtx := &context{
+		cmd:   subc,
+		group: ctx.group,
+		opts:  ctx.opts,
+	}
+
+	// Scan the struct recursively.
+	scanner := scanRoot(subCtx)
+	if err := parser.Scan(data, scanner); err != nil {
+		return nil, fmt.Errorf("failed to scan subcommand %s: %w", subc.Name(), err)
+	}
+
+	// Apply flag rules (like XOR) to the subcommand's collected flags.
+	if err := applyFlagRules(subCtx); err != nil {
+		return nil, err
+	}
 
 	// Bind the various pre/run/post implementations of our command.
 	if _, isSet := tag.Get("subcommands-optional"); !isSet && subc.HasSubCommands() {
@@ -149,59 +80,82 @@ func command(parentCtx *context, tag *parser.MultiTag, val reflect.Value) (bool,
 		setRuns(subc, data)
 	}
 
-	// And bind this subcommand back to us
-	parentCtx.cmd.AddCommand(subc)
+	return subCtx, nil
+}
 
-	// Check if this subcommand is marked as the default.
+// bindSubcommand adds the completed subcommand to its parent, propagates its flags,
+// and handles default command logic.
+func bindSubcommand(parentCtx *context, subCtx *context, tag *parser.MultiTag) error {
+	// Propagate the subcommand's flags up to the parent context.
+	parentCtx.Flags = append(parentCtx.Flags, subCtx.Flags...)
+
+	// Add the subcommand to the parent.
+	parentCtx.cmd.AddCommand(subCtx.cmd)
+
+	// Handle default command logic.
 	if defaultVal, isDefault := tag.Get("default"); isDefault {
-		// Ensure another default command hasn't already been set.
-		if parentCtx.defaultCommand != nil {
-			return true, fmt.Errorf("cannot set '%s' as default command, '%s' is already the default",
-				subc.Name(), parentCtx.defaultCommand.Name())
-		}
-
-		// Set this command as the default on the parent's context.
-		parentCtx.defaultCommand = subc
-
-		// Add the subcommand's flags to the parent's flag set, but hide them.
-		subc.Flags().VisitAll(func(f *pflag.Flag) {
-			f.Hidden = true
-			parentCtx.cmd.Flags().AddFlag(f)
-		})
-
-		// Create the RunE function for the parent to execute the default command.
-		parentCtx.cmd.RunE = func(cmd *cobra.Command, args []string) error {
-			// If default:"1", no args are allowed.
-			if defaultVal == "1" && len(args) > 0 {
-				// Let cobra handle the "unknown command" error by returning nothing.
-				return nil
-			}
-
-			// Find the default subcommand.
-			var defaultCmd *cobra.Command
-			for _, sub := range cmd.Commands() {
-				if sub.Name() == subc.Name() {
-					defaultCmd = sub
-
-					break
-				}
-			}
-
-			if defaultCmd == nil {
-				// This should not happen if generation is correct.
-				return fmt.Errorf("default command %s not found", subc.Name())
-			}
-
-			// Directly invoke the default subcommand's RunE, if it exists.
-			if defaultCmd.RunE != nil {
-				return defaultCmd.RunE(defaultCmd, args)
-			}
-
-			return nil
+		if err := handleDefaultCommand(parentCtx, subCtx.cmd, defaultVal); err != nil {
+			return err
 		}
 	}
 
-	return true, nil
+	return nil
+}
+
+// handleDefaultCommand manages the logic for a command marked as the default.
+func handleDefaultCommand(parentCtx *context, subc *cobra.Command, defaultVal string) error {
+	// Ensure another default command hasn't already been set.
+	if parentCtx.defaultCommand != nil {
+		return fmt.Errorf("cannot set '%s' as default command, '%s' is already the default",
+			subc.Name(), parentCtx.defaultCommand.Name())
+	}
+
+	// Set this command as the default on the parent's context.
+	parentCtx.defaultCommand = subc
+
+	// Add the subcommand's flags to the parent's flag set, but hide them.
+	subc.Flags().VisitAll(func(f *pflag.Flag) {
+		f.Hidden = true
+		parentCtx.cmd.Flags().AddFlag(f)
+	})
+
+	// Create the RunE function for the parent to execute the default command.
+	parentCtx.cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		return runDefaultCommand(cmd, subc, defaultVal, args)
+	}
+
+	return nil
+}
+
+// runDefaultCommand is the RunE implementation for a parent command that has a default subcommand.
+func runDefaultCommand(parentCmd, subc *cobra.Command, defaultVal string, args []string) error {
+	// If default:"1", no args are allowed.
+	if defaultVal == "1" && len(args) > 0 {
+		// Let cobra handle the "unknown command" error by returning nothing.
+		return nil
+	}
+
+	// Find the default subcommand.
+	var defaultCmd *cobra.Command
+	for _, sub := range parentCmd.Commands() {
+		if sub.Name() == subc.Name() {
+			defaultCmd = sub
+
+			break
+		}
+	}
+
+	if defaultCmd == nil {
+		// This should not happen if generation is correct.
+		return fmt.Errorf("default command %s not found", subc.Name())
+	}
+
+	// Directly invoke the default subcommand's RunE, if it exists.
+	if defaultCmd.RunE != nil {
+		return defaultCmd.RunE(defaultCmd, args)
+	}
+
+	return nil
 }
 
 // newCommand builds a quick command template based on what has been specified through tags, and in context.

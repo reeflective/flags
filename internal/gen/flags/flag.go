@@ -18,8 +18,7 @@ type flagSet interface {
 
 var _ flagSet = (*pflag.FlagSet)(nil)
 
-// generateTo takes a list of sflag.Flag,
-// that are parsed from some config structure, and put it to dst.
+// generateTo takes a list of parser.Flag, parsed from a struct, and adds them to the destination flag set.
 func generateTo(src []*parser.Flag, dst flagSet) {
 	for _, srcFlag := range src {
 		val, ok := srcFlag.Value.(pflag.Value)
@@ -27,52 +26,62 @@ func generateTo(src []*parser.Flag, dst flagSet) {
 			continue
 		}
 
-		usage := srcFlag.Usage
-		if srcFlag.Placeholder != "" {
-			usage = fmt.Sprintf("%s (placeholder: %s)", usage, srcFlag.Placeholder)
-		}
-
 		// Register the primary flag.
-		flag := dst.VarPF(val, srcFlag.Name, srcFlag.Short, usage)
-		flag.Annotations = map[string][]string{}
-		flag.NoOptDefVal = strings.Join(srcFlag.OptionalValue, " ")
-
-		if boolFlag, ok := srcFlag.Value.(values.BoolFlag); ok && boolFlag.IsBoolFlag() {
-			flag.NoOptDefVal = "true"
-		} else if srcFlag.Required {
-			flag.Annotations["flags"] = []string{"required"}
-		}
-
-		flag.Hidden = srcFlag.Hidden
-
-		if srcFlag.Deprecated {
-			flag.Deprecated = srcFlag.Usage
-			if flag.Deprecated == "" {
-				flag.Deprecated = "Deprecated"
-			}
-		}
+		registerFlag(dst, srcFlag, val)
 
 		// If the flag is negatable, register a hidden negation flag.
 		if srcFlag.Negatable != nil {
-			var noName string
-			if *srcFlag.Negatable == "" {
-				noName = "no-" + srcFlag.Name // Default behavior
-			} else {
-				noName = *srcFlag.Negatable // Custom name
-			}
-
-			noUsage := "negates --" + srcFlag.Name
-			noVal := &values.Inverter{Target: val}
-
-			noFlag := dst.VarPF(noVal, noName, "", noUsage)
-			noFlag.Hidden = true // The negation variant is usually hidden from help text.
-			// By setting NoOptDefVal, we tell pflag that this flag can be used
-			// without an explicit argument (e.g., `--no-my-flag`). When this
-			// happens, pflag will pass "true" to the Set method of our Inverter,
-			// which will then correctly invert it to `false`.
-			noFlag.NoOptDefVal = "true"
+			registerNegatableFlag(dst, srcFlag, val)
 		}
 	}
+}
+
+// registerFlag handles the creation and configuration of a single primary pflag.Flag.
+func registerFlag(dst flagSet, srcFlag *parser.Flag, val pflag.Value) {
+	usage := srcFlag.Usage
+	if srcFlag.Placeholder != "" {
+		usage = fmt.Sprintf("%s (placeholder: %s)", usage, srcFlag.Placeholder)
+	}
+
+	flag := dst.VarPF(val, srcFlag.Name, srcFlag.Short, usage)
+	flag.Annotations = map[string][]string{}
+	flag.NoOptDefVal = strings.Join(srcFlag.OptionalValue, " ")
+	flag.Hidden = srcFlag.Hidden
+
+	if boolFlag, ok := srcFlag.Value.(values.BoolFlag); ok && boolFlag.IsBoolFlag() {
+		flag.NoOptDefVal = "true"
+	} else if srcFlag.Required {
+		flag.Annotations["flags"] = []string{"required"}
+	}
+
+	if srcFlag.Deprecated {
+		flag.Deprecated = srcFlag.Usage
+		if flag.Deprecated == "" {
+			flag.Deprecated = "Deprecated"
+		}
+	}
+}
+
+// registerNegatableFlag handles the creation of the hidden --no-... variant for a boolean flag.
+func registerNegatableFlag(dst flagSet, srcFlag *parser.Flag, val pflag.Value) {
+	var noName string
+	if *srcFlag.Negatable == "" {
+		noName = "no-" + srcFlag.Name // Default behavior
+	} else {
+		noName = *srcFlag.Negatable // Custom name
+	}
+
+	noUsage := "negates --" + srcFlag.Name
+	noVal := &values.Inverter{Target: val}
+
+	noFlag := dst.VarPF(noVal, noName, "", noUsage)
+	noFlag.Hidden = true // The negation variant is usually hidden from help text.
+
+	// By setting NoOptDefVal, we tell pflag that this flag can be used
+	// without an explicit argument (e.g., `--no-my-flag`). When this
+	// happens, pflag will pass "true" to the Set method of our Inverter,
+	// which will then correctly invert it to `false`.
+	noFlag.NoOptDefVal = "true"
 }
 
 // applyFlagRules iterates over collected flags and applies cross-cutting rules.
