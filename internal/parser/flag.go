@@ -21,7 +21,7 @@ type Flag struct {
 	Required      bool         // If true, the option _must_ be specified on the command line.
 	Choices       []string     // If non empty, only a certain set of values is allowed for an option.
 	OptionalValue []string     // The optional value of the option.
-	Negatable     bool         // If true, a --no-<name> flag is generated.
+	Negatable     *string      // If not nil, a negation flag is generated with the given prefix.
 	Separator     *string      // Custom separator for slice values.
 	MapSeparator  *string      // Custom separator for map values.
 	XORGroup      []string     // Mutually exclusive flag groups.
@@ -68,7 +68,7 @@ func parseFlagTag(field reflect.StructField, opts *Opts) (*Flag, *MultiTag, erro
 		Deprecated:    isSet(tag, "deprecated"),
 		Choices:       expandStringSlice(getFlagChoices(tag), opts.Vars),
 		OptionalValue: expandStringSlice(tag.GetMany("optional-value"), opts.Vars),
-		Negatable:     isBool(field.Type) && isSet(tag, "negatable"),
+		Negatable:     getFlagNegatable(field, tag),
 		XORGroup:      getFlagXOR(tag),
 		ANDGroup:      getFlagAND(tag),
 	}
@@ -235,6 +235,19 @@ func getFlagAND(tag *MultiTag) []string {
 	}
 
 	return andGroups
+}
+
+func getFlagNegatable(field reflect.StructField, tag *MultiTag) *string {
+	if !isBool(field.Type) {
+		return nil
+	}
+
+	negatable, ok := tag.Get("negatable")
+	if !ok {
+		return nil
+	}
+
+	return &negatable
 }
 
 func expandVar(s string, vars map[string]string) string {

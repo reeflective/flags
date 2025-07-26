@@ -83,6 +83,18 @@ func ParseGroup(value reflect.Value, field reflect.StructField, parentOpts *Opts
 		return nil, err
 	}
 
+	// Apply XOR prefix if present.
+	if xorPrefix, ok := tag.Get("xorprefix"); ok {
+		fieldPrefix := CamelToFlag(field.Name, opts.FlagDivider) + opts.FlagDivider
+		for _, flag := range flags {
+			if len(flag.XORGroup) > 0 {
+				// Remove the field name prefix before adding the xorprefix.
+				flag.Name = strings.TrimPrefix(flag.Name, fieldPrefix)
+				flag.Name = xorPrefix + opts.FlagDivider + flag.Name
+			}
+		}
+	}
+
 	return flags, nil
 }
 

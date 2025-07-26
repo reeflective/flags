@@ -331,38 +331,3 @@ func setPostRuns(cmd *cobra.Command, data any) {
 		}
 	}
 }
-
-// applyFlagRules iterates over collected flags and applies cross-cutting rules.
-func applyFlagRules(ctx *context) error {
-	// Group flags by their XOR group names.
-	xorGroups := make(map[string][]string)
-	for _, flag := range ctx.Flags {
-		for _, group := range flag.XORGroup {
-			xorGroups[group] = append(xorGroups[group], flag.Name)
-		}
-	}
-
-	// Mark each XOR group as mutually exclusive on the command itself.
-	for _, flagsInGroup := range xorGroups {
-		if len(flagsInGroup) > 1 {
-			ctx.cmd.MarkFlagsMutuallyExclusive(flagsInGroup...)
-		}
-	}
-
-	// Group flags by their AND group names.
-	andGroups := make(map[string][]string)
-	for _, flag := range ctx.Flags {
-		for _, group := range flag.ANDGroup {
-			andGroups[group] = append(andGroups[group], flag.Name)
-		}
-	}
-
-	// Mark each AND group as required together.
-	for _, flagsInGroup := range andGroups {
-		if len(flagsInGroup) > 1 {
-			ctx.cmd.MarkFlagsRequiredTogether(flagsInGroup...)
-		}
-	}
-
-	return nil
-}

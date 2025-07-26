@@ -665,6 +665,8 @@ type envConfig struct {
 	Disabled string `env:"-"                         long:"disabled"`
 }
 
+// TestEnvVars verifies the behavior of ENV values specified
+// in struct tags, or through overrides with flag arguments.
 func TestEnvVars(t *testing.T) {
 
 	// Success case: A single env var provides the default value.
@@ -726,6 +728,8 @@ type andConfig struct {
 	Third  bool `long:"third"`
 }
 
+// TestANDFlags verifies the behavior of "AND" groups,
+// where all flags in the group must be used together.
 func TestANDFlags(t *testing.T) {
 	t.Parallel()
 
@@ -761,6 +765,58 @@ func TestANDFlags(t *testing.T) {
 			cfg:    cfg,
 			args:   []string{"--third"},
 			expCfg: &andConfig{Third: true},
+		}
+		run(t, test)
+	})
+}
+
+//
+// Custom Negatable Flag Tests -------------------------------------------------- //
+//
+
+type customNegatableConfig struct {
+	Default   bool `long:"default" negatable:""`
+	Custom    bool `long:"custom"  negatable:"disable-custom"`
+	WithValue bool `default:"true" long:"with-value"          negatable:"disable"`
+}
+
+// TestCustomNegatableFlags verifies the behavior of negatable flags with
+// entirely custom names.
+func TestCustomNegatableFlags(t *testing.T) {
+	t.Parallel()
+
+	// Success case: Default negatable flag works.
+	t.Run("Default negatable", func(t *testing.T) {
+		t.Parallel()
+		cfg := &customNegatableConfig{}
+		test := &testConfig{
+			cfg:    cfg,
+			args:   []string{"--no-default"},
+			expCfg: &customNegatableConfig{Default: false},
+		}
+		run(t, test)
+	})
+
+	// Success case: Custom negatable flag works.
+	t.Run("Custom negatable", func(t *testing.T) {
+		t.Parallel()
+		cfg := &customNegatableConfig{}
+		test := &testConfig{
+			cfg:    cfg,
+			args:   []string{"--disable-custom"},
+			expCfg: &customNegatableConfig{Custom: false},
+		}
+		run(t, test)
+	})
+
+	// Success case: Custom negatable flag with default value works.
+	t.Run("Custom negatable with default", func(t *testing.T) {
+		t.Parallel()
+		cfg := &customNegatableConfig{WithValue: true}
+		test := &testConfig{
+			cfg:    cfg,
+			args:   []string{"--disable"},
+			expCfg: &customNegatableConfig{WithValue: false},
 		}
 		run(t, test)
 	})

@@ -52,14 +52,20 @@ func generateTo(src []*parser.Flag, dst flagSet) {
 			}
 		}
 
-		// If the flag is negatable, register a hidden --no-<name> variant.
-		if srcFlag.Negatable {
-			noName := "no-" + srcFlag.Name
+		// If the flag is negatable, register a hidden negation flag.
+		if srcFlag.Negatable != nil {
+			var noName string
+			if *srcFlag.Negatable == "" {
+				noName = "no-" + srcFlag.Name // Default behavior
+			} else {
+				noName = *srcFlag.Negatable // Custom name
+			}
+
 			noUsage := "negates --" + srcFlag.Name
 			noVal := &values.Inverter{Target: val}
 
 			noFlag := dst.VarPF(noVal, noName, "", noUsage)
-			noFlag.Hidden = true // The --no- variant is usually hidden from help text.
+			noFlag.Hidden = true // The negation variant is usually hidden from help text.
 			// By setting NoOptDefVal, we tell pflag that this flag can be used
 			// without an explicit argument (e.g., `--no-my-flag`). When this
 			// happens, pflag will pass "true" to the Set method of our Inverter,
@@ -67,4 +73,39 @@ func generateTo(src []*parser.Flag, dst flagSet) {
 			noFlag.NoOptDefVal = "true"
 		}
 	}
+}
+
+// applyFlagRules iterates over collected flags and applies cross-cutting rules.
+func applyFlagRules(ctx *context) error {
+	// Group flags by their XOR group names.
+	xorGroups := make(map[string][]string)
+	for _, flag := range ctx.Flags {
+		for _, group := range flag.XORGroup {
+			xorGroups[group] = append(xorGroups[group], flag.Name)
+		}
+	}
+
+	// Mark each XOR group as mutually exclusive on the command itself.
+	for _, flagsInGroup := range xorGroups {
+		if len(flagsInGroup) > 1 {
+			ctx.cmd.MarkFlagsMutuallyExclusive(flagsInGroup...)
+		}
+	}
+
+	// Group flags by their AND group names.
+	andGroups := make(map[string][]string)
+	for _, flag := range ctx.Flags {
+		for _, group := range flag.ANDGroup {
+			andGroups[group] = append(andGroups[group], flag.Name)
+		}
+	}
+
+	// Mark each AND group as required together.
+	for _, flagsInGroup := range andGroups {
+		if len(flagsInGroup) > 1 {
+			ctx.cmd.MarkFlagsRequiredTogether(flagsInGroup...)
+		}
+	}
+
+	return nil
 }

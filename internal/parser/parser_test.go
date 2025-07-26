@@ -537,6 +537,8 @@ func TestParseFlagTag(t *testing.T) {
 	}
 }
 
+// TestVariableExpansion checks that variables set with
+// `set:""` tags are correctly expanded in other tags.
 func TestVariableExpansion(t *testing.T) {
 	t.Parallel()
 
@@ -583,6 +585,8 @@ func TestVariableExpansion(t *testing.T) {
 	})
 }
 
+// TestEmbedTag verifies that the `embed:""` tag correctly
+// embeds a struct's fields without prefixing.
 func TestEmbedTag(t *testing.T) {
 	t.Parallel()
 
@@ -596,6 +600,30 @@ func TestEmbedTag(t *testing.T) {
 
 	// Assert that the normal group flag has a prefix.
 	assert.Equal(t, "normal-flag2", flags[1].Name)
+}
+
+type xorPrefixConfig struct {
+	Group struct {
+		XORFlag   bool `long:"xor-flag"   xor:"group1"`
+		OtherFlag bool `long:"other-flag"`
+	} `group:"group options" xorprefix:"my-prefix"`
+}
+
+// TestXORPrefix checks that the `xorprefix:""` tag
+// correctly applies a prefix to flags within an XOR group.
+func TestXORPrefix(t *testing.T) {
+	t.Parallel()
+
+	cfg := &xorPrefixConfig{}
+	flags, err := parse(cfg, ParseAll())
+	require.NoError(t, err)
+	require.Len(t, flags, 2)
+
+	// Assert that the XOR flag has the prefix.
+	assert.Equal(t, "my-prefix-xor-flag", flags[0].Name)
+
+	// Assert that the other flag does NOT have the prefix.
+	assert.Equal(t, "group-other-flag", flags[1].Name)
 }
 
 // parse is the single, intelligent entry point for parsing a struct into flags.
