@@ -39,9 +39,9 @@ func flagsGroup(ctx *context, val reflect.Value, field *reflect.StructField) (bo
 
 // handleFlagGroup handles the scanning of a struct field that is a group of flags.
 // It uses the parser to get a list of flags and then generates them to the command's flag set.
-func handleFlagGroup(ctx *context, val reflect.Value, fld *reflect.StructField, tag *parser.MultiTag) error {
+func handleFlagGroup(ctx *context, val reflect.Value, fld *reflect.StructField, tag *parser.Tag) error {
 	// 1. Call the new parser.ParseGroup to get the list of flags.
-	flags, _, err := parser.ParseGroupV2(val, *fld, ctx.opts)
+	flags, _, err := parser.ParseGroup(val, *fld, ctx.opts)
 	if err != nil {
 		return err // The error is already wrapped by ParseGroup.
 	}
@@ -94,7 +94,7 @@ func flagsOrPositional(ctx *context) parser.Handler {
 	flagScanner := func(val reflect.Value, sfield *reflect.StructField) (bool, error) {
 		// Parse a field (which might be a struct container), for either one or
 		// more flags, or even a struct field (Kong-style) positional argument.
-		flags, pos, found, err := parser.ParseFieldV2(val, *sfield, ctx.opts)
+		flags, pos, found, err := parser.ParseField(val, *sfield, ctx.opts)
 		if err != nil {
 			return true, err
 		}

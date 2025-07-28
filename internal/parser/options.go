@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"maps"
 	"reflect"
 
 	"github.com/reeflective/flags/internal/validation"
@@ -9,7 +10,7 @@ import (
 // FlagFunc is a generic function that can be applied to each
 // value that will end up being a flags *Flag, so that users
 // can perform more arbitrary operations on each.
-type FlagFunc func(flag string, tag *MultiTag, val reflect.Value) error
+type FlagFunc func(flag string, tag *Tag, val reflect.Value) error
 
 // OptFunc sets values in Opts structure.
 type OptFunc func(opt *Opts)
@@ -79,9 +80,7 @@ func (o *Opts) Apply(optFuncs ...OptFunc) *Opts {
 func (o *Opts) Copy() *Opts {
 	cpy := *o
 	cpy.Vars = make(map[string]string)
-	for k, v := range o.Vars {
-		cpy.Vars[k] = v
-	}
+	maps.Copy(cpy.Vars, o.Vars)
 	// GlobalVars are not copied, they are global.
 	return &cpy
 }
@@ -130,8 +129,6 @@ func FlagHandler(val FlagFunc) OptFunc {
 // WithVars adds a map of variables for expansion.
 func WithVars(vars map[string]string) OptFunc {
 	return func(opt *Opts) {
-		for k, v := range vars {
-			opt.GlobalVars[k] = v
-		}
+		maps.Copy(opt.GlobalVars, vars)
 	}
 }

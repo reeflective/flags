@@ -8,7 +8,7 @@ import (
 )
 
 // positionals finds a struct tagged as containing positionals arguments and scans them.
-func positionals(ctx *context, stag *parser.MultiTag, val reflect.Value) (bool, error) {
+func positionals(ctx *context, stag *parser.Tag, val reflect.Value) (bool, error) {
 	// We need the struct to be marked as such
 	if pargs, _ := stag.Get("positional-args"); len(pargs) == 0 {
 		return false, nil
@@ -16,7 +16,7 @@ func positionals(ctx *context, stag *parser.MultiTag, val reflect.Value) (bool, 
 
 	// Scan all the fields on the struct and build the list of arguments
 	// with their own requirements, and references to their values.
-	args, err := positional.ScanArgsV2(val, stag, parser.CopyOpts(ctx.opts))
+	args, err := positional.ParseStruct(val, stag, parser.CopyOpts(ctx.opts))
 	if err != nil || args == nil {
 		return true, err
 	}

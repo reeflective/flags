@@ -15,7 +15,7 @@ import (
 )
 
 // command finds if a field is marked as a subcommand, and if yes, scans it.
-func command(parentCtx *context, tag *parser.MultiTag, val reflect.Value) (bool, error) {
+func command(parentCtx *context, tag *parser.Tag, val reflect.Value) (bool, error) {
 	name, isCommand := getCommandName(tag)
 	if !isCommand {
 		return false, nil
@@ -49,7 +49,7 @@ func command(parentCtx *context, tag *parser.MultiTag, val reflect.Value) (bool,
 }
 
 // getCommandName extracts the command name from the struct tag.
-func getCommandName(tag *parser.MultiTag) (name string, isCommand bool) {
+func getCommandName(tag *parser.Tag) (name string, isCommand bool) {
 	if name, ok := tag.Get("command"); ok {
 		return name, true
 	}
@@ -61,7 +61,7 @@ func getCommandName(tag *parser.MultiTag) (name string, isCommand bool) {
 }
 
 // setupCommand initializes the cobra.Command and its context.
-func setupCommand(ctx *context, name string, tag *parser.MultiTag, val reflect.Value) (*cobra.Command, any) {
+func setupCommand(ctx *context, name string, tag *parser.Tag, val reflect.Value) (*cobra.Command, any) {
 	ptrVal := parser.EnsureAddr(val)
 	data := ptrVal.Interface()
 
@@ -94,7 +94,7 @@ func scanCommand(cmd *cobra.Command, parentCtx *context, data any) (*context, er
 }
 
 // finalizeCommand applies final configurations to the command.
-func finalizeCommand(ctx *context, data any, tag *parser.MultiTag) error {
+func finalizeCommand(ctx *context, data any, tag *parser.Tag) error {
 	if err := ctx.positionals.Finalize(ctx.cmd); err != nil {
 		return err
 	}
@@ -114,7 +114,7 @@ func finalizeCommand(ctx *context, data any, tag *parser.MultiTag) error {
 }
 
 // handleDefaultCommand checks and sets the command as the default if specified.
-func handleDefaultCommand(parentCtx *context, cmd *cobra.Command, tag *parser.MultiTag) error {
+func handleDefaultCommand(parentCtx *context, cmd *cobra.Command, tag *parser.Tag) error {
 	defaultVal, isDefault := tag.Get("default")
 	if !isDefault {
 		return nil
@@ -164,34 +164,35 @@ func runDefaultCommand(parent, sub *cobra.Command, defaultVal string, args []str
 	return nil
 }
 
-// newCommand builds a quick command template based on what has been specified through tags, and in context.
-func newCommand(name string, mtag *parser.MultiTag) *cobra.Command {
+// newCommand builds a quick command template based on
+// what has been specified through tags, and in context.
+func newCommand(name string, tag *parser.Tag) *cobra.Command {
 	subc := &cobra.Command{
 		Use:         name,
 		Annotations: map[string]string{},
 	}
 
-	if desc, _ := mtag.Get("description"); desc != "" {
+	if desc, _ := tag.Get("description"); desc != "" {
 		subc.Short = desc
-	} else if desc, _ := mtag.Get("desc"); desc != "" {
+	} else if desc, _ := tag.Get("desc"); desc != "" {
 		subc.Short = desc
 	}
 
-	subc.Long, _ = mtag.Get("long-description")
-	subc.Aliases = mtag.GetMany("alias")
-	subc.Aliases = append(subc.Aliases, mtag.GetMany("aliases")...)
-	_, subc.Hidden = mtag.Get("hidden")
+	subc.Long, _ = tag.Get("long-description")
+	subc.Aliases = tag.GetMany("alias")
+	subc.Aliases = append(subc.Aliases, tag.GetMany("aliases")...)
+	_, subc.Hidden = tag.Get("hidden")
 
 	return subc
 }
 
 // setCommandGroup sets the command group for a subcommand.
-func setCommandGroup(parent, subc *cobra.Command, parentGroup *cobra.Group, tagged string) {
+func setCommandGroup(cmd, sub *cobra.Command, parentGroup *cobra.Group, tagged string) {
 	var group *cobra.Group
 
 	// The group tag on the command has priority
 	if tagged != "" {
-		for _, grp := range parent.Groups() {
+		for _, grp := range cmd.Groups() {
 			if grp.ID == tagged {
 				group = grp
 			}
@@ -199,7 +200,7 @@ func setCommandGroup(parent, subc *cobra.Command, parentGroup *cobra.Group, tagg
 
 		if group == nil {
 			group = &cobra.Group{ID: tagged, Title: tagged}
-			parent.AddGroup(group)
+			cmd.AddGroup(group)
 		}
 	} else if parentGroup != nil {
 		group = parentGroup
@@ -207,7 +208,7 @@ func setCommandGroup(parent, subc *cobra.Command, parentGroup *cobra.Group, tagg
 
 	// Use the group we settled on
 	if group != nil {
-		subc.GroupID = group.ID
+		sub.GroupID = group.ID
 	}
 }
 
@@ -232,7 +233,8 @@ func unknownSubcommandAction(cmd *cobra.Command, args []string) error {
 	return fmt.Errorf("%w %s", errors.ErrUnknownSubcommand, err)
 }
 
-// setRuns sets the run functions for a command, based on the interfaces implemented by the command struct.
+// setRuns sets the run functions for a command, based
+// on the interfaces implemented by the command struct.
 func setRuns(cmd *cobra.Command, data any) {
 	if data == nil {
 		return

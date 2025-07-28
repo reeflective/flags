@@ -16,7 +16,7 @@ const (
 )
 
 // GetCombinedCompletionAction returns a combined completion action from both the type and the struct tag.
-func GetCombinedCompletionAction(val reflect.Value, tag parser.MultiTag) (carapace.CompletionCallback, bool, bool) {
+func GetCombinedCompletionAction(val reflect.Value, tag parser.Tag) (carapace.CompletionCallback, bool, bool) {
 	typeCompCallback, isRepeatable, itemsImplement := typeCompleter(val)
 	tagCompCallback, combineWithCompleter, found := getTaggedCompletionAction(tag)
 
@@ -116,7 +116,7 @@ func getCompleter(val reflect.Value) carapace.CompletionCallback {
 	return nil
 }
 
-func getTaggedCompletionAction(tag parser.MultiTag) (carapace.CompletionCallback, bool, bool) {
+func getTaggedCompletionAction(tag parser.Tag) (carapace.CompletionCallback, bool, bool) {
 	compTag := tag.GetMany(completeTagName)
 	description, _ := tag.Get("description")
 	desc, _ := tag.Get("desc")
@@ -160,7 +160,7 @@ func getTaggedCompletionAction(tag parser.MultiTag) (carapace.CompletionCallback
 	return callback, combineWithCompleter, true
 }
 
-func hintCompletions(tag parser.MultiTag) (carapace.CompletionCallback, bool) {
+func hintCompletions(tag parser.Tag) (carapace.CompletionCallback, bool) {
 	description, _ := tag.Get("description")
 	desc, _ := tag.Get("desc")
 
@@ -179,7 +179,7 @@ func hintCompletions(tag parser.MultiTag) (carapace.CompletionCallback, bool) {
 	return callback, true
 }
 
-func choiceCompletions(tag parser.MultiTag, val reflect.Value) carapace.CompletionCallback {
+func choiceCompletions(tag parser.Tag, val reflect.Value) carapace.CompletionCallback {
 	choices := tag.GetMany("choice")
 
 	if len(choices) == 0 {

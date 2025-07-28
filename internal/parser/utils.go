@@ -5,6 +5,26 @@ import (
 	"strings"
 )
 
+// EnsureAddr we get the address of a given value.
+func EnsureAddr(val reflect.Value) reflect.Value {
+	// Initialize if needed
+	var ptrval reflect.Value
+
+	// We just want to get interface, even if nil
+	if val.Kind() == reflect.Ptr {
+		ptrval = val
+	} else {
+		ptrval = val.Addr()
+	}
+
+	// Once we're sure it's a command, initialize the field if needed.
+	if ptrval.IsNil() {
+		ptrval.Set(reflect.New(ptrval.Type().Elem()))
+	}
+
+	return ptrval
+}
+
 // CamelToFlag transforms s from CamelCase to flag-case.
 func CamelToFlag(s, flagDivider string) string {
 	splitted := split(s)
@@ -36,7 +56,7 @@ func isBool(t reflect.Type) bool {
 	return t.Kind() == reflect.Bool
 }
 
-func isSet(tag *MultiTag, key string) bool {
+func isSet(tag *Tag, key string) bool {
 	// First, check if the key exists as a standalone tag (e.g., `hidden:"true"`).
 	// This is the standard go-flags and kong behavior.
 	if _, ok := tag.Get(key); ok {
@@ -65,7 +85,7 @@ func isSet(tag *MultiTag, key string) bool {
 }
 
 // prepareGroupVars merges variables from parent options, group tags, and global variables.
-func prepareGroupVars(tag *MultiTag, parentOpts *Opts) map[string]string {
+func prepareGroupVars(tag *Tag, parentOpts *Opts) map[string]string {
 	newVars := make(map[string]string)
 	for k, v := range parentOpts.Vars {
 		newVars[k] = v

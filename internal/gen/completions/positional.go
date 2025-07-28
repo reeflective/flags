@@ -148,14 +148,14 @@ func (c *compCache) flush(ctx carapace.Context) carapace.Action {
 }
 
 // positionalsV2 finds a struct tagged as containing positional arguments and scans them.
-func positionalsV2(comps *carapace.Carapace, tag *parser.MultiTag, val reflect.Value) (bool, error) {
+func positionalsV2(comps *carapace.Carapace, tag *parser.Tag, val reflect.Value) (bool, error) {
 	if pargs, _ := tag.Get("positional-args"); len(pargs) == 0 {
 		return false, nil
 	}
 
 	// Scan all the fields on the struct and build the list of arguments
 	// with their own requirements, and references to their values.
-	args, err := positional.ScanArgsV2(val, tag)
+	args, err := positional.ParseStruct(val, tag)
 	if err != nil || args == nil {
 		return true, fmt.Errorf("failed to scan positional arguments: %w", err)
 	}

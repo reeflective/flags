@@ -18,7 +18,8 @@ type flagSet interface {
 
 var _ flagSet = (*pflag.FlagSet)(nil)
 
-// generateTo takes a list of parser.Flag, parsed from a struct, and adds them to the destination flag set.
+// generateTo takes a list of parser.Flag, parsed from
+// a struct, and adds them to the destination flag set.
 func generateTo(src []*parser.Flag, dst flagSet) {
 	for _, srcFlag := range src {
 		val, ok := srcFlag.Value.(pflag.Value)
@@ -37,25 +38,25 @@ func generateTo(src []*parser.Flag, dst flagSet) {
 }
 
 // registerFlag handles the creation and configuration of a single primary pflag.Flag.
-func registerFlag(dst flagSet, srcFlag *parser.Flag, val pflag.Value) {
-	usage := srcFlag.Usage
-	if srcFlag.Placeholder != "" {
-		usage = fmt.Sprintf("%s (placeholder: %s)", usage, srcFlag.Placeholder)
+func registerFlag(dst flagSet, src *parser.Flag, val pflag.Value) {
+	usage := src.Usage
+	if src.Placeholder != "" {
+		usage = fmt.Sprintf("%s (placeholder: %s)", usage, src.Placeholder)
 	}
 
-	flag := dst.VarPF(val, srcFlag.Name, srcFlag.Short, usage)
+	flag := dst.VarPF(val, src.Name, src.Short, usage)
 	flag.Annotations = map[string][]string{}
-	flag.NoOptDefVal = strings.Join(srcFlag.OptionalValue, " ")
-	flag.Hidden = srcFlag.Hidden
+	flag.NoOptDefVal = strings.Join(src.OptionalValue, " ")
+	flag.Hidden = src.Hidden
 
-	if boolFlag, ok := srcFlag.Value.(values.BoolFlag); ok && boolFlag.IsBoolFlag() {
+	if boolFlag, ok := src.Value.(values.BoolFlag); ok && boolFlag.IsBoolFlag() {
 		flag.NoOptDefVal = "true"
-	} else if srcFlag.Required {
+	} else if src.Required {
 		flag.Annotations["flags"] = []string{"required"}
 	}
 
-	if srcFlag.Deprecated {
-		flag.Deprecated = srcFlag.Usage
+	if src.Deprecated {
+		flag.Deprecated = src.Usage
 		if flag.Deprecated == "" {
 			flag.Deprecated = "Deprecated"
 		}
@@ -63,15 +64,15 @@ func registerFlag(dst flagSet, srcFlag *parser.Flag, val pflag.Value) {
 }
 
 // registerNegatableFlag handles the creation of the hidden --no-... variant for a boolean flag.
-func registerNegatableFlag(dst flagSet, srcFlag *parser.Flag, val pflag.Value) {
+func registerNegatableFlag(dst flagSet, src *parser.Flag, val pflag.Value) {
 	var noName string
-	if *srcFlag.Negatable == "" {
-		noName = "no-" + srcFlag.Name // Default behavior
+	if *src.Negatable == "" {
+		noName = "no-" + src.Name // Default behavior
 	} else {
-		noName = *srcFlag.Negatable // Custom name
+		noName = *src.Negatable // Custom name
 	}
 
-	noUsage := "negates --" + srcFlag.Name
+	noUsage := "negates --" + src.Name
 	noVal := &values.Inverter{Target: val}
 
 	noFlag := dst.VarPF(noVal, noName, "", noUsage)

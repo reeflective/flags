@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -24,22 +23,45 @@ type Positional struct {
 	StartMin    int
 	StartMax    int
 	Passthrough bool
-	Tag         *MultiTag
+	Tag         *Tag
 	Validator   func(val string) error
 }
 
-// parseSinglePositional is the internal helper that parses a field tagged as a
-// positional argument and returns a complete Positional struct.
-func parseSinglePositional(value reflect.Value, field reflect.StructField, tag *MultiTag, opts *Opts, reqAll bool) (*Positional, error) {
-	name, _ := tag.Get("arg")
-	if name == "" {
-		name, _ = tag.Get("positional-arg-name")
-		if name == "" {
-			name = field.Name
+// ParsePositionalStruct scans a struct value that is tagged as a legacy `positional-args:"true"`
+// container and returns a slice of parsed Positional arguments.
+func ParsePositionalStruct(val reflect.Value, stag *Tag, opts *Opts) ([]*Positional, error) {
+	stype := val.Type()
+	req, _ := stag.Get("required") // this is written on the struct, applies to all
+	reqAll := len(req) != 0        // Each field will count as one required minimum
+
+	var positionals = make([]*Positional, 0)
+
+	for i := range stype.NumField() {
+		field := stype.Field(i)
+		fieldValue := val.Field(i)
+
+		tag, _, err := GetFieldTag(field)
+		if err != nil {
+			return nil, err
 		}
+
+		pos, err := parsePositional(fieldValue, field, tag, opts, reqAll)
+		if err != nil {
+			return nil, err
+		}
+
+		pos.Index = len(positionals)
+		positionals = append(positionals, pos)
 	}
 
-	min, max, err := positionalReqs(value, *tag, reqAll)
+	return positionals, nil
+}
+
+// parsePositional is the internal helper that parses a field tagged as a positional argument and returns a complete Positional struct.
+func parsePositional(val reflect.Value, fld reflect.StructField, tag *Tag, opts *Opts, reqAll bool) (*Positional, error) {
+	name := getPositionalName(fld, tag)
+
+	min, max, err := positionalReqs(val, *tag, reqAll)
 	if err != nil {
 		return nil, err
 	}
@@ -47,94 +69,62 @@ func parseSinglePositional(value reflect.Value, field reflect.StructField, tag *
 	pos := &Positional{
 		Name:   name,
 		Usage:  getPositionalUsage(tag),
-		Value:  value,
-		PValue: values.NewValue(value, nil, nil),
+		Value:  val,
+		PValue: values.NewValue(val, nil, nil),
 		Min:    min,
 		Max:    max,
 		Tag:    tag,
 	}
 
-	// Check for passthrough tag
+	if err := setupPassthrough(pos, fld, tag); err != nil {
+		return nil, err
+	}
+
+	setupValidator(pos, fld, tag, opts)
+
+	return pos, nil
+}
+
+// getPositionalName extracts the name of the positional argument from the struct tag or field.
+func getPositionalName(fld reflect.StructField, tag *Tag) string {
+	if name, ok := tag.Get("arg"); ok {
+		return name
+	}
+	if name, ok := tag.Get("positional-arg-name"); ok {
+		return name
+	}
+
+	return fld.Name
+}
+
+// setupPassthrough configures the passthrough settings for a positional argument.
+func setupPassthrough(pos *Positional, fld reflect.StructField, tag *Tag) error {
 	if _, ok := tag.Get("passthrough"); ok {
-		// Passthrough argument must be a slice of strings.
-		if field.Type.Kind() != reflect.Slice || field.Type.Elem().Kind() != reflect.String {
-			return nil, fmt.Errorf("%w: passthrough argument %s must be of type []string",
-				flagerrors.ErrInvalidTag, field.Name)
+		if fld.Type.Kind() != reflect.Slice || fld.Type.Elem().Kind() != reflect.String {
+			return fmt.Errorf("%w: passthrough argument %s must be of type []string",
+				flagerrors.ErrInvalidTag, fld.Name)
 		}
 		pos.Passthrough = true
 		pos.Max = -1
 	}
 
-	// Set validators
+	return nil
+}
+
+// setupValidator creates and sets up a validator for the positional argument.
+func setupValidator(pos *Positional, fld reflect.StructField, tag *Tag, opts *Opts) {
 	var choices []string
-
 	choiceTags := tag.GetMany("choice")
-
 	for _, choice := range choiceTags {
 		choices = append(choices, strings.Split(choice, " ")...)
 	}
 
-	// Set up any validations.
-	if validator := validation.Setup(value, field, choices, opts.Validator); validator != nil {
+	if validator := validation.Setup(pos.Value, fld, choices, opts.Validator); validator != nil {
 		pos.Validator = validator
 	}
-
-	return pos, nil
 }
 
-// func parsePositionalReqs(tag *MultiTag, field reflect.StructField) (min, max int) {
-// 	isSlice := field.Type.Kind() == reflect.Slice || field.Type.Kind() == reflect.Map
-// 	if isSlice {
-// 		max = -1 // unlimited by default for slices
-// 	} else {
-// 		max = 1
-// 	}
-//
-// 	// For non-slice, if `optional` is present, it's not required.
-// 	if !isSlice {
-// 		if _, optional := tag.Get("optional"); optional {
-// 			return 0, 1
-// 		}
-// 	}
-//
-// 	reqTag, isSet := tag.Get("required")
-// 	if !isSet {
-// 		if isSlice {
-// 			return 0, -1
-// 		}
-// 		return 1, 1 // By default, non-slice positionals are required.
-// 	}
-//
-// 	if reqTag == "" {
-// 		return 1, max
-// 	}
-//
-// 	parts := strings.SplitN(reqTag, "-", 2)
-// 	if len(parts) == 1 {
-// 		if val, err := strconv.Atoi(parts[0]); err == nil {
-// 			min = val
-// 			if !isSlice && min > 1 {
-// 				min = 1
-// 			}
-// 			if max != -1 && min > max {
-// 				min = max
-// 			}
-// 			return min, max
-// 		}
-// 		return 1, max
-// 	}
-//
-// 	if minVal, err := strconv.Atoi(parts[0]); err == nil {
-// 		min = minVal
-// 	}
-// 	if maxVal, err := strconv.Atoi(parts[1]); err == nil {
-// 		max = maxVal
-// 	}
-//
-// 	return min, max
-// }
-
-func getPositionalUsage(tag *MultiTag) string {
+func getPositionalUsage(tag *Tag) string {
 	if usage, isSet := tag.Get("description"); isSet {
 		return usage
 	}
@@ -150,8 +140,8 @@ func getPositionalUsage(tag *MultiTag) string {
 
 // positionalReqs determines the correct quantity requirements for a positional field,
 // depending on its parsed struct tag values, and the underlying type of the field.
-func positionalReqs(val reflect.Value, mtag MultiTag, all bool) (minWords, maxWords int, err error) {
-	required, maxWords, set, err := parseArgsNumRequired(mtag)
+func positionalReqs(val reflect.Value, tag Tag, all bool) (minWords, maxWords int, err error) {
+	required, maxWords, set, err := parseQuantityRequired(tag)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -184,16 +174,16 @@ func positionalReqs(val reflect.Value, mtag MultiTag, all bool) (minWords, maxWo
 	return minWords, maxWords, err
 }
 
-// parseArgsNumRequired sets the minimum/maximum requirements for an argument field.
-func parseArgsNumRequired(fieldTag MultiTag) (required, maximum int, set bool, err error) {
-	required = 0
-	maximum = -1
+// parseQuantityRequired sets the minimum/maximum requirements for an argument field.
+func parseQuantityRequired(fieldTag Tag) (int, int, bool, error) {
+	required := 0
+	maximum := -1
 
 	sreq, set := fieldTag.Get("required")
 
 	// If no requirements, -1 means unlimited
 	if sreq == "" || !set {
-		return required, maximum, set, err
+		return required, maximum, set, nil
 	}
 
 	required = 1
@@ -215,8 +205,8 @@ func parseArgsNumRequired(fieldTag MultiTag) (required, maximum int, set bool, e
 	}
 
 	if maximum == 0 {
-		err = errors.New("maximum number of arguments cannot be 0")
+		return required, maximum, set, flagerrors.ErrInvalidRequiredQuantity
 	}
 
-	return required, maximum, set, err
+	return required, maximum, set, nil
 }

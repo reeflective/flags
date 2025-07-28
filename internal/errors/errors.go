@@ -56,4 +56,6 @@ var (
 
 	// ErrInvalidValue indicates that the provided flag argument is not a valid value for the flag type.
 	ErrInvalidValue = errors.New("invalid value")
+
+	ErrInvalidRequiredQuantity = errors.New("maximum number of arguments cannot be 0")
 )

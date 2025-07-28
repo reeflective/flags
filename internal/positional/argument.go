@@ -23,24 +23,6 @@ var ErrRequired = errors.New("required argument")
 // positional slot we can access within the function.
 type WordConsumer func(args *Args, current *parser.Positional, dash int) error
 
-// NewArgs creates a new, empty Args manager.
-func NewArgs() *Args {
-	args := &Args{
-		noTags: true,
-	}
-	args.consumer = args.consumeWords
-
-	return args
-}
-
-// WithWordConsumer allows to set a custom function to loop over
-// the command words for a given positional slot. See WordConsumer.
-func WithWordConsumer(args *Args, consumer WordConsumer) *Args {
-	args.consumer = consumer
-
-	return args
-}
-
 // Args contains an entire list of positional argument "slots" (struct fields)
 // along with everything needed to parse a list of words onto them, taking into
 // account all of their requirements and constraints, and throwing an error with
@@ -68,6 +50,16 @@ type Args struct {
 	// This consumer is called for each positional slot, either
 	// sequentially (normal parsing) or concurrently (useful for completions)
 	consumer WordConsumer
+}
+
+// NewArgs creates a new, empty Args manager.
+func NewArgs() *Args {
+	args := &Args{
+		noTags: true,
+	}
+	args.consumer = args.consumeWords
+
+	return args
 }
 
 // ToCobraArgs converts the list of positional arguments into a cobra.PositionalArgs function.
@@ -173,83 +165,19 @@ func (args *Args) ParseConcurrent(words []string) {
 	workers.Wait()
 }
 
-// Positionals returns the list of "slots" that have been
-// created when parsing a struct of positionals.
-func (args *Args) Positionals() []*parser.Positional {
-	return args.slots
-}
-
-// Add adds a new positional argument slot to the manager.
-// This function takes care of recomputing total positional
-// requirements and updates the positional argument manager.
-func (args *Args) Add(arg *parser.Positional) {
-	args.slots = append(args.slots, arg)
-
-	// First set the argument itself.
-	arg.StartMax = args.totalMax
-
-	// The total min/max number of arguments is used
-	// by completers to know precisely when they should
-	// start completing for a given positional field slot.
-	args.totalMin += arg.Min // min is never < 0
-
-	if arg.Max != -1 {
-		args.totalMax += arg.Max
-	}
-	// if args.totalMax != -1 && arg.Max != -1 {
-	// 	args.totalMax += arg.Max
-	// } else {
-	// 	args.totalMax = -1
-	// }
-}
-
-// Finalize runs adjustments on the argument list after all arguments have been added.
-func (args *Args) Finalize(cmd *cobra.Command) error {
-	// Validate ambiguous passthrough combinations.
-	if args.SoftPassthrough && len(args.slots) > 0 {
-		lastArg := args.slots[len(args.slots)-1]
-		if lastArg.Max == -1 {
-			return fmt.Errorf("ambiguous configuration: container-level passthrough cannot be used with a greedy positional argument ('%s')", lastArg.Name)
-		}
-	}
-
-	// Validate field-level passthrough arguments.
-	for i, arg := range args.slots {
-		if arg.Passthrough && i < len(args.slots)-1 {
-			return fmt.Errorf("passthrough argument %s must be the last positional argument", arg.Name)
-		}
-	}
-
-	for _, arg := range args.slots {
-		if arg.Passthrough {
-			cmd.Flags().SetInterspersed(false)
-
-			break
-		}
-	}
-
-	if err := args.validateGreedySlices(); err != nil {
-		return err
-	}
-	args.adjustMaximums()
-	args.needed = args.totalMin
-
-	return nil
-}
-
 // copyArgs is used to make several instances of our args
 // to work on the same list of command words (copies of it).
 func (args *Args) copyArgs() *Args {
 	return &Args{
-		slots:           args.slots,
-		totalMin:        args.totalMin,
-		totalMax:        args.totalMax,
-		AllRequired:     args.AllRequired,
-		needed:          args.totalMin,
-		noTags:          args.noTags,
-		done:            0,
-		parsed:          0,
-		consumer:        args.consumer,
+		slots:       args.slots,
+		totalMin:    args.totalMin,
+		totalMax:    args.totalMax,
+		AllRequired: args.AllRequired,
+		needed:      args.totalMin,
+		noTags:      args.noTags,
+		done:        0,
+		parsed:      0,
+		consumer:    args.consumer,
 	}
 }
 
@@ -299,6 +227,36 @@ func (args *Args) consumeWords(self *Args, arg *parser.Positional, dash int) err
 	// Or we consumed all the arguments we wanted, without
 	// error, so either exit because we are the last, or go
 	// with the next argument handler we bound.
+	return nil
+}
+
+// SetRemainingArgs takes argument words that have not been parsed on positional struct fields,
+// and stores them in the command annotations, to be passed to the command type's Execute() method.
+func SetRemainingArgs(cmd *cobra.Command, retargs []string) {
+	if len(retargs) == 0 || retargs == nil || cmd == nil {
+		return
+	}
+
+	if cmd.Annotations == nil {
+		cmd.Annotations = map[string]string{}
+	}
+	// Add these arguments in an annotation to be used
+	// in our Run implementation, where we pass just the
+	// unparsed positional arguments to the command Execute(args []string).
+	cmd.Annotations["flags"] = strings.Join(retargs, " ")
+}
+
+// GetRemainingArgs fetches the unparsed argument words
+// to be used in the command's Execute() method.
+func GetRemainingArgs(cmd *cobra.Command) []string {
+	if cmd.Annotations == nil {
+		return nil
+	}
+
+	if argString, found := cmd.Annotations["flags"]; found {
+		return strings.Split(argString, " ")
+	}
+
 	return nil
 }
 
@@ -386,36 +344,6 @@ func (args *Args) getRequiredNames(current *parser.Positional) (names []string) 
 	}
 
 	return names
-}
-
-// SetRemainingArgs takes argument words that have not been parsed on positional struct fields,
-// and stores them in the command annotations, to be passed to the command type's Execute() method.
-func SetRemainingArgs(cmd *cobra.Command, retargs []string) {
-	if len(retargs) == 0 || retargs == nil || cmd == nil {
-		return
-	}
-
-	if cmd.Annotations == nil {
-		cmd.Annotations = map[string]string{}
-	}
-	// Add these arguments in an annotation to be used
-	// in our Run implementation, where we pass just the
-	// unparsed positional arguments to the command Execute(args []string).
-	cmd.Annotations["flags"] = strings.Join(retargs, " ")
-}
-
-// GetRemainingArgs fetches the unparsed argument words
-// to be used in the command's Execute() method.
-func GetRemainingArgs(cmd *cobra.Command) []string {
-	if cmd.Annotations == nil {
-		return nil
-	}
-
-	if argString, found := cmd.Annotations["flags"]; found {
-		return strings.Split(argString, " ")
-	}
-
-	return nil
 }
 
 // makes a correct sentence when we don't have enough args.

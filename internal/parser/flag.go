@@ -1,9 +1,11 @@
 package parser
 
 import (
+	"fmt"
+	"os"
 	"reflect"
-	"strings"
 
+	"github.com/reeflective/flags/internal/validation"
 	"github.com/reeflective/flags/internal/values"
 )
 
@@ -28,8 +30,49 @@ type Flag struct {
 	ANDGroup      []string     // "AND" flag groups.
 }
 
+// parseSingleFlag handles the logic for parsing a field that is a single flag.
+func parseSingleFlag(value reflect.Value, field reflect.StructField, opts *Opts) (*Flag, bool, error) {
+	flag, tag, err := newFlag(field, opts)
+	if err != nil || flag == nil {
+		return nil, false, err
+	}
+
+	if err := setupFlagValue(flag, value, field, *tag, opts); err != nil {
+		return nil, true, err
+	}
+
+	if flag.Value == nil {
+		return nil, false, nil
+	}
+
+	if err := applyDefaults(flag); err != nil {
+		return nil, true, err
+	}
+
+	if err := executeFlagFunc(opts, flag, tag, value); err != nil {
+		return flag, true, err
+	}
+
+	return flag, true, nil
+}
+
+func newFlag(field reflect.StructField, opts *Opts) (*Flag, *Tag, error) {
+	if field.PkgPath != "" && !field.Anonymous {
+		return nil, nil, nil
+	}
+
+	flag, tag, err := parseFlag(field, opts)
+	if flag == nil || err != nil {
+		return flag, tag, err
+	}
+
+	flag.EnvNames = parseEnvTag(flag.Name, field, opts)
+
+	return flag, tag, err
+}
+
 // parseFlag parses the struct tag for a given field and returns a Flag object.
-func parseFlag(field reflect.StructField, opts *Opts) (*Flag, *MultiTag, error) {
+func parseFlag(field reflect.StructField, opts *Opts) (*Flag, *Tag, error) {
 	tag, skip, err := GetFieldTag(field)
 	if err != nil {
 		return nil, nil, err
@@ -55,27 +98,12 @@ func parseFlag(field reflect.StructField, opts *Opts) (*Flag, *MultiTag, error) 
 	return flag, tag, nil
 }
 
-// shouldSkipField checks if a field should be ignored based on its tags.
-func shouldSkipField(tag *MultiTag, skip bool, opts *Opts) bool {
-	if val, isSet := tag.Get("kong"); isSet && val == "-" {
-		return true
-	}
-	if val, isSet := tag.Get(opts.FlagTag); isSet && val == "-" {
-		return true
-	}
-	if _, isSet := tag.Get("no-flag"); isSet {
-		return true
-	}
-
-	return skip && !opts.ParseAll
-}
-
 // buildFlag constructs the initial Flag struct from parsed tag information.
-func buildFlag(name, short string, field reflect.StructField, tag *MultiTag, opts *Opts) *Flag {
+func buildFlag(name, short string, fld reflect.StructField, tag *Tag, opts *Opts) *Flag {
 	return &Flag{
 		Name:          name,
 		Short:         short,
-		EnvNames:      parseEnvTag(name, field, opts),
+		EnvNames:      parseEnvTag(name, fld, opts),
 		Usage:         getFlagUsage(tag),
 		Placeholder:   getFlagPlaceholder(tag),
 		DefValue:      getFlagDefault(tag),
@@ -83,14 +111,14 @@ func buildFlag(name, short string, field reflect.StructField, tag *MultiTag, opt
 		Deprecated:    isSet(tag, "deprecated"),
 		Choices:       getFlagChoices(tag),
 		OptionalValue: tag.GetMany("optional-value"),
-		Negatable:     getFlagNegatable(field, tag),
+		Negatable:     getFlagNegatable(fld, tag),
 		XORGroup:      getFlagXOR(tag),
 		ANDGroup:      getFlagAND(tag),
 	}
 }
 
 // finalizeFlag applies variable expansions and final settings to a Flag.
-func finalizeFlag(flag *Flag, tag *MultiTag, opts *Opts) {
+func finalizeFlag(flag *Flag, tag *Tag, opts *Opts) {
 	// Expand variables in usage, placeholder, default value, and choices.
 	flag.Usage = expandVar(flag.Usage, opts.Vars)
 	flag.Placeholder = expandVar(flag.Placeholder, opts.Vars)
@@ -111,205 +139,60 @@ func finalizeFlag(flag *Flag, tag *MultiTag, opts *Opts) {
 	flag.Required = isSet(tag, "required") && !IsStringFalsy(requiredVal)
 }
 
-func getFlagName(field reflect.StructField, tag *MultiTag, opts *Opts) (string, string) {
-	// Start with values from sflags format, which can include the ignore-prefix tilde.
-	long, short, ignorePrefix := parseSFlag(tag, opts)
-
-	// Layer on Kong's 'name' alias for long name.
-	if name, isSet := tag.Get("name"); isSet {
-		long = name
+// setupFlagValue creates and configures the value of a flag, including any validators.
+func setupFlagValue(flag *Flag, value reflect.Value, field reflect.StructField, tag Tag, opts *Opts) error {
+	val, err := newValue(value, field, tag, flag.Separator, flag.MapSeparator)
+	if err != nil {
+		return err
+	}
+	if val == nil {
+		return nil
 	}
 
-	// Layer on standard 'long' and 'short' tags, which take precedence if present.
-	if l, ok := tag.Get("long"); ok {
-		long = l
-	}
-	if s, ok := tag.Get("short"); ok {
-		short = s
+	if validator := validation.Setup(value, field, flag.Choices, opts.Validator); validator != nil {
+		val = values.NewValidator(val, validator)
 	}
 
-	// If no long name was found in any tag, generate it from the field name.
-	if long == "" {
-		long = CamelToFlag(field.Name, opts.FlagDivider)
-	}
+	flag.Value = val
 
-	// Apply the namespace prefix if it's not being ignored.
-	long = applyPrefix(long, tag, opts, ignorePrefix)
-
-	return long, short
+	return nil
 }
 
-// parseSFlag handles the specific parsing of sflags-style `flag:"..."` tags.
-// It returns the long name, short name, and a boolean indicating if the namespace prefix should be ignored.
-func parseSFlag(tag *MultiTag, opts *Opts) (long, short string, ignorePrefix bool) {
-	names, isSet := tag.Get(opts.FlagTag)
-	if !isSet {
-		return
+// applyDefaults sets the default value of a flag from environment variables if available.
+func applyDefaults(flag *Flag) error {
+	for _, env := range flag.EnvNames {
+		if envVal, ok := os.LookupEnv(env); ok {
+			if err := flag.Value.Set(envVal); err != nil {
+				return fmt.Errorf("failed to set default value from env var %s: %w", env, err)
+			}
+
+			break // Stop after finding the first one.
+		}
 	}
 
-	// Check for the ignore-prefix tilde.
-	if strings.HasPrefix(names, "~") {
-		ignorePrefix = true
-		names = names[1:] // Remove the tilde for further parsing.
+	if flag.Value.String() != "" {
+		flag.DefValue = append(flag.DefValue, flag.Value.String())
 	}
 
-	values := strings.Split(names, ",")
-	parts := strings.Split(values[0], " ")
-	if len(parts) > 1 {
-		long = parts[0]
-		short = parts[1]
+	return nil
+}
+
+// executeFlagFunc runs the custom FlagFunc if it is provided in the options.
+func executeFlagFunc(opts *Opts, flag *Flag, tag *Tag, value reflect.Value) error {
+	if opts.FlagFunc == nil {
+		return nil
+	}
+
+	var name string
+	if flag.Name != "" {
+		name = flag.Name
 	} else {
-		long = parts[0]
+		name = flag.Short
 	}
 
-	return
-}
-
-// applyPrefix conditionally applies the namespace prefix to a flag's long name.
-func applyPrefix(longName string, tag *MultiTag, opts *Opts, ignorePrefix bool) string {
-	if ignorePrefix {
-		return longName
+	if err := opts.FlagFunc(name, tag, value); err != nil {
+		return fmt.Errorf("flag handler error on flag %s: %w", name, err)
 	}
 
-	prefix, hasPrefixTag := tag.Get("prefix") // Kong alias for namespace
-
-	if opts.Prefix != "" {
-		return opts.Prefix + longName
-	} else if hasPrefixTag {
-		return prefix + opts.FlagDivider + longName
-	}
-
-	return longName
-}
-
-func getFlagUsage(tag *MultiTag) string {
-	if usage, isSet := tag.Get("description"); isSet {
-		return usage
-	}
-	if usage, isSet := tag.Get("desc"); isSet {
-		return usage
-	}
-	if usage, isSet := tag.Get("help"); isSet { // Kong alias
-		return usage
-	}
-
-	return ""
-}
-
-func getFlagPlaceholder(tag *MultiTag) string {
-	if placeholder, isSet := tag.Get("placeholder"); isSet {
-		return placeholder
-	}
-
-	return ""
-}
-
-func getFlagChoices(tag *MultiTag) []string {
-	var choices []string
-
-	choiceTags := tag.GetMany("choice")
-	for _, choice := range choiceTags {
-		choices = append(choices, strings.Split(choice, " ")...)
-	}
-
-	// Kong alias
-	enumTags := tag.GetMany("enum")
-	for _, enum := range enumTags {
-		choices = append(choices, strings.Split(enum, ",")...)
-	}
-
-	return choices
-}
-
-func getFlagXOR(tag *MultiTag) []string {
-	var xorGroups []string
-
-	xorTags := tag.GetMany("xor")
-	for _, xor := range xorTags {
-		xorGroups = append(xorGroups, strings.Split(xor, ",")...)
-	}
-
-	return xorGroups
-}
-
-func getFlagAND(tag *MultiTag) []string {
-	var andGroups []string
-
-	andTags := tag.GetMany("and")
-	for _, and := range andTags {
-		andGroups = append(andGroups, strings.Split(and, ",")...)
-	}
-
-	return andGroups
-}
-
-func getFlagNegatable(field reflect.StructField, tag *MultiTag) *string {
-	if !isBool(field.Type) {
-		return nil
-	}
-
-	negatable, ok := tag.Get("negatable")
-	if !ok {
-		return nil
-	}
-
-	return &negatable
-}
-
-func getFlagDefault(tag *MultiTag) []string {
-	val, ok := tag.Get("default")
-	if !ok {
-		return nil
-	}
-
-	return []string{val}
-}
-
-func parseEnvTag(flagName string, field reflect.StructField, options *Opts) []string {
-	envTag := field.Tag.Get(DefaultEnvTag)
-	if envTag == "" {
-		// If no tag, generate a default name.
-		envVar := FlagToEnv(flagName, options.FlagDivider, options.EnvDivider)
-		if options.EnvPrefix != "" {
-			envVar = options.EnvPrefix + envVar
-		}
-
-		return []string{envVar}
-	}
-
-	if envTag == "-" {
-		return nil // `env:"-"` disables env var lookup entirely.
-	}
-
-	var envNames []string
-	envVars := strings.Split(envTag, ",")
-
-	for _, envName := range envVars {
-		envName = strings.TrimSpace(envName)
-		if envName == "" {
-			// If the tag is `env:""`, generate from the flag name.
-			envName = FlagToEnv(flagName, options.FlagDivider, options.EnvDivider)
-		}
-
-		ignorePrefixes := false
-		if strings.HasPrefix(envName, "~") {
-			envName = envName[1:]
-			ignorePrefixes = true
-		}
-
-		// Apply prefixes only if they are not being ignored.
-		if !ignorePrefixes {
-			// First, the struct-level flag prefix.
-			if options.Prefix != "" {
-				envName = FlagToEnv(options.Prefix, options.FlagDivider, options.EnvDivider) + envName
-			}
-			// Then, the global env prefix.
-			if options.EnvPrefix != "" {
-				envName = options.EnvPrefix + envName
-			}
-		}
-		envNames = append(envNames, envName)
-	}
-
-	return envNames
+	return nil
 }

@@ -81,7 +81,7 @@ func scanCommandGroup(cmd *cobra.Command, comps *carapace.Carapace, data any, gr
 
 // addFlagComps scans a struct (potentially nested), for a set of flags, and without
 // binding them to the command, parses them for any completions specified/implemented.
-func addFlagComps(comps *carapace.Carapace, mtag *parser.MultiTag, data any) error {
+func addFlagComps(comps *carapace.Carapace, mtag *parser.Tag, data any) error {
 	opts := parser.DefOpts()
 
 	// New change, in order to easily propagate parent namespaces
@@ -107,7 +107,7 @@ func addFlagComps(comps *carapace.Carapace, mtag *parser.MultiTag, data any) err
 	// Instead of calling flags.ParseFlags, use parser.Scan directly
 	// to process the struct fields and trigger the FlagHandler.
 	if err := parser.Scan(data, func(val reflect.Value, sfield *reflect.StructField) (bool, error) {
-		_, _, found, err := parser.ParseFieldV2(val, *sfield, opts)
+		_, _, found, err := parser.ParseField(val, *sfield, opts)
 
 		return found, err
 	}); err != nil {
@@ -131,7 +131,7 @@ func flagComps(comps *carapace.Carapace, flagComps *flagSetComps) parser.Handler
 		opts.FlagFunc = flagCompsScanner(flagComps)
 
 		// Parse a single field, returning one or more generic Flags
-		_, _, found, err := parser.ParseFieldV2(val, *sfield, opts)
+		_, _, found, err := parser.ParseField(val, *sfield, opts)
 		if err != nil {
 			return found, err
 		}
@@ -154,7 +154,7 @@ func flagComps(comps *carapace.Carapace, flagComps *flagSetComps) parser.Handler
 
 // flagCompsScanner builds a scanner that will register some completers for an option flag.
 func flagCompsScanner(actions *flagSetComps) parser.FlagFunc {
-	handler := func(flag string, tag *parser.MultiTag, val reflect.Value) error {
+	handler := func(flag string, tag *parser.Tag, val reflect.Value) error {
 		// Get the combined completer from the type and the struct tag.
 		completer, isRepeatable, _ := GetCombinedCompletionAction(val, *tag)
 

@@ -64,7 +64,7 @@ func NewWith(custom *validator.Validate) ValidateFunc {
 }
 
 // Setup builds a validation function including all validation routines (builtin or user-defined) available.
-func Setup(val reflect.Value, field reflect.StructField, choices []string, validator ValidateFunc) func(val string) error {
+func Setup(val reflect.Value, fld reflect.StructField, choices []string, validator ValidateFunc) func(val string) error {
 	if validator == nil && len(choices) == 0 {
 		return nil
 	}
@@ -83,7 +83,7 @@ func Setup(val reflect.Value, field reflect.StructField, choices []string, valid
 
 			// If choice is valid or arbitrary, run custom validator.
 			if validator != nil {
-				if err := validator(word, field, val.Interface()); err != nil {
+				if err := validator(word, fld, val.Interface()); err != nil {
 
 					return fmt.Errorf("%w: %w", errors.ErrInvalidValue, err)
 				}

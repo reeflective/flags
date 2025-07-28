@@ -649,7 +649,7 @@ func parse(cfg any, optFuncs ...OptFunc) ([]*Flag, error) {
 
 	var flags []*Flag
 	scanner := func(val reflect.Value, sfield *reflect.StructField) (bool, error) {
-		fieldFlags, _, found, err := ParseFieldV2(val, *sfield, opts)
+		fieldFlags, _, found, err := ParseField(val, *sfield, opts)
 		if err != nil {
 			return false, err
 		}

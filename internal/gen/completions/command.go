@@ -80,7 +80,7 @@ func completionScanner(cmd *cobra.Command, comps *carapace.Carapace, flags *flag
 }
 
 // command finds if a field is marked as a command, and if yes, scans it.
-func command(cmd *cobra.Command, tag *parser.MultiTag, val reflect.Value) (bool, error) {
+func command(cmd *cobra.Command, tag *parser.Tag, val reflect.Value) (bool, error) {
 	// Parse the command name on struct tag...
 	name, _ := tag.Get("command")
 	if len(name) == 0 {
