@@ -111,14 +111,6 @@ func finalizeFlag(flag *Flag, tag *MultiTag, opts *Opts) {
 	flag.Required = isSet(tag, "required") && !IsStringFalsy(requiredVal)
 }
 
-func isBool(t reflect.Type) bool {
-	if t.Kind() == reflect.Ptr {
-		t = t.Elem()
-	}
-
-	return t.Kind() == reflect.Bool
-}
-
 func getFlagName(field reflect.StructField, tag *MultiTag, opts *Opts) (string, string) {
 	// Start with values from sflags format, which can include the ignore-prefix tilde.
 	long, short, ignorePrefix := parseSFlag(tag, opts)
@@ -264,14 +256,6 @@ func getFlagNegatable(field reflect.StructField, tag *MultiTag) *string {
 	return &negatable
 }
 
-func expandVar(s string, vars map[string]string) string {
-	for k, v := range vars {
-		s = strings.ReplaceAll(s, "${"+k+"}", v)
-	}
-
-	return s
-}
-
 func getFlagDefault(tag *MultiTag) []string {
 	val, ok := tag.Get("default")
 	if !ok {
@@ -279,14 +263,6 @@ func getFlagDefault(tag *MultiTag) []string {
 	}
 
 	return []string{val}
-}
-
-func expandStringSlice(s []string, vars map[string]string) []string {
-	for i, v := range s {
-		s[i] = expandVar(v, vars)
-	}
-
-	return s
 }
 
 func parseEnvTag(flagName string, field reflect.StructField, options *Opts) []string {
@@ -336,37 +312,4 @@ func parseEnvTag(flagName string, field reflect.StructField, options *Opts) []st
 	}
 
 	return envNames
-}
-
-func isSet(tag *MultiTag, key string) bool {
-	// First, check if the key exists as a standalone tag (e.g., `hidden:"true"`).
-	// This is the standard go-flags and kong behavior.
-	if _, ok := tag.Get(key); ok {
-		return true
-	}
-
-	// If not, check for sflags-style attributes within the main `flag` tag.
-	// e.g., `flag:"myflag f,hidden,deprecated"`
-	if flagTag, ok := tag.Get("flag"); ok {
-		// The attributes are comma-separated after the name/short-name part.
-		parts := strings.Split(flagTag, ",")
-		if len(parts) < 2 {
-			return false
-		}
-
-		// Check the attributes list for the key.
-		attributes := parts[1:]
-		for _, attr := range attributes {
-			if strings.TrimSpace(attr) == key {
-				return true
-			}
-		}
-	}
-
-	return false
-}
-
-// IsStringFalsy returns true if a string is considered "falsy" (empty, "false", "no", or "0").
-func IsStringFalsy(s string) bool {
-	return s == "" || s == "false" || s == "no" || s == "0"
 }

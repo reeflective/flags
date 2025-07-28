@@ -119,3 +119,34 @@ func EnsureAddr(val reflect.Value) reflect.Value {
 
 	return ptrval
 }
+
+// ParsePositionalStruct scans a struct value that is tagged as a legacy
+// `positional-args:"true"` container and returns a slice of parsed
+// Positional arguments.
+func ParsePositionalStruct(val reflect.Value, stag *MultiTag, opts *Opts) ([]*Positional, error) {
+	stype := val.Type()
+	req, _ := stag.Get("required") // this is written on the struct, applies to all
+	reqAll := len(req) != 0        // Each field will count as one required minimum
+
+	var positionals []*Positional
+
+	for i := 0; i < stype.NumField(); i++ {
+		field := stype.Field(i)
+		fieldValue := val.Field(i)
+
+		tag, _, err := GetFieldTag(field)
+		if err != nil {
+			return nil, err
+		}
+
+		pos, err := parseSinglePositional(fieldValue, field, tag, opts, reqAll)
+		if err != nil {
+			return nil, err
+		}
+
+		pos.Index = len(positionals)
+		positionals = append(positionals, pos)
+	}
+
+	return positionals, nil
+}

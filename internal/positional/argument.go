@@ -8,8 +8,9 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/spf13/cobra"
+
 	"github.com/reeflective/flags/internal/parser"
-	"github.com/reeflective/flags/internal/values"
 )
 
 // ErrRequired signals an argument field has not been
@@ -20,7 +21,17 @@ var ErrRequired = errors.New("required argument")
 // giving a few functions to manipulate the list of words we want to parse.
 // As well, the current positional argument is a parameter, which is the only
 // positional slot we can access within the function.
-type WordConsumer func(args *Args, current *Arg, dash int) error
+type WordConsumer func(args *Args, current *parser.Positional, dash int) error
+
+// NewArgs creates a new, empty Args manager.
+func NewArgs() *Args {
+	args := &Args{
+		noTags: true,
+	}
+	args.consumer = args.consumeWords
+
+	return args
+}
 
 // WithWordConsumer allows to set a custom function to loop over
 // the command words for a given positional slot. See WordConsumer.
@@ -30,37 +41,20 @@ func WithWordConsumer(args *Args, consumer WordConsumer) *Args {
 	return args
 }
 
-// Arg is a type used to store information and value references to
-// a struct field we use as positional arg. This type is passed in
-// many places, so that we can parse/convert and make informed
-// decisions on how to handle those tasks.
-type Arg struct {
-	Index       int             // The position in the struct (n'th struct field used as a slot)
-	Name        string          // name of the argument, either tag name or struct field
-	Minimum     int             // minimum number of arguments we want.
-	Maximum     int             // Maximum number of args we want (-1: infinite)
-	StartMin    int             // Index of first positional word for which we are used
-	StartMax    int             // if previous positional slots are full, this replaces startAt
-	Tag         parser.MultiTag // struct tag
-	Value       reflect.Value   // A reference to the field value itself
-	value       values.Value
-	Validator   func(val string) error
-	Passthrough bool
-}
-
 // Args contains an entire list of positional argument "slots" (struct fields)
 // along with everything needed to parse a list of words onto them, taking into
 // account all of their requirements and constraints, and throwing an error with
 // proper formatting and structure when one of these requirements are not satisfied.
 type Args struct {
 	// A list of positional struct fields
-	slots []*Arg
+	slots []*parser.Positional
 
 	// Requirements
-	totalMin    int  // Total count of required arguments
-	totalMax    int  // the maximum number of required arguments
-	allRequired bool // Are all positional slots required ?
-	noTags      bool // Did we find at least one tag on a positional field ?
+	totalMin        int  // Total count of required arguments
+	totalMax        int  // the maximum number of required arguments
+	AllRequired     bool // Are all positional slots required ?
+	noTags          bool // Did we find at least one tag on a positional field ?
+	SoftPassthrough bool // If true, allows unparsed args to be passed to Execute.
 
 	// Internal word management
 	words       []string // The list of arguments remaining to be parsed into their fields
@@ -76,6 +70,28 @@ type Args struct {
 	consumer WordConsumer
 }
 
+// ToCobraArgs converts the list of positional arguments into a cobra.PositionalArgs function.
+func (args *Args) ToCobraArgs() cobra.PositionalArgs {
+	return func(cmd *cobra.Command, cargs []string) error {
+		// Apply the words on the all/some of the positional fields,
+		// returning any words that have not been parsed in fields,
+		// and an error if one of the positionals has failed.
+		retargs, err := args.Parse(cargs, cmd.ArgsLenAtDash())
+
+		// Once we have consumed the words we wanted, we update the
+		// command's return (non-consummed) arguments, to be passed
+		// later to the Execute(args []string) implementation.
+		defer SetRemainingArgs(cmd, retargs)
+
+		// Directly return the error, which might be non-nil.
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+}
+
 // Parse acceps a list of command-line words to be ALL parsed as positional
 // arguments of a command. This function will parse each word into its proper
 // positional struct field (following quantity constraints/requirements), and
@@ -87,6 +103,7 @@ func (args *Args) Parse(words []string, dash int) (retargs []string, err error) 
 
 	// Always set the return arguments when exiting.
 	// This is used by command callers needing them
+
 	// as lambda parameters to the implementation.
 	defer func() { retargs = args.words }()
 
@@ -97,11 +114,11 @@ func (args *Args) Parse(words []string, dash int) (retargs []string, err error) 
 
 		// The positional slot consumes words as it needs, and only
 		// returns an error when it cannot fulfill its requirements.
-		err := args.consumeWords(args, arg, dash)
+		err := args.consumer(args, arg, dash)
 
 		// Either the positional argument has not had enough words
 		if errors.Is(err, ErrRequired) {
-			return retargs, args.positionalRequiredErr(*arg)
+			return retargs, args.positionalRequiredErr(arg)
 		}
 
 		// Or we have failed to parse the word onto the struct field
@@ -113,7 +130,10 @@ func (args *Args) Parse(words []string, dash int) (retargs []string, err error) 
 
 	// Finally, if we have some return arguments, we verify that
 	// the last positional was not a list with a maximum specified:
-	// This is to keep retrocompatibility with go-flags. Should be moved.
+	if args.SoftPassthrough {
+		return retargs, nil
+	}
+
 	return retargs, args.checkRequirementsFinal()
 }
 
@@ -133,7 +153,7 @@ func (args *Args) ParseConcurrent(words []string) {
 
 		workers.Add(1)
 
-		go func(arg *Arg) {
+		go func(arg *parser.Positional) {
 			defer workers.Done()
 
 			// If we don't have enough words for even
@@ -155,41 +175,99 @@ func (args *Args) ParseConcurrent(words []string) {
 
 // Positionals returns the list of "slots" that have been
 // created when parsing a struct of positionals.
-func (args *Args) Positionals() []*Arg {
+func (args *Args) Positionals() []*parser.Positional {
 	return args.slots
+}
+
+// Add adds a new positional argument slot to the manager.
+// This function takes care of recomputing total positional
+// requirements and updates the positional argument manager.
+func (args *Args) Add(arg *parser.Positional) {
+	args.slots = append(args.slots, arg)
+
+	// First set the argument itself.
+	arg.StartMax = args.totalMax
+
+	// The total min/max number of arguments is used
+	// by completers to know precisely when they should
+	// start completing for a given positional field slot.
+	args.totalMin += arg.Min // min is never < 0
+
+	if arg.Max != -1 {
+		args.totalMax += arg.Max
+	}
+	// if args.totalMax != -1 && arg.Max != -1 {
+	// 	args.totalMax += arg.Max
+	// } else {
+	// 	args.totalMax = -1
+	// }
+}
+
+// Finalize runs adjustments on the argument list after all arguments have been added.
+func (args *Args) Finalize(cmd *cobra.Command) error {
+	// Validate ambiguous passthrough combinations.
+	if args.SoftPassthrough && len(args.slots) > 0 {
+		lastArg := args.slots[len(args.slots)-1]
+		if lastArg.Max == -1 {
+			return fmt.Errorf("ambiguous configuration: container-level passthrough cannot be used with a greedy positional argument ('%s')", lastArg.Name)
+		}
+	}
+
+	// Validate field-level passthrough arguments.
+	for i, arg := range args.slots {
+		if arg.Passthrough && i < len(args.slots)-1 {
+			return fmt.Errorf("passthrough argument %s must be the last positional argument", arg.Name)
+		}
+	}
+
+	for _, arg := range args.slots {
+		if arg.Passthrough {
+			cmd.Flags().SetInterspersed(false)
+
+			break
+		}
+	}
+
+	if err := args.validateGreedySlices(); err != nil {
+		return err
+	}
+	args.adjustMaximums()
+	args.needed = args.totalMin
+
+	return nil
 }
 
 // copyArgs is used to make several instances of our args
 // to work on the same list of command words (copies of it).
 func (args *Args) copyArgs() *Args {
 	return &Args{
-		slots:       args.slots,
-		totalMin:    args.totalMin,
-		totalMax:    args.totalMax,
-		allRequired: args.allRequired,
-		needed:      args.totalMin,
-		noTags:      args.noTags,
-		done:        0,
-		parsed:      0,
-		consumer:    args.consumer,
+		slots:           args.slots,
+		totalMin:        args.totalMin,
+		totalMax:        args.totalMax,
+		AllRequired:     args.AllRequired,
+		needed:          args.totalMin,
+		noTags:          args.noTags,
+		done:            0,
+		parsed:          0,
+		consumer:        args.consumer,
 	}
 }
 
 // consumePositionals parses one or more words from the current list of positionals into
 // their struct fields, and returns once its own requirements are satisfied and/or the
 // next positional arguments require words to be passed along.
-func (args *Args) consumeWords(self *Args, arg *Arg, dash int) error {
+func (args *Args) consumeWords(self *Args, arg *parser.Positional, dash int) error {
 	// As long as we've got a word, and nothing told us to quit.
 	for !self.Empty() {
 		// If we have reached the maximum number of args we accept.
-		if (self.parsed == arg.Maximum) && arg.Maximum != -1 {
+		if (self.parsed == arg.Max) && arg.Max != -1 {
 			return nil
 		}
 
 		// If we have the minimum required, but there are
 		// "just enough" (we assume it at least) words for
 		// the next arguments, leave them the words.
-		if self.parsed >= arg.Minimum && self.allRemainingRequired() {
+		if self.parsed >= arg.Min && self.allRemainingRequired() {
 			return nil
 		}
 
@@ -203,16 +281,9 @@ func (args *Args) consumeWords(self *Args, arg *Arg, dash int) error {
 		// of arguments, we are cleared to consume one.
 		next := args.Pop()
 
-		// If the positional slot has a validator function,
-		// run it before trying to convert the value.
-		if arg.Validator != nil {
-			if err := arg.Validator(next); err != nil {
-				return err
-			}
-		}
 		// Parse the string value onto its native type, returning any errors.
 		// We also break this loop immediately if we are not parsing onto a list.
-		if err := arg.value.Set(next); err != nil {
+		if err := arg.PValue.Set(next); err != nil {
 			return fmt.Errorf("invalid value for %s: %w", arg.Name, err)
 		} else if arg.Value.Type().Kind() != reflect.Slice {
 			return nil
@@ -221,7 +292,7 @@ func (args *Args) consumeWords(self *Args, arg *Arg, dash int) error {
 
 	// If we are still lacking some required words,
 	// but we have exhausted the available ones.
-	if self.parsed < arg.Minimum {
+	if self.parsed < arg.Min {
 		return ErrRequired
 	}
 
@@ -250,11 +321,15 @@ func (args *Args) checkRequirementsFinal() error {
 	// any remaining slot being a list with a specified maximum value
 	// cannot accept more than that, and will error out instead of
 	// silently passing the excess args onto the Execute() parameters.
-	if isSlice && current.Value.Len() == current.Maximum && len(args.words) > 0 {
-		overweight := argHasTooMany(*current, len(args.words))
-		msgErr := overweight + " was not provided"
+	if isSlice && current.Value.Len() == current.Max && len(args.words) > 0 {
+		overweight := argHasTooMany(current, len(args.words))
+		msgErr := overweight
 
 		return fmt.Errorf("%w: %s", ErrRequired, msgErr)
+	}
+
+	if len(args.words) > 0 && !args.allRemainingRequired() {
+		return errors.New("too many arguments")
 	}
 
 	return nil
@@ -262,7 +337,7 @@ func (args *Args) checkRequirementsFinal() error {
 
 // positionalErrorHandler makes a handler to be used in our argument handlers,
 // when they fail, to compute a precise error message on argument requirements.
-func (args *Args) positionalRequiredErr(arg Arg) error {
+func (args *Args) positionalRequiredErr(arg *parser.Positional) error {
 	if names := args.getRequiredNames(arg); len(names) > 0 {
 		var msg string
 
@@ -280,7 +355,7 @@ func (args *Args) positionalRequiredErr(arg Arg) error {
 }
 
 // getRequiredNames is used by an argument handler to build the correct list of arguments we need.
-func (args *Args) getRequiredNames(current Arg) (names []string) {
+func (args *Args) getRequiredNames(current *parser.Positional) (names []string) {
 	// For each of the EXISTING positional argument fields
 	for index, arg := range args.slots {
 		// Ignore all positional arguments that have not
@@ -303,8 +378,8 @@ func (args *Args) getRequiredNames(current Arg) (names []string) {
 
 		// If we have less words to parse than
 		// the minimum required by this argument.
-		if arg.Value.Len() < arg.Minimum {
-			names = append(names, argHasNotEnough(*arg))
+		if arg.Value.Len() < arg.Min {
+			names = append(names, argHasNotEnough(arg))
 
 			continue
 		}
@@ -313,45 +388,70 @@ func (args *Args) getRequiredNames(current Arg) (names []string) {
 	return names
 }
 
+// SetRemainingArgs takes argument words that have not been parsed on positional struct fields,
+// and stores them in the command annotations, to be passed to the command type's Execute() method.
+func SetRemainingArgs(cmd *cobra.Command, retargs []string) {
+	if len(retargs) == 0 || retargs == nil || cmd == nil {
+		return
+	}
+
+	if cmd.Annotations == nil {
+		cmd.Annotations = map[string]string{}
+	}
+	// Add these arguments in an annotation to be used
+	// in our Run implementation, where we pass just the
+	// unparsed positional arguments to the command Execute(args []string).
+	cmd.Annotations["flags"] = strings.Join(retargs, " ")
+}
+
+// GetRemainingArgs fetches the unparsed argument words
+// to be used in the command's Execute() method.
+func GetRemainingArgs(cmd *cobra.Command) []string {
+	if cmd.Annotations == nil {
+		return nil
+	}
+
+	if argString, found := cmd.Annotations["flags"]; found {
+		return strings.Split(argString, " ")
+	}
+
+	return nil
+}
+
 // makes a correct sentence when we don't have enough args.
-func argHasNotEnough(arg Arg) string {
+func argHasNotEnough(arg *parser.Positional) string {
 	var arguments string
 
-	if arg.Minimum > 1 {
+	if arg.Min > 1 {
 		arguments = "arguments, but got only " + strconv.Itoa(arg.Value.Len())
 	} else {
 		arguments = "argument"
 	}
 
-	argRequired := "`" + arg.Name + " (at least " + strconv.Itoa(arg.Minimum) + " " + arguments + ")`"
+	argRequired := "`" + arg.Name + " (at least " + strconv.Itoa(arg.Min) + " " + arguments + ")`"
 
 	return argRequired
 }
 
 // makes a correct sentence when we have too much args.
-func argHasTooMany(arg Arg, added int) string {
-	// The argument might be explicitly disabled...
-	if arg.Maximum == 0 {
-		return "`" + arg.Name + " (zero arguments)`"
-	}
-
+func argHasTooMany(arg *parser.Positional, added int) string {
 	// Or just build the list accordingly.
 	var parsed string
 
-	if arg.Maximum > 1 {
+	if arg.Max > 1 {
 		parsed = "arguments, but got " + strconv.Itoa(arg.Value.Len()+added)
 	} else {
 		parsed = "argument"
 	}
 
-	hasTooMany := "`" + arg.Name + " (at most " + strconv.Itoa(arg.Maximum) + " " + parsed + ")`"
+	hasTooMany := "`" + arg.Name + " (at most " + strconv.Itoa(arg.Max) + " " + parsed + ")`"
 
 	return hasTooMany
 }
 
-func isRequired(p *Arg) bool {
-	return (p.Value.Type().Kind() != reflect.Slice && (p.Minimum > 0)) || // Both must be true
-		p.Minimum != -1 || p.Maximum != -1 // And either of these
+func isRequired(p *parser.Positional) bool {
+	return (p.Value.Type().Kind() != reflect.Slice && (p.Min > 0)) || // Both must be true
+		p.Min != -1 || p.Max != -1 // And either of these
 }
 
 //
@@ -368,9 +468,9 @@ func (args *Args) setWords(words []string) {
 // setNext (re)sets the number of words parsed by
 // a single positional slot to 0, so that the next
 // positional using the words can set its own values.
-func (args *Args) setNext(arg *Arg) {
+func (args *Args) setNext(arg *parser.Positional) {
 	args.parsed = 0
-	args.offsetRange = arg.Minimum
+	args.offsetRange = arg.Min
 }
 
 func (args *Args) Empty() bool {

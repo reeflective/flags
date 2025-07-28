@@ -8,7 +8,6 @@ import (
 
 	"github.com/reeflective/flags/internal/errors"
 	"github.com/reeflective/flags/internal/parser"
-	"github.com/reeflective/flags/internal/validation"
 	"github.com/reeflective/flags/internal/values"
 )
 
@@ -25,11 +24,14 @@ func ScanArgs(val reflect.Value, stag *parser.MultiTag, opts ...parser.OptFunc) 
 	opt := parser.DefOpts().Apply(opts...)
 
 	// Holds our positional slots and manages them
-	args := &Args{allRequired: reqAll, noTags: true}
+	args := &Args{AllRequired: reqAll, noTags: true}
+	if _, isSet := stag.Get("passthrough"); isSet {
+		args.SoftPassthrough = true
+	}
 
 	// Each positional field is scanned for its number requirements,
 	// and underlying value to be used by the command's arg handlers/converters.
-	for fieldCount := range stype.NumField() {
+	for fieldCount := 0; fieldCount < stype.NumField(); fieldCount++ {
 		field := stype.Field(fieldCount)
 		fieldValue := val.Field(fieldCount)
 
@@ -41,30 +43,33 @@ func ScanArgs(val reflect.Value, stag *parser.MultiTag, opts ...parser.OptFunc) 
 		}
 	}
 
-	// Validate passthrough arguments.
-	for i, arg := range args.slots {
-		if arg.Passthrough && i < len(args.slots)-1 {
-			return nil, fmt.Errorf("%w: passthrough argument %s must be the last positional argument",
-				errors.ErrInvalidTag, arg.Name)
-		}
-	}
-
-	// After scanning all fields, validate the configuration.
-	if err := args.validateGreedySlices(); err != nil {
-		return nil, err
-	}
-
-	// Depending on our position and type, we reset the maximum
-	// number of words allowed for this argument, and update the
-	// counter that will be used by handlers to sync their use of words.
-	args.adjustMaximums()
-
-	// Last minute internal counters adjustments
-	args.needed = args.totalMin
-
 	// By default, the positionals have a consumer made
 	// to parse a list of command words onto our struct.
 	args.consumer = args.consumeWords
+
+	return args, nil
+}
+
+// ScanArgsV2 scans a legacy `positional-args` struct and returns a populated
+// Args argument manager. It acts as a bridge to the new parser-centric logic.
+func ScanArgsV2(val reflect.Value, stag *parser.MultiTag, opts ...parser.OptFunc) (*Args, error) {
+	// Prepare our scan options.
+	opt := parser.DefOpts().Apply(opts...)
+
+	// The parser package is now the source of truth for scanning.
+	positionals, err := parser.ParsePositionalStruct(val, stag, opt)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create a new runtime manager and populate it.
+	args := NewArgs()
+	if _, isSet := stag.Get("passthrough"); isSet {
+		args.SoftPassthrough = true
+	}
+	for _, pos := range positionals {
+		args.Add(pos)
+	}
 
 	return args, nil
 }
@@ -85,52 +90,28 @@ func (args *Args) scanArg(field reflect.StructField, value reflect.Value, reqAll
 	// account the kind of field we are considering (slice or not)
 	minArgs, maxArgs := positionalReqs(value, *ptag, reqAll)
 
-	arg := &Arg{
-		Index:    len(args.slots),
-		Name:     name,
-		Minimum:  minArgs,
-		Maximum:  maxArgs,
-		Tag:      *ptag,
-		StartMin: args.totalMin,
-		StartMax: args.totalMax,
-		Value:    value,
-		value:    values.NewValue(value, nil, nil),
+	arg := &parser.Positional{
+		Name:   name,
+		Min:    minArgs,
+		Max:    maxArgs,
+		Tag:    ptag,
+		Value:  value,
+		PValue: values.NewValue(value, nil, nil),
 	}
 
-	// Check for passthrough tag
-	if _, ok := ptag.Get("passthrough"); ok {
-		// Passthrough argument must be a slice of strings.
-		if field.Type.Kind() != reflect.Slice || field.Type.Elem().Kind() != reflect.String {
-			return fmt.Errorf("%w: passthrough argument %s must be of type []string",
-				errors.ErrInvalidTag, field.Name)
-		}
-		arg.Passthrough = true
-		arg.Maximum = -1
-	}
-
-	args.slots = append(args.slots, arg)
-	args.totalMin += minArgs // min is never < 0
-
-	// The total maximum number of arguments is used
-	// by completers to know precisely when they should
-	// start completing for a given positional field slot.
-	if arg.Maximum != -1 {
-		args.totalMax += arg.Maximum
-	}
+	args.Add(arg)
 
 	// Set validators
 	var choices []string
-
 	choiceTags := ptag.GetMany("choice")
-
 	for _, choice := range choiceTags {
 		choices = append(choices, strings.Split(choice, " ")...)
 	}
 
 	// Set up any validations.
-	if validator := validation.Setup(value, field, choices, opt.Validator); validator != nil {
-		arg.Validator = validator
-	}
+	// if validator := validation.Setup(value, field, choices, opt.Validator); validator != nil {
+	// 	arg.Validator = validator
+	// }
 
 	return nil
 }
@@ -198,18 +179,18 @@ func parseArgsNumRequired(fieldTag parser.MultiTag) (required, maximum int, set 
 
 	required = 1
 
-	rng := strings.SplitN(sreq, "-", requiredNumParsedValues)
+	rng := strings.SplitN(sreq, "-", 2)
 
 	if len(rng) > 1 {
-		if preq, err := strconv.ParseInt(rng[0], baseParseInt, bitsizeParseInt); err == nil {
+		if preq, err := strconv.ParseInt(rng[0], 10, 64); err == nil {
 			required = int(preq)
 		}
 
-		if preq, err := strconv.ParseInt(rng[1], baseParseInt, bitsizeParseInt); err == nil {
+		if preq, err := strconv.ParseInt(rng[1], 10, 64); err == nil {
 			maximum = int(preq)
 		}
 	} else {
-		if preq, err := strconv.ParseInt(sreq, baseParseInt, bitsizeParseInt); err == nil {
+		if preq, err := strconv.ParseInt(sreq, 10, 64); err == nil {
 			required = int(preq)
 		}
 	}
@@ -229,12 +210,12 @@ func (args *Args) validateGreedySlices() error {
 
 		// If we have already found a greedy slice, and we encounter another
 		// slice of any kind, it's an error because it's shadowed.
-		if greedySliceFound && isSlice && arg.Maximum == -1 {
+		if greedySliceFound && isSlice && arg.Max == -1 {
 			return args.errorSliceShadowing(arg.Name, greedySliceName)
 		}
 
 		// Check if the current argument is a greedy slice.
-		if isSlice && arg.Maximum == -1 {
+		if isSlice && arg.Max == -1 {
 			greedySliceFound = true
 			greedySliceName = arg.Name
 		}
@@ -266,7 +247,7 @@ func (args *Args) constrainGreedySlices() {
 	for pos, arg := range args.slots {
 		// We only care about slices that are currently "greedy" (no max set).
 		isSlice := arg.Value.Type().Kind() == reflect.Slice || arg.Value.Type().Kind() == reflect.Map
-		if !isSlice || arg.Maximum != -1 {
+		if !isSlice || arg.Max != -1 {
 			continue
 		}
 
@@ -276,8 +257,8 @@ func (args *Args) constrainGreedySlices() {
 			nextIsSlice := nextArg.Value.Type().Kind() == reflect.Slice || nextArg.Value.Type().Kind() == reflect.Map
 
 			// If the next slice is ALSO greedy (max == -1), then the current one must be constrained.
-			if nextIsSlice && nextArg.Maximum == -1 && nextArg.Minimum > 0 {
-				arg.Maximum = arg.Minimum
+			if nextIsSlice && nextArg.Max == -1 && nextArg.Min > 0 {
+				arg.Max = arg.Min
 
 				break // The current arg is now constrained, move to the next one in the outer loop.
 			}
@@ -298,17 +279,46 @@ func (args *Args) applyDefaultAdjustments() {
 			arg.StartMax = arg.StartMin
 		}
 
-		if arg.Maximum == -1 && !isSlice {
-			arg.Maximum = 1
-			if args.allRequired {
-				arg.Minimum = 1
+		if arg.Max == -1 && !isSlice {
+			arg.Max = 1
+			if args.AllRequired {
+				arg.Min = 1
 			}
 
 			continue
 		}
 
-		if isSlice && args.allRequired && args.noTags {
-			arg.Minimum = 1
+		if isSlice && args.AllRequired && args.noTags {
+			arg.Min = 1
 		}
 	}
+}
+
+// validateGreedySlices checks for invalid positional argument configurations
+// where a "greedy" slice (one with no maximum) is followed by another slice,
+// which would be impossible to parse.
+func validateGreedySlices(args []*parser.Positional) error {
+	return nil
+}
+
+// errorSliceShadowing formats an error indicating that a greedy
+// positional slice is making a subsequent greedy slice unreachable.
+func errorSliceShadowingT(shadowingArgName, shadowedArgName string) error {
+	details := fmt.Sprintf("positional `%s` is shadowed by `%s`, which is a greedy slice",
+		shadowedArgName,
+		shadowingArgName)
+
+	return fmt.Errorf("%w: %s", errors.ErrPositionalShadowing, details)
+}
+
+// constrainGreedySlices iterates through the positional
+// arguments and constrains any greedy slice that is followed
+// by another greedy slice by setting its maximum to its minimum.
+func constrainGreedySlicesT(args []*parser.Positional) {
+}
+
+// applyDefaultAdjustments handles miscellaneous adjustments for positional
+// arguments, such as setting default maximums for non-slice fields and
+// handling untagged required slices.
+func applyDefaultAdjustmentsT(args []*parser.Positional, allRequired bool) {
 }

@@ -15,7 +15,7 @@ import (
 func flags(ctx *context) parser.Handler {
 	flagScanner := func(val reflect.Value, sfield *reflect.StructField) (bool, error) {
 		// Parse a single field, returning one or more generic Flags
-		flagSet, found, err := parser.ParseField(val, *sfield, ctx.opts)
+		flagSet, _, found, err := parser.ParseFieldV2(val, *sfield, ctx.opts)
 		if err != nil {
 			return found, fmt.Errorf("failed to parse flag field: %w", err)
 		}
@@ -67,7 +67,7 @@ func flagsGroup(ctx *context, val reflect.Value, field *reflect.StructField) (bo
 // It uses the parser to get a list of flags and then generates them to the command's flag set.
 func handleFlagGroup(ctx *context, val reflect.Value, fld *reflect.StructField, tag *parser.MultiTag) error {
 	// 1. Call the new parser.ParseGroup to get the list of flags.
-	flags, err := parser.ParseGroup(val, *fld, ctx.opts)
+	flags, _, err := parser.ParseGroupV2(val, *fld, ctx.opts)
 	if err != nil {
 		return err // The error is already wrapped by ParseGroup.
 	}
@@ -105,7 +105,7 @@ func handleCommandGroup(ctx *context, val reflect.Value, commandGroup string) er
 		group: group,
 		opts:  ctx.opts,
 	}
-	scannerCommand := scanRoot(subCtx)
+	scannerCommand := scanRootV2(subCtx)
 
 	if err := parser.Scan(ptrval.Interface(), scannerCommand); err != nil {
 		return fmt.Errorf("failed to scan command group: %w", err)

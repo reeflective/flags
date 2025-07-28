@@ -12,57 +12,42 @@ import (
 )
 
 // ParseGroup scans a struct that is tagged as a group of flags and returns the parsed flags.
-func ParseGroup(value reflect.Value, field reflect.StructField, parentOpts *Opts) ([]*Flag, error) {
-	opts := parentOpts.Copy()
-	tag, _, _ := GetFieldTag(field)
-
-	// Prepare variables and namespacing for the group.
-	opts.Vars = prepareGroupVars(tag, parentOpts)
-	applyGroupNamespacing(opts, field, tag)
-
-	// Scan the group for flags.
-	var flags []*Flag
-	scanner := func(val reflect.Value, sfield *reflect.StructField) (bool, error) {
-		fieldFlags, found, err := ParseField(val, *sfield, opts)
-		if err != nil {
-			return false, err
-		}
-		if found {
-			flags = append(flags, fieldFlags...)
-		}
-
-		return true, nil
-	}
-
-	ptrVal := EnsureAddr(value)
-	if err := Scan(ptrVal.Interface(), scanner); err != nil {
-		return nil, err
-	}
-
-	// Apply post-parsing modifications like XOR prefixing.
-	applyXORPrefix(flags, field, tag, opts)
-
-	return flags, nil
-}
-
-// prepareGroupVars merges variables from parent options, group tags, and global variables.
-func prepareGroupVars(tag *MultiTag, parentOpts *Opts) map[string]string {
-	newVars := make(map[string]string)
-	for k, v := range parentOpts.Vars {
-		newVars[k] = v
-	}
-	for _, setVal := range tag.GetMany("set") {
-		parts := strings.SplitN(setVal, "=", 2)
-		if len(parts) == 2 {
-			newVars[parts[0]] = parts[1]
-		}
-	}
-	for k, v := range parentOpts.GlobalVars {
-		newVars[k] = v
-	}
-
-	return newVars
-}
+// func ParseGroup(value reflect.Value, field reflect.StructField, parentOpts *Opts) ([]*Flag, []*PositionalArgument, error) {
+// 	opts := parentOpts.Copy()
+// 	tag, _, _ := GetFieldTag(field)
+//
+// 	// Prepare variables and namespacing for the group.
+// 	opts.Vars = prepareGroupVars(tag, parentOpts)
+// 	applyGroupNamespacing(opts, field, tag)
+//
+// 	// Scan the group for flags and positionals.
+// 	var flags []*Flag
+// 	var positionals []*PositionalArgument
+// 	scanner := func(val reflect.Value, sfield *reflect.StructField) (bool, error) {
+// 		fieldFlags, fieldPositional, found, err := ParseField(val, *sfield, opts)
+// 		if err != nil {
+// 			return false, err
+// 		}
+// 		if found {
+// 			flags = append(flags, fieldFlags...)
+// 			if fieldPositional != nil {
+// 				positionals = append(positionals, fieldPositional)
+// 			}
+// 		}
+//
+// 		return true, nil
+// 	}
+//
+// 	ptrVal := EnsureAddr(value)
+// 	if err := Scan(ptrVal.Interface(), scanner); err != nil {
+// 		return nil, err
+// 	}
+//
+// 	// Apply post-parsing modifications like XOR prefixing.
+// 	applyXORPrefix(flags, field, tag, opts)
+//
+// 	return flags, positionals, nil
+// }
 
 // applyGroupNamespacing modifies the options' prefixes based on group structure and tags.
 func applyGroupNamespacing(opts *Opts, field reflect.StructField, tag *MultiTag) {
@@ -108,28 +93,134 @@ func applyXORPrefix(flags []*Flag, field reflect.StructField, tag *MultiTag, opt
 
 // ParseField parses a single struct field. It acts as a dispatcher, checking if
 // the field is a group of flags or a single flag, and calling the appropriate parser.
-func ParseField(value reflect.Value, field reflect.StructField, opts *Opts) ([]*Flag, bool, error) {
+// func ParseField(value reflect.Value, field reflect.StructField, opts *Opts) ([]*Flag, *PositionalArgument, bool, error) {
+// 	if (field.PkgPath != "" && !field.Anonymous) || value.Kind() == reflect.Func {
+// 		return nil, false, nil
+// 	}
+//
+// 	tag, _, err := GetFieldTag(field)
+// 	if err != nil {
+// 		return nil, false, err
+// 	}
+//
+// 	// Check if the field is a positional argument.
+// 	if _, isArg := tag.Get("arg"); isArg {
+// 		pos, err := parsePositional(value, field, tag, opts)
+// 		if err != nil {
+// 			return nil, true, err
+// 		}
+//
+// 		return nil, pos, true, nil
+// 	}
+//
+// 	// Check if the field is a struct group and parse it recursively if so.
+// 	if field.Anonymous || (isOptionGroup(value) && opts.ParseAll) {
+// 		flags, positionals, err := ParseGroup(value, field, opts)
+// 		if err != nil {
+// 			return nil, true, err
+// 		}
+// 		// This is not ideal, as we are losing the positional information here.
+// 		// The new generator logic will need to handle this properly by collecting
+// 		// positionals from groups.
+// 		if len(positionals) > 0 {
+// 			// For now, we can't propagate positionals from deep within groups.
+// 			// This will be addressed in the generator logic.
+// 		}
+//
+// 		return flags, nil, true, nil
+// 	}
+//
+// 	// If not a group, parse as a single flag.
+// 	flag, found, err := parseSingleFlag(value, field, opts)
+// 	if err != nil {
+// 		return nil, found, err
+// 	}
+// 	if !found {
+// 		return nil, false, nil
+// 	}
+//
+// 	return []*Flag{flag}, nil, true, nil
+// }
+
+// ParseFieldV2 is the updated version of ParseField that returns the new parser.Positional type.
+func ParseFieldV2(value reflect.Value, field reflect.StructField, opts *Opts) ([]*Flag, *Positional, bool, error) {
 	if (field.PkgPath != "" && !field.Anonymous) || value.Kind() == reflect.Func {
-		return nil, false, nil
+		return nil, nil, false, nil
+	}
+
+	tag, _, err := GetFieldTag(field)
+	if err != nil {
+		return nil, nil, false, err
+	}
+
+	// Check if the field is a positional argument.
+	if _, isArg := tag.Get("arg"); isArg {
+		pos, err := parseSinglePositional(value, field, tag, opts, false)
+		if err != nil {
+			return nil, nil, true, err
+		}
+
+		return nil, pos, true, nil
 	}
 
 	// Check if the field is a struct group and parse it recursively if so.
 	if field.Anonymous || (isOptionGroup(value) && opts.ParseAll) {
-		flags, err := ParseGroup(value, field, opts)
+		flags, _, err := ParseGroupV2(value, field, opts)
+		if err != nil {
+			return nil, nil, true, err
+		}
 
-		return flags, true, err
+		return flags, nil, true, nil
 	}
 
 	// If not a group, parse as a single flag.
 	flag, found, err := parseSingleFlag(value, field, opts)
 	if err != nil {
-		return nil, found, err
+		return nil, nil, found, err
 	}
 	if !found {
-		return nil, false, nil
+		return nil, nil, false, nil
 	}
 
-	return []*Flag{flag}, true, nil
+	return []*Flag{flag}, nil, true, nil
+}
+
+// ParseGroupV2 is the updated version of ParseGroup that returns the new parser.Positional type.
+func ParseGroupV2(value reflect.Value, field reflect.StructField, parentOpts *Opts) ([]*Flag, []*Positional, error) {
+	opts := parentOpts.Copy()
+	tag, _, _ := GetFieldTag(field)
+
+	// Prepare variables and namespacing for the group.
+	opts.Vars = prepareGroupVars(tag, parentOpts)
+	applyGroupNamespacing(opts, field, tag)
+
+	// Scan the group for flags and positionals.
+	var flags []*Flag
+	var positionals []*Positional
+	scanner := func(val reflect.Value, sfield *reflect.StructField) (bool, error) {
+		fieldFlags, fieldPositional, found, err := ParseFieldV2(val, *sfield, opts)
+		if err != nil {
+			return false, err
+		}
+		if found {
+			flags = append(flags, fieldFlags...)
+			if fieldPositional != nil {
+				positionals = append(positionals, fieldPositional)
+			}
+		}
+
+		return true, nil
+	}
+
+	ptrVal := EnsureAddr(value)
+	if err := Scan(ptrVal.Interface(), scanner); err != nil {
+		return nil, nil, err
+	}
+
+	// Apply post-parsing modifications like XOR prefixing.
+	applyXORPrefix(flags, field, tag, opts)
+
+	return flags, positionals, nil
 }
 
 // parseSingleFlag handles the logic for parsing a field that is a single flag.
@@ -229,10 +320,4 @@ func markedFlagNotImplementing(tag MultiTag, val values.Value) bool {
 	_, long := tag.Get("long")
 
 	return (flagOld || short || long) && val == nil
-}
-
-func isOptionGroup(value reflect.Value) bool {
-	return (value.Kind() == reflect.Struct ||
-		(value.Kind() == reflect.Ptr && value.Type().Elem().Kind() == reflect.Struct)) &&
-		!isSingleValue(value)
 }

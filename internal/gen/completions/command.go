@@ -56,7 +56,7 @@ func completionScanner(cmd *cobra.Command, comps *carapace.Carapace, flags *flag
 
 		// If the field is marked as -one or more- positional arguments, we
 		// return either on a successful scan of them, or with an error doing so.
-		if found, err := positionals(comps, mtag, val); found || err != nil {
+		if found, err := positionalsV2(comps, mtag, val); found || err != nil {
 			return found, err
 		}
 

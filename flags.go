@@ -59,7 +59,7 @@ func ParseCommands(data any, opts ...Option) (*cobra.Command, error) {
 // Shell completions for the bound components are generated and attached automatically.
 func Bind(cmd *cobra.Command, data any, opts ...Option) error {
 	// 1. Bind the struct to the command
-	if err := flags.Bind(cmd, data, toInternalOpts(opts)...); err != nil {
+	if err := flags.BindV2(cmd, data, toInternalOpts(opts)...); err != nil {
 		return fmt.Errorf("failed to bind command: %w", err)
 	}
 

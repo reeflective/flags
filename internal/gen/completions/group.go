@@ -107,7 +107,7 @@ func addFlagComps(comps *carapace.Carapace, mtag *parser.MultiTag, data any) err
 	// Instead of calling flags.ParseFlags, use parser.Scan directly
 	// to process the struct fields and trigger the FlagHandler.
 	if err := parser.Scan(data, func(val reflect.Value, sfield *reflect.StructField) (bool, error) {
-		_, found, err := parser.ParseField(val, *sfield, opts)
+		_, _, found, err := parser.ParseFieldV2(val, *sfield, opts)
 
 		return found, err
 	}); err != nil {
@@ -131,7 +131,7 @@ func flagComps(comps *carapace.Carapace, flagComps *flagSetComps) parser.Handler
 		opts.FlagFunc = flagCompsScanner(flagComps)
 
 		// Parse a single field, returning one or more generic Flags
-		_, found, err := parser.ParseField(val, *sfield, opts)
+		_, _, found, err := parser.ParseFieldV2(val, *sfield, opts)
 		if err != nil {
 			return found, err
 		}

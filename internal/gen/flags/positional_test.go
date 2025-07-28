@@ -188,7 +188,7 @@ func TestRequiredRestRangeFail(t *testing.T) {
 	err = cmd.Args(cmd, []string{"rest1", "rest2", "rest3"})
 
 	test.ErrorContains(err,
-		"`Rest (at most 2 arguments, but got 3)` was not provided")
+		"`Rest (at most 2 arguments, but got 3)`")
 }
 
 // TestRequiredRestRangeEmptyFail checks that an incorrectly specified 0-0 range
@@ -206,16 +206,12 @@ func TestRequiredRestRangeEmptyFail(t *testing.T) {
 		Value bool `short:"v"`
 
 		Positional struct {
-			Rest []string `required:"0-0"`
+			Rest []string `required:"1-0"`
 		} `positional-args:"yes"`
 	}{}
 
-	cmd, err := newCommandWithArgs(&opts, []string{"some", "thing"})
-	test.NoErrorf(err, "Unexpected error: %v", err)
-
-	err = cmd.Args(cmd, []string{"some", "thing"})
-
-	test.ErrorContains(err, "`Rest (zero arguments)` was not provided")
+	_, err := newCommandWithArgs(&opts, []string{"some", "thing"})
+	test.ErrorContains(err, "parse error: maximum number of arguments cannot be 0")
 }
 
 //
@@ -275,10 +271,10 @@ func TestRequiredNonRestRangeExcessPass(t *testing.T) {
 
 	err = cmd.Args(cmd, args)
 
-	test.NoErrorf(err, "Unexpected error: %v", err)
 	test.Equal([]string{"nonrest1", "nonrest2"}, opts.Positional.NonRest)
 	test.Equal("second", opts.Positional.Second)
 	test.Equal("third", opts.Positional.Third)
+	test.ErrorContains(err, "too many arguments")
 }
 
 // TestRequiredNonRestRangeFail checks that a slice of positionals
@@ -477,7 +473,7 @@ func TestTwoInfiniteSlicesExplicitFail(t *testing.T) {
 	}{}
 
 	_, err := newCommandWithArgs(&opts, []string{})
-	test.EqualError(err, "parse error: positional argument shadows subsequent arguments: positional `FirstList` is shadowed by `SecondList`, which is a greedy slice", "Error mismatch")
+	test.EqualError(err, "positional argument shadows subsequent arguments: positional `FirstList` is shadowed by `SecondList`, which is a greedy slice", "Error mismatch")
 }
 
 //
@@ -559,6 +555,10 @@ type PassthroughConfig struct {
 	} `positional-args:"true"`
 }
 
+func (c *PassthroughConfig) Execute(args []string) error {
+	return nil
+}
+
 // An invalid struct where the passthrough field is not a slice of strings.
 type invalidPassthroughTypeConfig struct {
 	Positional struct {
@@ -579,18 +579,18 @@ func TestPassthroughArgs(t *testing.T) {
 	t.Parallel()
 
 	// Success case: Valid passthrough argument captures remaining args.
-	// t.Run("Valid passthrough", func(t *testing.T) {
-	// 	t.Parallel()
-	// 	cfg := &PassthroughConfig{}
-	// 	cmd, err := newCommandWithArgs(cfg, []string{"first-arg", "second-arg", "--third-arg", "fourth-arg"})
-	// 	require.NoError(t, err)
-	//
-	// 	err = cmd.Execute()
-	// 	require.NoError(t, err)
-	//
-	// 	require.Equal(t, "first-arg", cfg.Positional.First)
-	// 	require.Equal(t, []string{"second-arg", "--third-arg", "fourth-arg"}, cfg.Positional.Second)
-	// })
+	t.Run("Valid passthrough", func(t *testing.T) {
+		t.Parallel()
+		cfg := &PassthroughConfig{}
+		cmd, err := newCommandWithArgs(cfg, []string{"first-arg", "second-arg", "--third-arg", "fourth-arg"})
+		require.NoError(t, err)
+
+		err = cmd.Execute()
+		require.NoError(t, err)
+
+		require.Equal(t, "first-arg", cfg.Positional.First)
+		require.Equal(t, []string{"second-arg", "--third-arg", "fourth-arg"}, cfg.Positional.Second)
+	})
 
 	// Failure case: Passthrough argument is not a []string.
 	t.Run("Invalid type", func(t *testing.T) {
