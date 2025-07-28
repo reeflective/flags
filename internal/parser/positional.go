@@ -1,12 +1,13 @@
 package parser
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
 
-	"github.com/reeflective/flags/internal/errors"
+	flagerrors "github.com/reeflective/flags/internal/errors"
 	"github.com/reeflective/flags/internal/validation"
 	"github.com/reeflective/flags/internal/values"
 )
@@ -58,7 +59,7 @@ func parseSinglePositional(value reflect.Value, field reflect.StructField, tag *
 		// Passthrough argument must be a slice of strings.
 		if field.Type.Kind() != reflect.Slice || field.Type.Elem().Kind() != reflect.String {
 			return nil, fmt.Errorf("%w: passthrough argument %s must be of type []string",
-				errors.ErrInvalidTag, field.Name)
+				flagerrors.ErrInvalidTag, field.Name)
 		}
 		pos.Passthrough = true
 		pos.Max = -1
@@ -180,7 +181,7 @@ func positionalReqs(val reflect.Value, mtag MultiTag, all bool) (minWords, maxWo
 		minWords += required
 	}
 
-	return
+	return minWords, maxWords, err
 }
 
 // parseArgsNumRequired sets the minimum/maximum requirements for an argument field.
@@ -192,7 +193,7 @@ func parseArgsNumRequired(fieldTag MultiTag) (required, maximum int, set bool, e
 
 	// If no requirements, -1 means unlimited
 	if sreq == "" || !set {
-		return
+		return required, maximum, set, err
 	}
 
 	required = 1
@@ -214,8 +215,8 @@ func parseArgsNumRequired(fieldTag MultiTag) (required, maximum int, set bool, e
 	}
 
 	if maximum == 0 {
-		err = fmt.Errorf("maximum number of arguments cannot be 0")
+		err = errors.New("maximum number of arguments cannot be 0")
 	}
 
-	return
+	return required, maximum, set, err
 }

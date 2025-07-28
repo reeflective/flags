@@ -10,32 +10,6 @@ import (
 	"github.com/reeflective/flags/internal/parser"
 )
 
-// flags builds a small struct field handler so that we can scan
-// it as an option and add it to our current command flags.
-func flags(ctx *context) parser.Handler {
-	flagScanner := func(val reflect.Value, sfield *reflect.StructField) (bool, error) {
-		// Parse a single field, returning one or more generic Flags
-		flagSet, _, found, err := parser.ParseFieldV2(val, *sfield, ctx.opts)
-		if err != nil {
-			return found, fmt.Errorf("failed to parse flag field: %w", err)
-		}
-
-		if !found {
-			return false, nil
-		}
-
-		// Collect the parsed flags for post-processing.
-		ctx.Flags = append(ctx.Flags, flagSet...)
-
-		// Put these flags into the command's flagset.
-		generateTo(flagSet, ctx.cmd.Flags())
-
-		return true, nil
-	}
-
-	return flagScanner
-}
-
 // flagsGroup finds if a field is marked as a subgroup of options or commands,
 // and if so, dispatches to the appropriate handler.
 func flagsGroup(ctx *context, val reflect.Value, field *reflect.StructField) (bool, error) {
@@ -105,11 +79,43 @@ func handleCommandGroup(ctx *context, val reflect.Value, commandGroup string) er
 		group: group,
 		opts:  ctx.opts,
 	}
-	scannerCommand := scanRootV2(subCtx)
+	scannerCommand := newFieldScanner(subCtx)
 
 	if err := parser.Scan(ptrval.Interface(), scannerCommand); err != nil {
 		return fmt.Errorf("failed to scan command group: %w", err)
 	}
 
 	return nil
+}
+
+// flagsOrPositional builds a small struct field handler so that we can scan
+// it as a flag, a group of them or a Kong-style positional argument slot.
+func flagsOrPositional(ctx *context) parser.Handler {
+	flagScanner := func(val reflect.Value, sfield *reflect.StructField) (bool, error) {
+		// Parse a field (which might be a struct container), for either one or
+		// more flags, or even a struct field (Kong-style) positional argument.
+		flags, pos, found, err := parser.ParseFieldV2(val, *sfield, ctx.opts)
+		if err != nil {
+			return true, err
+		}
+		if !found {
+			return false, nil
+		}
+
+		// Either we found flags, add them to the command.
+		if len(flags) > 0 {
+			ctx.Flags = append(ctx.Flags, flags...)
+			generateTo(flags, ctx.cmd.Flags())
+		}
+
+		// Or a positional argument, and add it
+		// to the positional arguments manager.
+		if pos != nil {
+			ctx.positionals.Add(pos)
+		}
+
+		return true, nil
+	}
+
+	return flagScanner
 }

@@ -473,7 +473,7 @@ func TestTwoInfiniteSlicesExplicitFail(t *testing.T) {
 	}{}
 
 	_, err := newCommandWithArgs(&opts, []string{})
-	test.EqualError(err, "positional argument shadows subsequent arguments: positional `FirstList` is shadowed by `SecondList`, which is a greedy slice", "Error mismatch")
+	test.EqualError(err, "parse error: positional argument shadows subsequent arguments: positional `FirstList` is shadowed by `SecondList`, which is a greedy slice", "Error mismatch")
 }
 
 //
