@@ -160,23 +160,23 @@ func getTaggedCompletionAction(tag parser.Tag) (carapace.CompletionCallback, boo
 	return callback, combineWithCompleter, true
 }
 
-func hintCompletions(tag parser.Tag) (carapace.CompletionCallback, bool) {
+func hintCompletions(tag parser.Tag) (string, bool) {
 	description, _ := tag.Get("description")
 	desc, _ := tag.Get("desc")
+	help, _ := tag.Get("help")
 
 	if description == "" {
 		description = desc
 	}
+	if description == "" {
+		description = help
+	}
 
 	if description == "" {
-		return nil, false
+		return "", false
 	}
 
-	callback := func(carapace.Context) carapace.Action {
-		return carapace.Action{}.Usage(desc)
-	}
-
-	return callback, true
+	return description, true
 }
 
 func choiceCompletions(tag parser.Tag, val reflect.Value) carapace.CompletionCallback {
