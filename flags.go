@@ -18,8 +18,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/reeflective/flags/internal/errors"
-	"github.com/reeflective/flags/internal/gen/completions"
-	"github.com/reeflective/flags/internal/gen/flags"
+	"github.com/reeflective/flags/internal/gen"
 	"github.com/reeflective/flags/internal/interfaces"
 	"github.com/reeflective/flags/internal/parser"
 	"github.com/reeflective/flags/internal/validation"
@@ -39,14 +38,9 @@ import (
 // This is the primary entry point for creating a new CLI application.
 func ParseCommands(data any, opts ...Option) (*cobra.Command, error) {
 	// 1. Generate the command structure
-	cmd, err := flags.Generate(data, toInternalOpts(opts)...)
+	cmd, err := gen.Generate(data, toInternalOpts(opts)...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate command: %w", err)
-	}
-
-	// 2. Add shell completions automatically
-	if _, err := completions.Generate(cmd, data, nil); err != nil {
-		return nil, fmt.Errorf("failed to generate completions: %w", err)
 	}
 
 	return cmd, nil
@@ -59,13 +53,8 @@ func ParseCommands(data any, opts ...Option) (*cobra.Command, error) {
 // Shell completions for the bound components are generated and attached automatically.
 func Bind(cmd *cobra.Command, data any, opts ...Option) error {
 	// 1. Bind the struct to the command
-	if err := flags.Bind(cmd, data, toInternalOpts(opts)...); err != nil {
+	if err := gen.Bind(cmd, data, toInternalOpts(opts)...); err != nil {
 		return fmt.Errorf("failed to bind command: %w", err)
-	}
-
-	// 2. Add shell completions automatically
-	if _, err := completions.Generate(cmd, data, nil); err != nil {
-		return fmt.Errorf("failed to generate completions: %w", err)
 	}
 
 	return nil

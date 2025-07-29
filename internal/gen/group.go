@@ -1,12 +1,14 @@
-package flags
+package gen
 
 import (
 	"fmt"
 	"reflect"
 
+	"github.com/carapace-sh/carapace"
 	"github.com/spf13/cobra"
 
 	"github.com/reeflective/flags/internal/errors"
+	"github.com/reeflective/flags/internal/completions"
 	"github.com/reeflective/flags/internal/parser"
 )
 
@@ -63,6 +65,15 @@ func handleFlagGroup(ctx *context, val reflect.Value, fld *reflect.StructField, 
 		generateTo(flags, ctx.cmd.Flags())
 	}
 
+	// And add their completions to the context.
+	if len(flags) > 0 {
+		for _, flag := range flags {
+			if comp, found := buildFlagCompleter(flag); found {
+				ctx.flagComps[flag.Name] = comp
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -112,6 +123,13 @@ func flagsOrPositional(ctx *context) parser.Handler {
 		if len(flags) > 0 {
 			ctx.Flags = append(ctx.Flags, flags...)
 			generateTo(flags, ctx.cmd.Flags())
+
+			// And add their completions to the context.
+			for _, flag := range flags {
+				if comp, found := buildFlagCompleter(flag); found {
+					ctx.flagComps[flag.Name] = comp
+				}
+			}
 		}
 
 		// Or a positional argument, and add it
@@ -124,4 +142,30 @@ func flagsOrPositional(ctx *context) parser.Handler {
 	}
 
 	return flagScanner
+}
+
+func buildFlagCompleter(flag *parser.Flag) (carapace.Action, bool) {
+	// Get the combined completer from the type and the struct tag.
+	completer, isRepeatable, _ := completions.GetCombinedCompletionAction(flag.RValue, *flag.Tag)
+
+	// Check if the flag has some choices: if yes, we simply overwrite
+	// the completer implementation with a builtin one.
+	if choices := completions.ChoiceCompletions(*flag.Tag, flag.RValue); choices != nil {
+		completer = choices
+	}
+
+	// We are done if no completer is found whatsoever.
+	if completer == nil {
+		return carapace.Action{}, false
+	}
+
+	action := carapace.ActionCallback(completer)
+
+	// Then, and irrespectively of where the completer comes from,
+	// we adapt it considering the kind of type we're dealing with.
+	if isRepeatable {
+		action = action.UniqueList(",")
+	}
+
+	return action, true
 }

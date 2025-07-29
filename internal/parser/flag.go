@@ -11,23 +11,25 @@ import (
 
 // Flag structure might be used by cli/flag libraries for their flag generation.
 type Flag struct {
-	Name          string       // name as it appears on command line
-	Short         string       // optional short name
-	EnvNames      []string     // OS Environment-based names
-	Usage         string       // help message
-	Placeholder   string       // placeholder for the flag's value
-	Value         values.Value // value as set
-	DefValue      []string     // default value (as text); for usage message
-	Hidden        bool         // Flag hidden from descriptions/completions
-	Deprecated    bool         // Not in use anymore
-	Required      bool         // If true, the option _must_ be specified on the command line.
-	Choices       []string     // If non empty, only a certain set of values is allowed for an option.
-	OptionalValue []string     // The optional value of the option.
-	Negatable     *string      // If not nil, a negation flag is generated with the given prefix.
-	Separator     *string      // Custom separator for slice values.
-	MapSeparator  *string      // Custom separator for map values.
-	XORGroup      []string     // Mutually exclusive flag groups.
-	ANDGroup      []string     // "AND" flag groups.
+	Name          string        // name as it appears on command line
+	Short         string        // optional short name
+	EnvNames      []string      // OS Environment-based names
+	Usage         string        // help message
+	Placeholder   string        // placeholder for the flag's value
+	Value         values.Value  // value as set
+	RValue        reflect.Value // Type value to use for completions
+	DefValue      []string      // default value (as text); for usage message
+	Hidden        bool          // Flag hidden from descriptions/completions
+	Deprecated    bool          // Not in use anymore
+	Required      bool          // If true, the option _must_ be specified on the command line.
+	Choices       []string      // If non empty, only a certain set of values is allowed for an option.
+	OptionalValue []string      // The optional value of the option.
+	Negatable     *string       // If not nil, a negation flag is generated with the given prefix.
+	Separator     *string       // Custom separator for slice values.
+	MapSeparator  *string       // Custom separator for map values.
+	XORGroup      []string      // Mutually exclusive flag groups.
+	ANDGroup      []string      // "AND" flag groups.
+	Tag           *Tag          // Field tag
 }
 
 // parseSingleFlag handles the logic for parsing a field that is a single flag.
@@ -114,6 +116,7 @@ func setupFlagValue(ctx *FieldContext, flag *Flag) error {
 	}
 
 	flag.Value = val
+	flag.RValue = ctx.Value
 
 	return nil
 }
@@ -153,6 +156,7 @@ func buildFlag(name, short string, fld reflect.StructField, tag *Tag, opts *Opts
 		Negatable:     getFlagNegatable(fld, tag),
 		XORGroup:      getFlagXOR(tag),
 		ANDGroup:      getFlagAND(tag),
+		Tag:           tag,
 	}
 }
 

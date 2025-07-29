@@ -1,30 +1,16 @@
 package completions
 
 import (
-	"fmt"
-	"reflect"
-
 	"github.com/carapace-sh/carapace"
 
 	"github.com/reeflective/flags/internal/parser"
 	"github.com/reeflective/flags/internal/positional"
 )
 
-// positionals finds a struct tagged as containing positional arguments and scans them.
-func positionals(comps *carapace.Carapace, tag *parser.Tag, val reflect.Value) (bool, error) {
-	if pargs, _ := tag.Get("positional-args"); len(pargs) == 0 {
-		return false, nil
-	}
-
-	// Scan all the fields on the struct and build the list of arguments
-	// with their own requirements, and references to their values.
-	args, err := positional.ParseStruct(val, tag)
-	if err != nil || args == nil {
-		return true, fmt.Errorf("failed to scan positional arguments: %w", err)
-	}
-
+// BindPositionals registers the completions for a set of positional arguments.
+func BindPositionals(comps *carapace.Carapace, args *positional.Args) {
 	completionCache := positionalCompleters(args)
-	args = positional.WithWordConsumer(args, consumePositionalsWith(completionCache))
+	args = positional.WithWordConsumer(args, consumePositionalWith(completionCache))
 
 	handler := func(ctx carapace.Context) carapace.Action {
 		args.ParseConcurrent(ctx.Args)
@@ -33,8 +19,6 @@ func positionals(comps *carapace.Carapace, tag *parser.Tag, val reflect.Value) (
 	}
 
 	comps.PositionalAnyCompletion(carapace.ActionCallback(handler))
-
-	return true, nil
 }
 
 func positionalCompleters(args *positional.Args) *compCache {
@@ -87,10 +71,10 @@ func buildPositionalCompleter(arg *parser.Positional) carapace.CompletionCallbac
 	return finalCompleter
 }
 
-// consumePositionalsWith returns a custom handler which will be called on each
+// consumePositionalWith returns a custom handler which will be called on each
 // positional argument, so that it can consume one/more of the positional words
 // and add completions to the cache if needed.
-func consumePositionalsWith(comps *compCache) positional.WordConsumer {
+func consumePositionalWith(comps *compCache) positional.WordConsumer {
 	handler := func(args *positional.Args, arg *parser.Positional, _ int) error {
 		// First, pop all the words we KNOW we're not
 		// interested in, which is the number of minimum

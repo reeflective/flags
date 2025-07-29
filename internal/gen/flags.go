@@ -255,4 +255,4 @@
 //
 // Check the documentation for adding other custom validations directly through the
 // go-validator engine.
-package flags
+package gen

@@ -50,7 +50,7 @@ type MultipleListsArgs struct {
 		// - If one argument is passed, it will be stored in this slot.
 		// - If two arguments, one is stored here, and the first is stored in Vuln
 		// - If three or more, two will be stored here, and the others in Vuln.
-		Other []Host `description:"Other list of IP addresses" required:"1-2"`
+		Other []Host `desc:"Other list of IP addresses" required:"1-2"`
 	} `positional-args:"yes"`
 }
 

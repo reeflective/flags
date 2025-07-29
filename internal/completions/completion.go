@@ -39,6 +39,32 @@ func GetCombinedCompletionAction(val reflect.Value, tag parser.Tag) (carapace.Co
 	return nil, isRepeatable, false
 }
 
+func ChoiceCompletions(tag parser.Tag, val reflect.Value) carapace.CompletionCallback {
+	choices := tag.GetMany("choice")
+
+	if len(choices) == 0 {
+		return nil
+	}
+
+	var allChoices []string
+
+	flagIsList := val.Kind() == reflect.Slice || val.Kind() == reflect.Map
+
+	if flagIsList {
+		for _, choice := range choices {
+			allChoices = append(allChoices, strings.Split(choice, " ")...)
+		}
+	} else {
+		allChoices = choices
+	}
+
+	callback := func(_ carapace.Context) carapace.Action {
+		return carapace.ActionValues(allChoices...)
+	}
+
+	return callback
+}
+
 func getCompletionAction(name, value, desc string) carapace.Action {
 	var action carapace.Action
 
@@ -177,30 +203,4 @@ func hintCompletions(tag parser.Tag) (string, bool) {
 	}
 
 	return description, true
-}
-
-func choiceCompletions(tag parser.Tag, val reflect.Value) carapace.CompletionCallback {
-	choices := tag.GetMany("choice")
-
-	if len(choices) == 0 {
-		return nil
-	}
-
-	var allChoices []string
-
-	flagIsList := val.Kind() == reflect.Slice || val.Kind() == reflect.Map
-
-	if flagIsList {
-		for _, choice := range choices {
-			allChoices = append(allChoices, strings.Split(choice, " ")...)
-		}
-	} else {
-		allChoices = choices
-	}
-
-	callback := func(_ carapace.Context) carapace.Action {
-		return carapace.ActionValues(allChoices...)
-	}
-
-	return callback
 }

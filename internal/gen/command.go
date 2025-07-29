@@ -1,10 +1,11 @@
-package flags
+package gen
 
 import (
 	"fmt"
 	"reflect"
 	"strings"
 
+	"github.com/carapace-sh/carapace"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
@@ -84,6 +85,8 @@ func scanCommand(cmd *cobra.Command, parentCtx *context, data any) (*context, er
 		group:       parentCtx.group,
 		opts:        parentCtx.opts,
 		positionals: positional.NewArgs(),
+		comps:       carapace.Gen(cmd),
+		flagComps:   make(map[string]carapace.Action),
 	}
 	scanner := newFieldScanner(subCtx)
 	if err := parser.Scan(data, scanner); err != nil {
@@ -109,6 +112,8 @@ func finalizeCommand(ctx *context, data any, tag *parser.Tag) error {
 	} else {
 		setRuns(ctx.cmd, data)
 	}
+
+	ctx.bindCompletions()
 
 	return nil
 }

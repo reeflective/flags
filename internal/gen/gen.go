@@ -1,12 +1,14 @@
-package flags
+package gen
 
 import (
 	"fmt"
 	"os"
 	"reflect"
 
+	"github.com/carapace-sh/carapace"
 	"github.com/spf13/cobra"
 
+	"github.com/reeflective/flags/internal/completions"
 	"github.com/reeflective/flags/internal/errors"
 	"github.com/reeflective/flags/internal/parser"
 	"github.com/reeflective/flags/internal/positional"
@@ -19,7 +21,19 @@ type context struct {
 	opts           *parser.Opts
 	defaultCommand *cobra.Command
 	positionals    *positional.Args
-	Flags          []*parser.Flag // Collect all parsed flags for post-processing.
+	Flags          []*parser.Flag
+	comps          *carapace.Carapace
+	flagComps      map[string]carapace.Action
+}
+
+func (c *context) bindCompletions() {
+	// Flags
+	if len(c.flagComps) > 0 {
+		c.comps.FlagCompletion(carapace.ActionMap(c.flagComps))
+	}
+
+	// Positionals
+	completions.BindPositionals(c.comps, c.positionals)
 }
 
 // Generate returns a root cobra Command to be used directly as an entry-point.
