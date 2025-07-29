@@ -66,16 +66,16 @@ func setupCommand(ctx *context, name string, tag *parser.Tag, val reflect.Value)
 	ptrVal := parser.EnsureAddr(val)
 	data := ptrVal.Interface()
 
-	var cmd *cobra.Command
+	var sub *cobra.Command
 	if name == ctx.cmd.Use {
-		cmd = ctx.cmd
+		sub = ctx.cmd
 	} else {
-		cmd = newCommand(name, tag)
+		sub = newCommand(name, tag)
 		tagged, _ := tag.Get("group")
-		setCommandGroup(ctx.cmd, cmd, ctx.group, tagged)
+		setCommandGroup(ctx.cmd, sub, ctx.group, tagged)
 	}
 
-	return cmd, data
+	return sub, data
 }
 
 // scanCommand scans the command's struct for flags, positionals, and subcommands.
@@ -88,6 +88,7 @@ func scanCommand(cmd *cobra.Command, parentCtx *context, data any) (*context, er
 		comps:       carapace.Gen(cmd),
 		flagComps:   make(map[string]carapace.Action),
 	}
+
 	scanner := newFieldScanner(subCtx)
 	if err := parser.Scan(data, scanner); err != nil {
 		return nil, err
@@ -107,11 +108,7 @@ func finalizeCommand(ctx *context, data any, tag *parser.Tag) error {
 		return err
 	}
 
-	if _, isSet := tag.Get("subcommands-optional"); !isSet && ctx.cmd.HasSubCommands() {
-		ctx.cmd.RunE = unknownSubcommandAction
-	} else {
-		setRuns(ctx.cmd, data)
-	}
+	setRuns(ctx.cmd, tag, data)
 
 	ctx.bindCompletions()
 
@@ -238,13 +235,26 @@ func unknownSubcommandAction(cmd *cobra.Command, args []string) error {
 	return fmt.Errorf("%w %s", errors.ErrUnknownSubcommand, err)
 }
 
+// hasSubcommands checks that a command has at least one
+// command that is not the _carapace completion command.
+func hasSubcommands(cmd *cobra.Command) bool {
+	for _, sub := range cmd.Commands() {
+		if sub.Name() != "_carapace" {
+			return true
+		}
+	}
+
+	return false
+}
+
 // setRuns sets the run functions for a command, based
 // on the interfaces implemented by the command struct.
-func setRuns(cmd *cobra.Command, data any) {
+func setRuns(cmd *cobra.Command, tag *parser.Tag, data any) {
 	if data == nil {
 		return
 	}
 
+	// By default, always bind a generic positional word handler.
 	if cmd.Args == nil {
 		cmd.Args = func(cmd *cobra.Command, args []string) error {
 			positional.SetRemainingArgs(cmd, args)
@@ -253,9 +263,26 @@ func setRuns(cmd *cobra.Command, data any) {
 		}
 	}
 
-	setPreRuns(cmd, data)
-	setMainRuns(cmd, data)
-	setPostRuns(cmd, data)
+	// Next, if subcommand invocation is mandatory,
+	// bind a non-persistent run function. If not,
+	// bind a default Run implementation: this will
+	// ensure any positional args/flags will be parsed
+	// onto the command's struct, even if it doesn't
+	// have an actually run implementation.
+	_, isSet := tag.Get("subcommands-optional")
+	if !isSet && hasSubcommands(cmd) {
+		cmd.RunE = unknownSubcommandAction
+	} else {
+		cmd.RunE = func(cmd *cobra.Command, args []string) error {
+			return nil
+		}
+
+		// The default RunE might be overwritten
+		// by any type-implemented Run method.
+		setPreRuns(cmd, data)
+		setMainRuns(cmd, data)
+		setPostRuns(cmd, data)
+	}
 }
 
 // setPreRuns sets the pre-run functions for a command.

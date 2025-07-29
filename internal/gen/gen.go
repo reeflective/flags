@@ -73,8 +73,9 @@ func Bind(cmd *cobra.Command, data any, opts ...parser.OptFunc) error {
 
 	// The context now operates on the root command.
 	ctx := &context{
-		cmd:  cmd,
-		opts: parser.DefOpts().Apply(opts...),
+		cmd:   cmd,
+		opts:  parser.DefOpts().Apply(opts...),
+		comps: carapace.Gen(cmd),
 	}
 
 	// Scan the virtual root. The commandV2 function will be triggered for the

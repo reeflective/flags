@@ -140,7 +140,7 @@ func (args *Args) ParseConcurrent(words []string) {
 	for _, arg := range args.slots {
 		// Make a copy of our positionals, so that each arg slot can
 		// work on the same word list while doing different things.
-		argsC := args.copyArgs()
+		argsC := args.Copy()
 		argsC.words = words
 
 		workers.Add(1)
@@ -165,9 +165,9 @@ func (args *Args) ParseConcurrent(words []string) {
 	workers.Wait()
 }
 
-// copyArgs is used to make several instances of our args
+// Copy is used to make several instances of our args
 // to work on the same list of command words (copies of it).
-func (args *Args) copyArgs() *Args {
+func (args *Args) Copy() *Args {
 	return &Args{
 		slots:       args.slots,
 		totalMin:    args.totalMin,

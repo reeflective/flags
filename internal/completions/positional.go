@@ -9,11 +9,12 @@ import (
 
 // BindPositionals registers the completions for a set of positional arguments.
 func BindPositionals(comps *carapace.Carapace, args *positional.Args) {
-	completionCache := positionalCompleters(args)
-	args = positional.WithWordConsumer(args, consumePositionalWith(completionCache))
+	compArgs := args.Copy()
+	completionCache := positionalCompleters(compArgs)
+	compArgs = positional.WithWordConsumer(compArgs, consumePositionalWith(completionCache))
 
 	handler := func(ctx carapace.Context) carapace.Action {
-		args.ParseConcurrent(ctx.Args)
+		compArgs.ParseConcurrent(ctx.Args)
 
 		return completionCache.flush(ctx)
 	}

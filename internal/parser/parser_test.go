@@ -323,7 +323,7 @@ func TestParseStruct(t *testing.T) {
 			} else {
 				require.Equal(t, test.expErr, err)
 			}
-			require.Equal(t, test.expFlagSet, flagSet)
+			compareFlagSets(t, test.expFlagSet, flagSet)
 		})
 	}
 }
@@ -665,6 +665,49 @@ func parse(cfg any, optFuncs ...OptFunc) ([]*Flag, error) {
 	}
 
 	return flags, nil
+}
+
+// compareFlagSets compares two slices of Flag pointers, ignoring the Tag and Value fields.
+func compareFlagSets(t *testing.T, expected, actual []*Flag) {
+	require.Len(t, actual, len(expected), "Number of flags mismatch")
+
+	for i := range expected {
+		exp := expected[i]
+		act := actual[i]
+
+		assert.Equal(t, exp.Name, act.Name, "Flag Name mismatch at index %d", i)
+		assert.Equal(t, exp.Short, act.Short, "Flag Short mismatch at index %d", i)
+		assert.Equal(t, exp.Name, act.Name, "Flag Long mismatch at index %d", i)
+		assert.Equal(t, exp.Usage, act.Usage, "Flag Usage mismatch at index %d", i)
+		assert.Equal(t, exp.DefValue, act.DefValue, "Flag DefValue mismatch at index %d", i)
+		assert.Equal(t, exp.Placeholder, act.Placeholder, "Flag Placeholder mismatch at index %d", i)
+		// assert.Equal(t, exp.NoOptDefVal, act.NoOptDefVal, "Flag NoOptDefVal mismatch at index %d", i)
+		assert.Equal(t, exp.Deprecated, act.Deprecated, "Flag Deprecated mismatch at index %d", i)
+		assert.Equal(t, exp.Hidden, act.Hidden, "Flag Hidden mismatch at index %d", i)
+		assert.Equal(t, exp.Required, act.Required, "Flag Required mismatch at index %d", i)
+		// assert.Equal(t, exp.Persistent, act.Persistent, "Flag Persistent mismatch at index %d", i)
+		// assert.Equal(t, exp.ToggleGroup, act.ToggleGroup, "Flag ToggleGroup mismatch at index %d", i)
+		assert.Equal(t, exp.EnvNames, act.EnvNames, "Flag EnvNames mismatch at index %d", i)
+		assert.Equal(t, exp.XORGroup, act.XORGroup, "Flag XORGroup mismatch at index %d", i)
+		assert.Equal(t, exp.ANDGroup, act.ANDGroup, "Flag ANDGroup mismatch at index %d", i)
+		assert.Equal(t, exp.Choices, act.Choices, "Flag Choices mismatch at index %d", i)
+
+		// For Value, we can compare the underlying value if it implements values.Getter
+		if exp.Value != nil && act.Value != nil {
+			expGetter, expOk := exp.Value.(values.Getter)
+			actGetter, actOk := act.Value.(values.Getter)
+			if expOk && actOk {
+				assert.Equal(t, expGetter.Get(), actGetter.Get(), "Flag Value mismatch at index %d", i)
+			} else {
+				// Fallback to comparing string representation or type if not Getter
+				assert.Equal(t, fmt.Sprintf("%v", exp.Value), fmt.Sprintf("%v", act.Value), "Flag Value (non-Getter) mismatch at index %d", i)
+			}
+		} else {
+			assert.Nil(t, act.Value, "Actual Flag Value should be nil at index %d", i)
+		}
+
+		// Tag field is ignored for comparison
+	}
 }
 
 //

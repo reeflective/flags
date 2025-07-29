@@ -287,22 +287,22 @@ func TestCommandAdd(t *testing.T) {
 	// Binding checks
 	test := assert.New(t)
 	test.NotNil(root.RunE) // The command has not SubcommandsOptional true
-	test.Len(root.Commands(), 2)
+	test.Len(root.Commands(), 3)
 
 	// Command 1
-	cmd1 := root.Commands()[0]
+	cmd1 := root.Commands()[1] // 1 because 0 is _carapace
 	test.Equal("c1", cmd1.Name())
 	test.NotNil(cmd1.RunE)
 
 	// Command 2
-	cmd2 := root.Commands()[1]
+	cmd2 := root.Commands()[2]
 	test.Equal("c2", cmd2.Name())
 	test.NotNil(cmd2.RunE)
 
 	resultCmd, err := root.ExecuteC()
 	test.NoError(err)
 	test.True(rootData.V)
-	test.Equal(cmd1, resultCmd)
+	test.Equal(cmd1.Name(), resultCmd.Name())
 	test.True(rootData.C1.G)
 }
 

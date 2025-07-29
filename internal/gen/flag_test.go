@@ -237,7 +237,6 @@ type envConfig struct {
 // TestEnvVars verifies the behavior of ENV values specified
 // in struct tags, or through overrides with flag arguments.
 func TestEnvVars(t *testing.T) {
-
 	// Success case: A single env var provides the default value.
 	t.Run("Single env var", func(t *testing.T) {
 		t.Setenv("SINGLE_VAR", "value_from_env")

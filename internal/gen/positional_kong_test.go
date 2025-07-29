@@ -15,34 +15,34 @@ type kongSinglePositional struct {
 	Arg1 string `arg:"" required:"true"`
 }
 
-func (k *kongSinglePositional) Execute(args []string) error {
-	return nil
-}
+// func (k *kongSinglePositional) Execute(args []string) error {
+// 	return nil
+// }
 
 type kongMultiplePositional struct {
 	Arg1 string `arg:"" required:"true"`
 	Arg2 int    `arg:"" required:"true"`
 }
 
-func (k *kongMultiplePositional) Execute(args []string) error {
-	return nil
-}
+// func (k *kongMultiplePositional) Execute(args []string) error {
+// 	return nil
+// }
 
 type kongOptionalPositional struct {
 	Arg1 string `arg:"" optional:"true"`
 }
 
-func (k *kongOptionalPositional) Execute(args []string) error {
-	return nil
-}
+// func (k *kongOptionalPositional) Execute(args []string) error {
+// 	return nil
+// }
 
 type kongSlicePositional struct {
 	Arg1 []string `arg:""`
 }
 
-func (k *kongSlicePositional) Execute(args []string) error {
-	return nil
-}
+// func (k *kongSlicePositional) Execute(args []string) error {
+// 	return nil
+// }
 
 type legacyMixed struct {
 	Arg2 string
@@ -54,9 +54,9 @@ type kongMixedKongFirst struct {
 	PositionalArgs legacyMixed `positional-args:"true" required:"true"`
 }
 
-func (k *kongMixedKongFirst) Execute(args []string) error {
-	return nil
-}
+// func (k *kongMixedKongFirst) Execute(args []string) error {
+// 	return nil
+// }
 
 type legacyMixed2 struct {
 	Arg1 string
@@ -68,34 +68,34 @@ type kongMixedGoFlagsFirst struct {
 	Arg3           int          `arg:""                 required:"true"`
 }
 
-func (k *kongMixedGoFlagsFirst) Execute(args []string) error {
-	return nil
-}
+// func (k *kongMixedGoFlagsFirst) Execute(args []string) error {
+// 	return nil
+// }
 
 type kongPassthrough struct {
 	Flag        bool     `long:"flag"`
 	Passthrough []string `arg:""      passthrough:"true"`
 }
 
-func (k *kongPassthrough) Execute(args []string) error {
-	return nil
-}
+// func (k *kongPassthrough) Execute(args []string) error {
+// 	return nil
+// }
 
 type kongErrorMissing struct {
 	Arg1 string `arg:"" required:"true"`
 }
 
-func (k *kongErrorMissing) Execute(args []string) error {
-	return nil
-}
+// func (k *kongErrorMissing) Execute(args []string) error {
+// 	return nil
+// }
 
 type kongErrorTooMany struct {
 	Arg1 string `arg:"" required:"true"`
 }
 
-func (k *kongErrorTooMany) Execute(args []string) error {
-	return nil
-}
+// func (k *kongErrorTooMany) Execute(args []string) error {
+// 	return nil
+// }
 
 //
 // Tests

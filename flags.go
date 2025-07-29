@@ -37,7 +37,6 @@ import (
 //
 // This is the primary entry point for creating a new CLI application.
 func ParseCommands(data any, opts ...Option) (*cobra.Command, error) {
-	// 1. Generate the command structure
 	cmd, err := gen.Generate(data, toInternalOpts(opts)...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate command: %w", err)
@@ -52,7 +51,6 @@ func ParseCommands(data any, opts ...Option) (*cobra.Command, error) {
 //
 // Shell completions for the bound components are generated and attached automatically.
 func Bind(cmd *cobra.Command, data any, opts ...Option) error {
-	// 1. Bind the struct to the command
 	if err := gen.Bind(cmd, data, toInternalOpts(opts)...); err != nil {
 		return fmt.Errorf("failed to bind command: %w", err)
 	}

@@ -37,10 +37,9 @@ func TestAllOptional(t *testing.T) {
 	cmd, err := newCommandWithArgs(&opts, []string{"10", "arg_test.go", "a", "b"})
 	test.NoErrorf(err, "Unexpected error: %v", err)
 
-	cmd.Args(cmd, []string{"10", "arg_test.go", "a", "b"})
 	err = cmd.Execute()
-
 	test.NoErrorf(err, "Unexpected error: %v", err)
+
 	test.Equal(10, opts.Positional.Command, "Expected opts.Positional.Command to match")
 	test.Equal("arg_test.go", opts.Positional.Filename, "Expected opts.Positional.Filename to match")
 	test.Equal([]string{"a", "b"}, opts.Positional.Rest, "Expected opts.Positional.Rest to match")
