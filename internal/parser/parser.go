@@ -8,60 +8,15 @@ import (
 	"github.com/reeflective/flags/internal/values"
 )
 
-// ParseField is the updated version of ParseField that returns the new parser.Positional type.
-func ParseField(val reflect.Value, fld reflect.StructField, opts *Opts) ([]*Flag, *Positional, bool, error) {
-	if (fld.PkgPath != "" && !fld.Anonymous) || val.Kind() == reflect.Func {
-		return nil, nil, false, nil
-	}
-
-	tag, _, err := GetFieldTag(fld)
-	if err != nil {
-		return nil, nil, false, err
-	}
-
-	if flags, pos, found, err := parseField(val, fld, tag, opts); err != nil || found {
-		return flags, pos, found, err
-	}
-
-	return nil, nil, false, nil
-}
-
-// parseField is the main dispatcher for parsing a single struct field.
-func parseField(val reflect.Value, fld reflect.StructField, tag *Tag, opts *Opts) ([]*Flag, *Positional, bool, error) {
-	if _, isArg := tag.Get("arg"); isArg {
-		pos, err := parsePositional(val, fld, tag, opts, false)
-		if err != nil {
-			return nil, nil, true, err
-		}
-
-		return nil, pos, true, nil
-	}
-
-	if fld.Anonymous || (isOptionGroup(val) && opts.ParseAll) {
-		flags, _, err := ParseGroup(val, fld, opts)
-		if err != nil {
-			return nil, nil, true, err
-		}
-
-		return flags, nil, true, nil
-	}
-
-	flag, found, err := parseSingleFlag(val, fld, opts)
-	if err != nil || !found {
-		return nil, nil, found, err
-	}
-
-	return []*Flag{flag}, nil, true, nil
-}
-
 // ParseGroup is the updated version of ParseGroup that returns the new parser.Positional type.
-func ParseGroup(val reflect.Value, fld reflect.StructField, opts *Opts) ([]*Flag, []*Positional, error) {
-	gopts := opts.Copy()
-	tag, _, _ := GetFieldTag(fld)
+func ParseGroup(ctx *FieldContext) ([]*Flag, []*Positional, error) {
+	gopts := ctx.Opts.Copy()
+	tag, _, _ := GetFieldTag(ctx.Field)
 
 	// Prepare variables and namespacing for the group.
-	gopts.Vars = prepareGroupVars(tag, opts)
-	applyGroupNamespacing(gopts, fld, tag)
+	gopts.Vars = prepareGroupVars(tag, ctx.Opts)
+	ctx.Opts = gopts
+	applyGroupNamespacing(ctx)
 
 	// Scan the group for flags and positionals.
 	var flags []*Flag
@@ -81,35 +36,86 @@ func ParseGroup(val reflect.Value, fld reflect.StructField, opts *Opts) ([]*Flag
 		return true, nil
 	}
 
-	ptrVal := EnsureAddr(val)
+	ptrVal := EnsureAddr(ctx.Value)
 	if err := Scan(ptrVal.Interface(), scanner); err != nil {
 		return nil, nil, err
 	}
 
 	// Apply post-parsing modifications like XOR prefixing.
-	applyXORPrefix(flags, fld, tag, gopts)
+	applyXORPrefix(flags, ctx.Field, tag, gopts)
 
 	return flags, positionals, nil
 }
 
+// ParseField is the updated version of ParseField that returns the new parser.Positional type.
+func ParseField(val reflect.Value, fld reflect.StructField, opts *Opts) ([]*Flag, *Positional, bool, error) {
+	if (fld.PkgPath != "" && !fld.Anonymous) || val.Kind() == reflect.Func {
+		return nil, nil, false, nil
+	}
+
+	// Let's create a new context for this field
+	ctx, err := NewFieldContext(val, fld, opts)
+	if err != nil || ctx == nil {
+		return nil, nil, false, err
+	}
+
+	if flags, pos, found, err := parseField(ctx); err != nil || found {
+		return flags, pos, found, err
+	}
+
+	return nil, nil, false, nil
+}
+
+// parseField is the main dispatcher for parsing a single struct field.
+func parseField(ctx *FieldContext) ([]*Flag, *Positional, bool, error) {
+
+	if _, isArg := ctx.Tag.Get("arg"); isArg {
+		pos, err := parsePositional(ctx, false)
+		if err != nil {
+			return nil, nil, true, err
+		}
+
+		return nil, pos, true, nil
+	}
+
+	if ctx.Field.Anonymous || (isOptionGroup(ctx.Value) && ctx.Opts.ParseAll) {
+		flags, _, err := ParseGroup(ctx)
+		if err != nil {
+			return nil, nil, true, err
+		}
+
+		return flags, nil, true, nil
+	}
+
+	flag, found, err := parseSingleFlag(ctx)
+	if err != nil || !found {
+		return nil, nil, found, err
+	}
+
+	return []*Flag{flag}, nil, true, nil
+}
+
 // newValue creates a new values.Value for a field and runs initial validation.
-func newValue(val reflect.Value, fld reflect.StructField, tag Tag, sep, mapSep *string) (values.Value, error) {
-	pvalue := values.NewValue(val, sep, mapSep)
+func newValue(ctx *FieldContext, sep, mapSep *string) (values.Value, error) {
+	pvalue := values.NewValue(ctx.Value, sep, mapSep)
 
 	// Check if this field was *supposed* to be a flag but failed to implement a supported interface.
-	if markedFlagNotImplementing(tag, pvalue) {
+	if markedFlagNotImplementing(*ctx.Tag, pvalue) {
 		return nil, fmt.Errorf("%w: field %s does not implement a supported interface",
-			errors.ErrNotValue, fld.Name)
+			errors.ErrNotValue, ctx.Field.Name)
 	}
 
 	return pvalue, nil
 }
 
-// applyGroupNamespacing modifies the options' prefixes based on group structure and tags.
-func applyGroupNamespacing(opts *Opts, field reflect.StructField, tag *Tag) {
+// applyGroupNamespacing modifies the options'
+// prefixes based on group structure and tags.
+func applyGroupNamespacing(ctx *FieldContext) {
+	field, tag, opts := ctx.Field, ctx.Tag, ctx.Opts
 	_, isEmbed := tag.Get("embed")
 
-	// Apply prefixing for nested groups, but not for embedded or anonymous structs (unless flattened).
+	// Apply prefixing for nested groups, but not for
+	// embedded or anonymous structs (unless flattened).
 	if (!field.Anonymous && !isEmbed) || opts.Flatten {
 		baseName := CamelToFlag(field.Name, opts.FlagDivider)
 		opts.Prefix = opts.Prefix + baseName + opts.FlagDivider

@@ -31,13 +31,13 @@ type Flag struct {
 }
 
 // parseSingleFlag handles the logic for parsing a field that is a single flag.
-func parseSingleFlag(value reflect.Value, field reflect.StructField, opts *Opts) (*Flag, bool, error) {
-	flag, tag, err := newFlag(field, opts)
+func parseSingleFlag(ctx *FieldContext) (*Flag, bool, error) {
+	flag, _, err := newFlag(ctx.Field, ctx.Opts)
 	if err != nil || flag == nil {
 		return nil, false, err
 	}
 
-	if err := setupFlagValue(flag, value, field, *tag, opts); err != nil {
+	if err := setupFlagValue(ctx, flag); err != nil {
 		return nil, true, err
 	}
 
@@ -49,7 +49,7 @@ func parseSingleFlag(value reflect.Value, field reflect.StructField, opts *Opts)
 		return nil, true, err
 	}
 
-	if err := executeFlagFunc(opts, flag, tag, value); err != nil {
+	if err := executeFlagFunc(ctx, flag); err != nil {
 		return flag, true, err
 	}
 
@@ -98,6 +98,45 @@ func parseFlag(field reflect.StructField, opts *Opts) (*Flag, *Tag, error) {
 	return flag, tag, nil
 }
 
+// setupFlagValue creates and configures the value of a flag, including any validators.
+func setupFlagValue(ctx *FieldContext, flag *Flag) error {
+	val, err := newValue(ctx, flag.Separator, flag.MapSeparator)
+	if err != nil {
+		return err
+	}
+	if val == nil {
+		return nil
+	}
+
+	validator := validation.Setup(ctx.Value, ctx.Field, flag.Choices, ctx.Opts.Validator)
+	if validator != nil {
+		val = values.NewValidator(val, validator)
+	}
+
+	flag.Value = val
+
+	return nil
+}
+
+// applyDefaults sets the default value of a flag from environment variables if available.
+func applyDefaults(flag *Flag) error {
+	for _, env := range flag.EnvNames {
+		if envVal, ok := os.LookupEnv(env); ok {
+			if err := flag.Value.Set(envVal); err != nil {
+				return fmt.Errorf("failed to set default value from env var %s: %w", env, err)
+			}
+
+			break // Stop after finding the first one.
+		}
+	}
+
+	if flag.Value.String() != "" {
+		flag.DefValue = append(flag.DefValue, flag.Value.String())
+	}
+
+	return nil
+}
+
 // buildFlag constructs the initial Flag struct from parsed tag information.
 func buildFlag(name, short string, fld reflect.StructField, tag *Tag, opts *Opts) *Flag {
 	return &Flag{
@@ -139,47 +178,9 @@ func finalizeFlag(flag *Flag, tag *Tag, opts *Opts) {
 	flag.Required = isSet(tag, "required") && !IsStringFalsy(requiredVal)
 }
 
-// setupFlagValue creates and configures the value of a flag, including any validators.
-func setupFlagValue(flag *Flag, value reflect.Value, field reflect.StructField, tag Tag, opts *Opts) error {
-	val, err := newValue(value, field, tag, flag.Separator, flag.MapSeparator)
-	if err != nil {
-		return err
-	}
-	if val == nil {
-		return nil
-	}
-
-	if validator := validation.Setup(value, field, flag.Choices, opts.Validator); validator != nil {
-		val = values.NewValidator(val, validator)
-	}
-
-	flag.Value = val
-
-	return nil
-}
-
-// applyDefaults sets the default value of a flag from environment variables if available.
-func applyDefaults(flag *Flag) error {
-	for _, env := range flag.EnvNames {
-		if envVal, ok := os.LookupEnv(env); ok {
-			if err := flag.Value.Set(envVal); err != nil {
-				return fmt.Errorf("failed to set default value from env var %s: %w", env, err)
-			}
-
-			break // Stop after finding the first one.
-		}
-	}
-
-	if flag.Value.String() != "" {
-		flag.DefValue = append(flag.DefValue, flag.Value.String())
-	}
-
-	return nil
-}
-
 // executeFlagFunc runs the custom FlagFunc if it is provided in the options.
-func executeFlagFunc(opts *Opts, flag *Flag, tag *Tag, value reflect.Value) error {
-	if opts.FlagFunc == nil {
+func executeFlagFunc(ctx *FieldContext, flag *Flag) error {
+	if ctx.Opts.FlagFunc == nil {
 		return nil
 	}
 
@@ -190,7 +191,7 @@ func executeFlagFunc(opts *Opts, flag *Flag, tag *Tag, value reflect.Value) erro
 		name = flag.Short
 	}
 
-	if err := opts.FlagFunc(name, tag, value); err != nil {
+	if err := ctx.Opts.FlagFunc(name, ctx.Tag, ctx.Value); err != nil {
 		return fmt.Errorf("flag handler error on flag %s: %w", name, err)
 	}
 

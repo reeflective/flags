@@ -40,12 +40,12 @@ func ParsePositionalStruct(val reflect.Value, stag *Tag, opts *Opts) ([]*Positio
 		field := stype.Field(i)
 		fieldValue := val.Field(i)
 
-		tag, _, err := GetFieldTag(field)
-		if err != nil {
+		ctx, err := NewFieldContext(fieldValue, field, opts)
+		if err != nil || ctx == nil {
 			return nil, err
 		}
 
-		pos, err := parsePositional(fieldValue, field, tag, opts, reqAll)
+		pos, err := parsePositional(ctx, reqAll)
 		if err != nil {
 			return nil, err
 		}
@@ -57,11 +57,14 @@ func ParsePositionalStruct(val reflect.Value, stag *Tag, opts *Opts) ([]*Positio
 	return positionals, nil
 }
 
-// parsePositional is the internal helper that parses a field tagged as a positional argument and returns a complete Positional struct.
-func parsePositional(val reflect.Value, fld reflect.StructField, tag *Tag, opts *Opts, reqAll bool) (*Positional, error) {
-	name := getPositionalName(fld, tag)
+// parsePositional is the internal helper that parses a field tagged
+// as a positional argument and returns a complete Positional struct.
+func parsePositional(ctx *FieldContext, reqAll bool) (*Positional, error) {
+	field, value, tag := ctx.Field, ctx.Value, ctx.Tag
 
-	min, max, err := positionalReqs(val, *tag, reqAll)
+	name := getPositionalName(field, tag)
+
+	minWords, maxWords, err := positionalReqs(ctx, reqAll)
 	if err != nil {
 		return nil, err
 	}
@@ -69,25 +72,25 @@ func parsePositional(val reflect.Value, fld reflect.StructField, tag *Tag, opts 
 	pos := &Positional{
 		Name:   name,
 		Usage:  getPositionalUsage(tag),
-		Value:  val,
-		PValue: values.NewValue(val, nil, nil),
-		Min:    min,
-		Max:    max,
+		Value:  value,
+		PValue: values.NewValue(value, nil, nil),
+		Min:    minWords,
+		Max:    maxWords,
 		Tag:    tag,
 	}
 
-	if err := setupPassthrough(pos, fld, tag); err != nil {
+	if err := setupPassthrough(pos, field, tag); err != nil {
 		return nil, err
 	}
 
-	setupValidator(pos, fld, tag, opts)
+	setupValidator(ctx, pos)
 
 	return pos, nil
 }
 
 // getPositionalName extracts the name of the positional argument from the struct tag or field.
 func getPositionalName(fld reflect.StructField, tag *Tag) string {
-	if name, ok := tag.Get("arg"); ok {
+	if name, ok := tag.Get("arg"); ok && name != "" {
 		return name
 	}
 	if name, ok := tag.Get("positional-arg-name"); ok {
@@ -112,36 +115,24 @@ func setupPassthrough(pos *Positional, fld reflect.StructField, tag *Tag) error 
 }
 
 // setupValidator creates and sets up a validator for the positional argument.
-func setupValidator(pos *Positional, fld reflect.StructField, tag *Tag, opts *Opts) {
+func setupValidator(ctx *FieldContext, pos *Positional) {
 	var choices []string
-	choiceTags := tag.GetMany("choice")
+	choiceTags := ctx.Tag.GetMany("choice")
 	for _, choice := range choiceTags {
 		choices = append(choices, strings.Split(choice, " ")...)
 	}
 
-	if validator := validation.Setup(pos.Value, fld, choices, opts.Validator); validator != nil {
+	validator := validation.Setup(pos.Value, ctx.Field, choices, ctx.Opts.Validator)
+	if validator != nil {
 		pos.Validator = validator
 	}
 }
 
-func getPositionalUsage(tag *Tag) string {
-	if usage, isSet := tag.Get("description"); isSet {
-		return usage
-	}
-	if usage, isSet := tag.Get("desc"); isSet {
-		return usage
-	}
-	if usage, isSet := tag.Get("help"); isSet { // Kong alias
-		return usage
-	}
-
-	return ""
-}
-
 // positionalReqs determines the correct quantity requirements for a positional field,
 // depending on its parsed struct tag values, and the underlying type of the field.
-func positionalReqs(val reflect.Value, tag Tag, all bool) (minWords, maxWords int, err error) {
-	required, maxWords, set, err := parseQuantityRequired(tag)
+func positionalReqs(ctx *FieldContext, all bool) (minWords, maxWords int, err error) {
+	val, tag := ctx.Value, ctx.Tag
+	required, maxWords, set, err := parseQuantityRequired(*tag)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -209,4 +200,18 @@ func parseQuantityRequired(fieldTag Tag) (int, int, bool, error) {
 	}
 
 	return required, maximum, set, nil
+}
+
+func getPositionalUsage(tag *Tag) string {
+	if usage, isSet := tag.Get("description"); isSet {
+		return usage
+	}
+	if usage, isSet := tag.Get("desc"); isSet {
+		return usage
+	}
+	if usage, isSet := tag.Get("help"); isSet { // Kong alias
+		return usage
+	}
+
+	return ""
 }

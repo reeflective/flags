@@ -114,24 +114,24 @@ func finalizeCommand(ctx *context, data any, tag *parser.Tag) error {
 }
 
 // handleDefaultCommand checks and sets the command as the default if specified.
-func handleDefaultCommand(parentCtx *context, cmd *cobra.Command, tag *parser.Tag) error {
+func handleDefaultCommand(ctx *context, cmd *cobra.Command, tag *parser.Tag) error {
 	defaultVal, isDefault := tag.Get("default")
 	if !isDefault {
 		return nil
 	}
 
-	if parentCtx.defaultCommand != nil {
+	if ctx.defaultCommand != nil {
 		return fmt.Errorf("cannot set '%s' as default command, '%s' is already the default",
-			cmd.Name(), parentCtx.defaultCommand.Name())
+			cmd.Name(), ctx.defaultCommand.Name())
 	}
 
-	parentCtx.defaultCommand = cmd
+	ctx.defaultCommand = cmd
 	cmd.Flags().VisitAll(func(f *pflag.Flag) {
 		f.Hidden = true
-		parentCtx.cmd.Flags().AddFlag(f)
+		ctx.cmd.Flags().AddFlag(f)
 	})
 
-	parentCtx.cmd.RunE = func(c *cobra.Command, args []string) error {
+	ctx.cmd.RunE = func(c *cobra.Command, args []string) error {
 		return runDefaultCommand(c, cmd, defaultVal, args)
 	}
 
