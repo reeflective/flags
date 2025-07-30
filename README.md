@@ -168,7 +168,7 @@ func main() {
 
 ## Status
 
-This library is approaching v1.0.0 status: it has been under a big refactoring and has seen many
+This library is approaching v1.0 status: it has been under a big refactoring and has seen many
 improvements in many aspects (Compatibility, completions, validations, failure safety, etc).
 However, it has not been much tested outside of its test suite: there might be bugs, or behavior 
 inconsistencies that I might have missed.
