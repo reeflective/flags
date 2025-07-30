@@ -60,6 +60,12 @@ func ParsePositionalStruct(val reflect.Value, stag *Tag, opts *Opts) ([]*Positio
 // parsePositional is the internal helper that parses a field tagged
 // as a positional argument and returns a complete Positional struct.
 func parsePositional(ctx *FieldContext, reqAll bool) (*Positional, error) {
+	// First, check if the field has a type that can be used as a positional argument.
+	if !isSingleValue(ctx.Value) {
+		return nil, fmt.Errorf("%w: field '%s' has an invalid type for a positional argument",
+			flagerrors.ErrNotValue, ctx.Field.Name)
+	}
+
 	field, value, tag := ctx.Field, ctx.Value, ctx.Tag
 
 	name := getPositionalName(field, tag)

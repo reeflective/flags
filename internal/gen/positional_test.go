@@ -2,10 +2,8 @@ package gen
 
 import (
 	"errors"
-	"strings"
 	"testing"
 
-	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"
 )
 
@@ -608,30 +606,4 @@ func TestPassthroughArgs(t *testing.T) {
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "passthrough argument First must be the last positional argument")
 	})
-}
-
-//
-// Helpers --------------------------------------------------------------- //
-//
-
-func newCommandWithArgs(data any, args []string) (*cobra.Command, error) {
-	cmd, err := Generate(data) // Generate the command
-	if err != nil {
-		return cmd, err
-	}
-
-	cmd.SetArgs(args) // And use our args for execution
-
-	// We don't want the errors to be printed to stdout.
-	cmd.SilenceErrors = true
-	cmd.SilenceUsage = true
-
-	// by default our root command has name os.Args[1],
-	// which makes it fail, so only remove it when we
-	// find it in the args sequence
-	if strings.Contains(cmd.Name(), "cobra.test") {
-		cmd.Use = ""
-	}
-
-	return cmd, nil
 }

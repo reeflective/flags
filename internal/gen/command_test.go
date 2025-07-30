@@ -1,10 +1,14 @@
 package gen
 
 import (
+	"strings"
 	"testing"
 
+	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/reeflective/flags/internal/parser"
 )
 
 // Test only partially ported from github.com/jessevdk/go-flags, since we are
@@ -54,6 +58,49 @@ type testCommand struct {
 // Execute - Generic command that is used as child command to programs.
 func (t *testCommand) Execute(_ []string) error {
 	return nil
+}
+
+type optionalCommandsRoot struct {
+	C1 struct {
+		SC1 testCommand `command:"sc1"`
+		SC2 testCommand `command:"sc2"`
+	} `command:"c1" subcommands-optional:"yes"`
+
+	C2 struct {
+		SC1 testCommand `command:"sc1"`
+		SC2 testCommand `command:"sc2"`
+	} `command:"c2"`
+}
+
+//
+// Default Command structs ----------------------------------------------------- //
+//
+
+type defaultCommandRoot struct {
+	Run  runCommand  `command:"run"  default:"withargs"`
+	Test testCommand `command:"test"`
+}
+
+type runCommand struct {
+	Value string `long:"value"`
+}
+
+func (r *runCommand) Execute(args []string) error {
+	if len(args) > 0 {
+		r.Value = args[0]
+	}
+
+	return nil
+}
+
+type simpleDefaultCommandRoot struct {
+	Run  runCommand  `command:"run"  default:"1"`
+	Test testCommand `command:"test"`
+}
+
+type invalidDoubleDefaultCommandRoot struct {
+	Run  runCommand `command:"run"  default:"1"`
+	Test runCommand `command:"test" default:"1"`
 }
 
 //
@@ -258,22 +305,6 @@ func TestCommandFlagOverrideChild(t *testing.T) {
 	test.False(opts.Command.V, "child flag -v should be false")
 }
 
-//
-// Command Execution & Runners ----------------------------------------------------- //
-//
-
-type optionalCommandsRoot struct {
-	C1 struct {
-		SC1 testCommand `command:"sc1"`
-		SC2 testCommand `command:"sc2"`
-	} `command:"c1" subcommands-optional:"yes"`
-
-	C2 struct {
-		SC1 testCommand `command:"sc1"`
-		SC2 testCommand `command:"sc2"`
-	} `command:"c2"`
-}
-
 // TestCommandAdd checks that a command type is correctly scanned and translated
 // into a cobra command. We don't need to test for this recursively, since we let
 // cobra itself deal with how it would "merge" them when .AddCommand().
@@ -343,37 +374,6 @@ func TestSubcommandsRequiredUsage(t *testing.T) {
 	test.Error(err)
 }
 
-//
-// Default Command Tests ----------------------------------------------------- //
-//
-
-type defaultCommandRoot struct {
-	Run  runCommand  `command:"run"  default:"withargs"`
-	Test testCommand `command:"test"`
-}
-
-type runCommand struct {
-	Value string `long:"value"`
-}
-
-func (r *runCommand) Execute(args []string) error {
-	if len(args) > 0 {
-		r.Value = args[0]
-	}
-
-	return nil
-}
-
-type simpleDefaultCommandRoot struct {
-	Run  runCommand  `command:"run"  default:"1"`
-	Test testCommand `command:"test"`
-}
-
-type invalidDoubleDefaultCommandRoot struct {
-	Run  runCommand `command:"run"  default:"1"`
-	Test runCommand `command:"test" default:"1"`
-}
-
 func TestDefaultCommand(t *testing.T) {
 	t.Parallel()
 
@@ -420,4 +420,69 @@ func TestDefaultCommand(t *testing.T) {
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "cannot set 'test' as default command, 'run' is already the default")
 	})
+}
+
+//
+// Command Execution & Runners ----------------------------------------------------- //
+//
+
+func newCommandWithArgs(data any, args []string) (*cobra.Command, error) {
+	cmd, err := Generate(data) // Generate the command
+	if err != nil {
+		return cmd, err
+	}
+
+	cmd.SetArgs(args) // And use our args for execution
+
+	// We don't want the errors to be printed to stdout.
+	cmd.SilenceErrors = true
+	cmd.SilenceUsage = true
+
+	// by default our root command has name os.Args[1],
+	// which makes it fail, so only remove it when we
+	// find it in the args sequence
+	if strings.Contains(cmd.Name(), "cobra.test") {
+		cmd.Use = ""
+	}
+
+	return cmd, nil
+}
+
+// run condenses all CLI/flags parsing steps, and compares
+// all structs/errors against their expected state.
+func run(t *testing.T, test *testConfig) {
+	t.Helper()
+
+	// We must parse all struct fields regardless of them being tagged.
+	parseOptions := parser.ParseAll()
+
+	cmd, err := Generate(test.cfg, parseOptions)
+
+	if test.expErr1 != nil {
+		require.Error(t, err)
+		require.Equal(t, test.expErr1, err)
+	} else {
+		require.NoError(t, err)
+	}
+
+	if err != nil {
+		return
+	}
+
+	cmd.SetArgs(test.args)
+
+	err = cmd.Execute()
+
+	if test.expErr2 != nil {
+		assert.Error(t, err)
+		require.Equal(t, test.expErr2, err)
+	} else {
+		require.NoError(t, err)
+	}
+
+	if err != nil {
+		return
+	}
+
+	assert.Equal(t, test.expCfg, test.cfg)
 }
