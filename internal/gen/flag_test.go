@@ -125,6 +125,120 @@ func TestParseNoArgs(t *testing.T) {
 	run(t, test)
 }
 
+// TestPFlagGetters tests that pflag getter functions like GetInt work as expected.
+func TestPFlagGetters(t *testing.T) {
+	_, ipNet, err := net.ParseCIDR("127.0.0.1/24")
+	require.NoError(t, err)
+
+	cfg := &allPflags{
+		IntValue:    10,
+		Int8Value:   11,
+		Int32Value:  12,
+		Int64Value:  13,
+		UintValue:   14,
+		Uint8Value:  15,
+		Uint16Value: 16,
+		Uint32Value: 17,
+		Uint64Value: 18,
+
+		Float32Value: 19.1,
+		Float64Value: 20.1,
+
+		BoolValue:     true,
+		StringValue:   "stringValue",
+		DurationValue: time.Second * 10,
+		CountValue:    30,
+
+		IPValue:    net.ParseIP("127.0.0.1"),
+		IPNetValue: *ipNet,
+
+		StringSliceValue: []string{"one", "two"},
+		IntSliceValue:    []int{10, 20},
+	}
+
+	parseOptions := parser.ParseAll()
+
+	cmd, err := Generate(cfg, parseOptions)
+	flagSet := cmd.Flags()
+	require.NoError(t, err)
+
+	intValue, err := flagSet.GetInt("int-value")
+	require.NoError(t, err)
+	assert.Equal(t, 10, intValue)
+
+	int8Value, err := flagSet.GetInt8("int8-value")
+	require.NoError(t, err)
+	assert.Equal(t, int8(11), int8Value)
+
+	int32Value, err := flagSet.GetInt32("int32-value")
+	require.NoError(t, err)
+	assert.Equal(t, int32(12), int32Value)
+
+	int64Value, err := flagSet.GetInt64("int64-value")
+	require.NoError(t, err)
+	assert.Equal(t, int64(13), int64Value)
+
+	uintValue, err := flagSet.GetUint("uint-value")
+	require.NoError(t, err)
+	assert.Equal(t, uint(14), uintValue)
+
+	uint8Value, err := flagSet.GetUint8("uint8-value")
+	require.NoError(t, err)
+	assert.Equal(t, uint8(15), uint8Value)
+
+	uint16Value, err := flagSet.GetUint16("uint16-value")
+	require.NoError(t, err)
+	assert.Equal(t, uint16(16), uint16Value)
+
+	uint32Value, err := flagSet.GetUint32("uint32-value")
+	require.NoError(t, err)
+	assert.Equal(t, uint32(17), uint32Value)
+
+	uint64Value, err := flagSet.GetUint64("uint64-value")
+	require.NoError(t, err)
+	assert.Equal(t, uint64(18), uint64Value)
+
+	float32Value, err := flagSet.GetFloat32("float32-value")
+	require.NoError(t, err)
+	assert.Equal(t, float32(19.1), float32Value)
+
+	float64Value, err := flagSet.GetFloat64("float64-value")
+	require.NoError(t, err)
+	assert.Equal(t, float64(20.1), float64Value)
+
+	boolValue, err := flagSet.GetBool("bool-value")
+	require.NoError(t, err)
+	assert.True(t, boolValue)
+
+	countValue, err := flagSet.GetCount("count-value")
+	require.NoError(t, err)
+	assert.Equal(t, 30, countValue)
+
+	durationValue, err := flagSet.GetDuration("duration-value")
+	require.NoError(t, err)
+	assert.Equal(t, time.Second*10, durationValue)
+
+	stringValue, err := flagSet.GetString("string-value")
+	require.NoError(t, err)
+	assert.Equal(t, "stringValue", stringValue)
+
+	ipValue, err := flagSet.GetIP("ip-value")
+	require.NoError(t, err)
+	assert.Equal(t, net.ParseIP("127.0.0.1"), ipValue)
+
+	ipNetValue, err := flagSet.GetIPNet("ip-net-value")
+	require.NoError(t, err)
+	assert.Equal(t, cfg.IPNetValue, ipNetValue)
+
+	stringSliceValue, err := flagSet.GetStringSlice("string-slice-value")
+	require.NoError(t, err)
+	assert.Equal(t, []string{"one", "two"}, stringSliceValue)
+
+	intSliceValue, err := flagSet.GetIntSlice("int-slice-value")
+	require.NoError(t, err)
+	assert.Equal(t, []int{10, 20}, intSliceValue)
+}
+
 // TestParseShortOptions checks that flags
 // invoked as short options correctly parse.
 func TestParseShortOptions(t *testing.T) {
@@ -197,69 +311,6 @@ func TestParseBadConfig(t *testing.T) {
 	}
 
 	run(t, test)
-}
-
-//
-// Environment Variable Tests -------------------------------------------------- //
-//
-
-type envConfig struct {
-	Single   string `env:"SINGLE_VAR"                long:"single"`
-	Fallback string `env:"PRIMARY_VAR,SECONDARY_VAR" long:"fallback"`
-	Override string `env:"OVERRIDE_VAR"              long:"override"`
-	Disabled string `env:"-"                         long:"disabled"`
-}
-
-// TestEnvVars verifies the behavior of ENV values specified
-// in struct tags, or through overrides with flag arguments.
-func TestEnvVars(t *testing.T) {
-	// Success case: A single env var provides the default value.
-	t.Run("Single env var", func(t *testing.T) {
-		t.Setenv("SINGLE_VAR", "value_from_env")
-		cfg := &envConfig{}
-		test := &testConfig{
-			cfg:    cfg,
-			args:   []string{},
-			expCfg: &envConfig{Single: "value_from_env"},
-		}
-		run(t, test)
-	})
-
-	// Success case: The second env var in a fallback list is used.
-	t.Run("Fallback env var", func(t *testing.T) {
-		t.Setenv("SECONDARY_VAR", "value_from_fallback")
-		cfg := &envConfig{}
-		test := &testConfig{
-			cfg:    cfg,
-			args:   []string{},
-			expCfg: &envConfig{Fallback: "value_from_fallback"},
-		}
-		run(t, test)
-	})
-
-	// Success case: A command-line arg overrides the env var.
-	t.Run("Argument overrides env var", func(t *testing.T) {
-		t.Setenv("OVERRIDE_VAR", "value_from_env")
-		cfg := &envConfig{}
-		test := &testConfig{
-			cfg:    cfg,
-			args:   []string{"--override", "value_from_arg"},
-			expCfg: &envConfig{Override: "value_from_arg"},
-		}
-		run(t, test)
-	})
-
-	// Success case: `env:"-"` disables env var lookup.
-	t.Run("Disabled env var", func(t *testing.T) {
-		t.Setenv("DISABLED", "value_from_env")
-		cfg := &envConfig{}
-		test := &testConfig{
-			cfg:    cfg,
-			args:   []string{},
-			expCfg: &envConfig{}, // Expect the zero value
-		}
-		run(t, test)
-	})
 }
 
 //
@@ -411,4 +462,67 @@ func TestUserDefinedTypes(t *testing.T) {
 	}
 
 	run(t, test)
+}
+
+//
+// Environment Variable Tests -------------------------------------------------- //
+//
+
+type envConfig struct {
+	Single   string `env:"SINGLE_VAR"                long:"single"`
+	Fallback string `env:"PRIMARY_VAR,SECONDARY_VAR" long:"fallback"`
+	Override string `env:"OVERRIDE_VAR"              long:"override"`
+	Disabled string `env:"-"                         long:"disabled"`
+}
+
+// TestEnvVars verifies the behavior of ENV values specified
+// in struct tags, or through overrides with flag arguments.
+func TestEnvVars(t *testing.T) {
+	// Success case: A single env var provides the default value.
+	t.Run("Single env var", func(t *testing.T) {
+		t.Setenv("SINGLE_VAR", "value_from_env")
+		cfg := &envConfig{}
+		test := &testConfig{
+			cfg:    cfg,
+			args:   []string{},
+			expCfg: &envConfig{Single: "value_from_env"},
+		}
+		run(t, test)
+	})
+
+	// Success case: The second env var in a fallback list is used.
+	t.Run("Fallback env var", func(t *testing.T) {
+		t.Setenv("SECONDARY_VAR", "value_from_fallback")
+		cfg := &envConfig{}
+		test := &testConfig{
+			cfg:    cfg,
+			args:   []string{},
+			expCfg: &envConfig{Fallback: "value_from_fallback"},
+		}
+		run(t, test)
+	})
+
+	// Success case: A command-line arg overrides the env var.
+	t.Run("Argument overrides env var", func(t *testing.T) {
+		t.Setenv("OVERRIDE_VAR", "value_from_env")
+		cfg := &envConfig{}
+		test := &testConfig{
+			cfg:    cfg,
+			args:   []string{"--override", "value_from_arg"},
+			expCfg: &envConfig{Override: "value_from_arg"},
+		}
+		run(t, test)
+	})
+
+	// Success case: `env:"-"` disables env var lookup.
+	t.Run("Disabled env var", func(t *testing.T) {
+		t.Setenv("DISABLED", "value_from_env")
+		cfg := &envConfig{}
+		test := &testConfig{
+			cfg:    cfg,
+			args:   []string{},
+			expCfg: &envConfig{}, // Expect the zero value
+		}
+		run(t, test)
+	})
 }
