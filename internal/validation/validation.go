@@ -1,28 +1,71 @@
 package validation
 
 import (
-	"errors"
+	"fmt"
 	"reflect"
+	"slices"
 	"strings"
 
-	"github.com/reeflective/flags/internal/scan"
-)
+	"github.com/go-playground/validator/v10"
 
-// ErrInvalidChoice indicates that the provided flag argument is not among the valid choices.
-var ErrInvalidChoice = errors.New("invalid choice")
+	"github.com/reeflective/flags/internal/errors"
+)
 
 // ValueValidator is the interface implemented by types that can validate a
 // flag argument themselves. The provided value is directly passed from the
 // command line. This interface has been retroported from jessevdk/go-flags.
 type ValueValidator interface {
-	// IsValidValue returns an error if the provided string value is valid for
-	// the flag.
+	// IsValidValue returns an error if the provided
+	// string value is invalid for the flag.
 	IsValidValue(value string) error
 }
 
-// Bind builds a validation function including all validation routines (builtin or user-defined) available.
-func Bind(value reflect.Value, field reflect.StructField, choices []string, opt scan.Opts) func(val string) error {
-	if opt.Validator == nil && len(choices) == 0 {
+// ValidateFunc describes a validation func, that takes string val for flag from command line,
+// field that's associated with this flag in structure cfg. Also works for positional arguments.
+// Should return error if validation fails.
+type ValidateFunc func(val string, field reflect.StructField, data any) error
+
+// validatorFunc is a function signature used to bridge go-playground/validator
+// logic and our own struct-field based ValidateFunc signatures.
+type validatorFunc func(value any, validationTag string, fieldName string) error
+
+// NewDefault generates and sets up a default validation engine
+// provided by go-playground/validator. The library consumer only
+// has to declare "validate" tags for the validation to work.
+func NewDefault() ValidateFunc {
+	v := validator.New()
+
+	validations := func(value any, validationTag string, fieldName string) error {
+		if err := v.Var(value, validationTag); err != nil {
+			// We need the string representation of the value for error reporting.
+			// For now, we'll use fmt.Sprintf, but this might need refinement
+			// depending on how 'fieldValue' is used in invalidVarError.
+			return &invalidVarError{fieldName, fmt.Sprintf("%v", value), err}
+		}
+
+		return nil
+	}
+
+	return bindValidatorToField(validations)
+}
+
+// NewWith returns a ValidateFunc that uses a custom go-playground/validator instance,
+// on which the user can prealably register any custom validation routines.
+func NewWith(custom *validator.Validate) ValidateFunc {
+	validator := func(value any, validationTag string, fieldName string) error {
+		if err := custom.Var(value, validationTag); err != nil {
+			return &invalidVarError{fieldName, fmt.Sprintf("%v", value), err}
+		}
+
+		return nil
+	}
+
+	return bindValidatorToField(validator)
+}
+
+// Setup builds a validation function including all validation routines (builtin or user-defined) available.
+func Setup(val reflect.Value, fld reflect.StructField, choices []string, validator ValidateFunc) func(val string) error {
+	if validator == nil && len(choices) == 0 {
 		return nil
 	}
 
@@ -30,24 +73,26 @@ func Bind(value reflect.Value, field reflect.StructField, choices []string, opt 
 		allValues := strings.Split(argValue, ",")
 
 		// The validation is performed on each individual item of a (potential) array
-		for _, val := range allValues {
+		for _, word := range allValues {
 			if len(choices) > 0 {
-				if err := validateChoice(val, choices); err != nil {
+				if err := validateChoice(word, choices); err != nil {
+
 					return err
 				}
 			}
 
 			// If choice is valid or arbitrary, run custom validator.
-			if opt.Validator != nil {
-				if err := opt.Validator(val, field, value.Interface()); err != nil {
-					return err
+			if validator != nil {
+				if err := validator(word, fld, val.Interface()); err != nil {
+
+					return fmt.Errorf("%w: %w", errors.ErrInvalidValue, err)
 				}
 			}
 
 			// Retroporting from jessevdk/go-flags
-			if validator, implemented := value.Interface().(ValueValidator); implemented {
-				if err := validator.IsValidValue(val); err != nil {
-					return err
+			if validator, implemented := val.Interface().(ValueValidator); implemented {
+				if err := validator.IsValidValue(word); err != nil {
+					return fmt.Errorf("%w: %w", errors.ErrInvalidValue, err)
 				}
 			}
 		}
@@ -58,25 +103,36 @@ func Bind(value reflect.Value, field reflect.StructField, choices []string, opt 
 	return validation
 }
 
+// bindValidatorToField is a helper function for the parser.
+// It takes a ValidateFunc (the simplified one) and returns a function
+// that matches the parser's expected signature for a validator.
+// This function extracts the necessary information from reflect.StructField
+// and passes it to the simplified ValidateFunc.
+// This function is intended to be used by the parser package.
+func bindValidatorToField(validator validatorFunc) ValidateFunc {
+	if validator == nil {
+		return nil
+	}
+
+	return func(valStr string, field reflect.StructField, _ any) error {
+		validationTag := field.Tag.Get(validTag)
+		// if validationTag == "" {
+		// 	return nil // No validation tag, nothing to validate
+		// }
+
+		return validator(valStr, validationTag, field.Name)
+	}
+}
+
 // validateChoice checks the given value(s) is among valid choices.
 func validateChoice(val string, choices []string) error {
 	values := strings.Split(val, ",")
 
 	for _, value := range values {
-		if !stringInSlice(value, choices) {
-			return ErrInvalidChoice
+		if !slices.Contains(choices, value) {
+			return errors.ErrInvalidChoice
 		}
 	}
 
 	return nil
-}
-
-func stringInSlice(a string, list []string) bool {
-	for _, b := range list {
-		if b == a {
-			return true
-		}
-	}
-
-	return false
 }
