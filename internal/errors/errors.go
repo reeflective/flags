@@ -2,6 +2,13 @@ package errors
 
 import "errors"
 
+// Generation errors: command/flag/argument generation errors.
+var (
+	// ErrUnknownSubcommand indicates that the invoked subcommand has not been found.
+	ErrUnknownSubcommand = errors.New("unknown subcommand")
+)
+
+// Parsing errors: command/flag/argument parsing errors.
 var (
 	// ErrParse is a general error used to wrap more specific parsing errors.
 	ErrParse = errors.New("parse error")
@@ -24,18 +31,34 @@ var (
 	// ErrNilObject indicates that an object is nil although it should not.
 	ErrNilObject = errors.New("object cannot be nil")
 
-	// ErrUnknownSubcommand indicates that the invoked subcommand has not been found.
-	ErrUnknownSubcommand = errors.New("unknown subcommand")
-
 	// ErrPositionalShadowing indicates that a positional argument with an unbounded
 	// maximum number of values is followed by other positional arguments, which
 	// it will shadow.
 	ErrPositionalShadowing = errors.New("positional argument shadows subsequent arguments")
 
-	// ErrTypeAssertion indicates that a type assertion failed unexpectedly.
-	// This typically points to an internal logic error in the library.
-	ErrTypeAssertion = errors.New("internal type assertion error")
+	// ErrUnsupportedType indicates that a type is not supported for a given operation.
+	ErrUnsupportedType = errors.New("unsupported type")
 
+	// ErrInvalidChoice indicates that the provided flag argument is not among the valid choices.
+	ErrInvalidChoice = errors.New("invalid choice")
+
+	// ErrInvalidValue indicates that the provided flag argument is not a valid value for the flag type.
+	ErrInvalidValue = errors.New("invalid value")
+
+	// ErrInvalidRequiredQuantity indicates that the minimum number of required arguments is greater
+	// than the maximum number of arguments that can be accepted.
+	ErrInvalidRequiredQuantity = errors.New("maximum number of arguments cannot be 0")
+
+	// ErrRequired signals an argument field has not been
+	// given its minimum amount of positional words to use.
+	ErrRequired = errors.New("required argument")
+
+	// ErrTooManyArguments indicates that too many arguments were provided to the command.
+	ErrTooManyArguments = errors.New("too many arguments")
+)
+
+// Validation errors: command/flag/argument validation errors.
+var (
 	// ErrInvalidDuration indicates that a string could not be parsed as a time.Duration.
 	ErrInvalidDuration = errors.New("invalid duration value")
 
@@ -47,15 +70,11 @@ var (
 
 	// ErrInvalidFloat indicates that a string could not be parsed as a float.
 	ErrInvalidFloat = errors.New("invalid float value")
+)
 
-	// ErrUnsupportedType indicates that a type is not supported for a given operation.
-	ErrUnsupportedType = errors.New("unsupported type")
-
-	// ErrInvalidChoice indicates that the provided flag argument is not among the valid choices.
-	ErrInvalidChoice = errors.New("invalid choice")
-
-	// ErrInvalidValue indicates that the provided flag argument is not a valid value for the flag type.
-	ErrInvalidValue = errors.New("invalid value")
-
-	ErrInvalidRequiredQuantity = errors.New("maximum number of arguments cannot be 0")
+// Internal errors: should not happen, but are here for safety.
+var (
+	// ErrTypeAssertion indicates that a type assertion failed unexpectedly.
+	// This typically points to an internal logic error in the library.
+	ErrTypeAssertion = errors.New("internal type assertion error")
 )

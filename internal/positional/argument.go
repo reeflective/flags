@@ -10,12 +10,9 @@ import (
 
 	"github.com/spf13/cobra"
 
+	ierrors "github.com/reeflective/flags/internal/errors"
 	"github.com/reeflective/flags/internal/parser"
 )
-
-// ErrRequired signals an argument field has not been
-// given its minimum amount of positional words to use.
-var ErrRequired = errors.New("required argument")
 
 // WordConsumer is a function that has access to the array of positional slots,
 // giving a few functions to manipulate the list of words we want to parse.
@@ -109,7 +106,7 @@ func (args *Args) Parse(words []string, dash int) (retargs []string, err error) 
 		err := args.consumer(args, arg, dash)
 
 		// Either the positional argument has not had enough words
-		if errors.Is(err, ErrRequired) {
+		if errors.Is(err, ierrors.ErrRequired) {
 			return retargs, args.positionalRequiredErr(arg)
 		}
 
@@ -221,7 +218,7 @@ func (args *Args) consumeWords(self *Args, arg *parser.Positional, dash int) err
 	// If we are still lacking some required words,
 	// but we have exhausted the available ones.
 	if self.parsed < arg.Min {
-		return ErrRequired
+		return ierrors.ErrRequired
 	}
 
 	// Or we consumed all the arguments we wanted, without
@@ -283,11 +280,11 @@ func (args *Args) checkRequirementsFinal() error {
 		overweight := argHasTooMany(current, len(args.words))
 		msgErr := overweight
 
-		return fmt.Errorf("%w: %s", ErrRequired, msgErr)
+		return fmt.Errorf("%w: %s", ierrors.ErrRequired, msgErr)
 	}
 
 	if len(args.words) > 0 && !args.allRemainingRequired() {
-		return errors.New("too many arguments")
+		return ierrors.ErrTooManyArguments
 	}
 
 	return nil
@@ -306,7 +303,7 @@ func (args *Args) positionalRequiredErr(arg *parser.Positional) error {
 				strings.Join(names[:len(names)-1], ", "), names[len(names)-1])
 		}
 
-		return fmt.Errorf("%w: %s", ErrRequired, msg)
+		return fmt.Errorf("%w: %s", ierrors.ErrRequired, msg)
 	}
 
 	return nil
