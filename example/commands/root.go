@@ -1,10 +1,11 @@
 package commands
 
 import (
+	"github.com/spf13/cobra"
+
 	"github.com/reeflective/flags/example/args"
 	"github.com/reeflective/flags/example/opts"
 	"github.com/reeflective/flags/example/validated"
-	"github.com/spf13/cobra"
 )
 
 const (
