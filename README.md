@@ -49,10 +49,10 @@
 
 ### Overview
 *   **Declarative & Simple:** Define your entire CLI—commands, subcommands, flags, and positional arguments—using simple Go struct tags.
-*   **Powerful Completions:** Instantly generate rich, context-aware shell completions for Zsh, Bash, Fish, and more, powered by a single call to `carapace`.
+*   **Powerful Completions:** Instantly generate rich, context-aware shell completions for 9 shells, powered by a single call to `carapace`.
 *   **Built-in Validation:** Add validation rules (`required`, `min`, `max`, `oneof`, etc.) directly in your struct tags using the `validate` tag.
 *   **Seamless Cobra Integration:** Generates a standard `cobra.Command`, so you can still use the full power of the Cobra ecosystem.
-*   **High Compatibility:** Offers a familiar experience for developers coming from `jessevdk/go-flags` or `octago/sflags` by supporting their tag formats.
+*   **High Compatibility:** Offers a familiar experience for developers coming from `jessevdk/go-flags`, `alecthomas/kong` or `octago/sflags` by supporting their tag formats.
 *   **Focus on Your Logic:** Spend less time on CLI boilerplate and more time on what your application actually does.
 
 ### Commands, flags & positionals 
