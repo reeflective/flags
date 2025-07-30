@@ -263,7 +263,7 @@ func TestEnvVars(t *testing.T) {
 }
 
 //
-// Custom Negatable Flag Tests -------------------------------------------------- //
+// Exported/unexported Fields Tests -------------------------------------------- //
 //
 
 // TestUnexportedFields verifies that fields that are not exported but have tags are rejected.
@@ -360,40 +360,55 @@ func TestInvalidFlagType(t *testing.T) {
 	assert.Contains(t, err.Error(), "parse error: field marked as flag does not implement flags.Value: field 'Invalid' is a struct but ParseAll is not enabled")
 }
 
-// TestInvalidPositionalType verifies that a custom positional type that does not
-// implement the flags.Value interface returns an error.
-func TestInvalidPositionalType(t *testing.T) {
+// TestUserDefinedTypes verifies that custom types that do not implement the
+// flags.Value interface but are of a kind supported by the reflective
+// value wrapper, are correctly accepted and parsed.
+func TestUserDefinedTypes(t *testing.T) {
 	t.Parallel()
 
-	type customValue struct {
-		Value string
+	type customString string
+	type ipList []net.IP
+	type tcpAddrMap map[string]*net.TCPAddr
+
+	type userDefinedTypesConfig struct {
+		Custom   customString `long:"custom"`
+		IPs      ipList       `long:"ips"`
+		TCPAddrs tcpAddrMap   `long:"tcp-addrs"`
+		PosArgs  struct {
+			Custom customString `positional-arg-name:"custom"`
+		} `positional-args:"true"`
 	}
 
-	t.Run("legacy positional container", func(t *testing.T) {
-		type positionalContainer struct {
-			Positional customValue `positional-arg-name:"pos"`
-		}
+	host1Addr, err := net.ResolveTCPAddr("tcp", "127.0.0.1:8080")
+	require.NoError(t, err)
 
-		type invalidPositionalTypeConfig struct {
-			Args positionalContainer `positional-args:"true"`
-		}
+	host2Addr, err := net.ResolveTCPAddr("tcp", "10.0.0.2:9090")
+	require.NoError(t, err)
 
-		cfg := &invalidPositionalTypeConfig{}
-		_, err := Generate(cfg)
+	test := &testConfig{
+		cfg: &userDefinedTypesConfig{},
+		expCfg: &userDefinedTypesConfig{
+			Custom: "mycustomstring",
+			IPs:    ipList{net.ParseIP("192.168.1.1"), net.ParseIP("10.0.0.1")},
+			TCPAddrs: tcpAddrMap{
+				"host1": host1Addr,
+				"host2": host2Addr,
+			},
+			PosArgs: struct {
+				Custom customString `positional-arg-name:"custom"`
+			}{
+				Custom: "anothercustomstring",
+			},
+		},
+		args: []string{
+			"--custom=mycustomstring",
+			"--ips=192.168.1.1",
+			"--ips=10.0.0.1",
+			"--tcp-addrs=host1:127.0.0.1:8080",
+			"--tcp-addrs=host2:10.0.0.2:9090",
+			"anothercustomstring",
+		},
+	}
 
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "field 'Positional' has an invalid type for a positional argument")
-	})
-
-	t.Run("kong-style positional", func(t *testing.T) {
-		type invalidKongPositional struct {
-			Positional customValue `arg:""`
-		}
-
-		cfg := &invalidKongPositional{}
-		_, err := Generate(cfg)
-
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "field 'Positional' has an invalid type for a positional argument")
-	})
+	run(t, test)
 }

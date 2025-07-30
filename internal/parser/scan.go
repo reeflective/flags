@@ -135,7 +135,12 @@ func isSingleValue(val reflect.Value) bool {
 		}
 	}
 
-	// 3. Handle pointers: if the value is a pointer, check the type it points to.
+	// 3. Check for primitive types that can be handled by a reflective value.
+	if values.IsValidReflectiveKind(val) {
+		return true
+	}
+
+	// 4. Handle pointers: if the value is a pointer, check the type it points to.
 	if val.Kind() == reflect.Ptr {
 		// If the pointer is nil, we can't check the pointed-to value directly.
 		// Instead, we create a new zero value of the underlying type and check that.

@@ -142,3 +142,20 @@ func (v *reflectiveValue) String() string {
 func (v *reflectiveValue) Type() string {
 	return v.value.Type().String()
 }
+
+// IsValidReflectiveKind checks that the given value can be wrapped
+// into a reflective value and function like a builtin values.Value type.
+func IsValidReflectiveKind(val reflect.Value) bool {
+	switch val.Kind() {
+	case reflect.String,
+		reflect.Bool,
+		reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
+		reflect.Float32, reflect.Float64,
+		reflect.Slice,
+		reflect.Map:
+		return true
+	default:
+		return false
+	}
+}

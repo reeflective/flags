@@ -62,8 +62,8 @@ func ParsePositionalStruct(val reflect.Value, stag *Tag, opts *Opts) ([]*Positio
 func parsePositional(ctx *FieldContext, reqAll bool) (*Positional, error) {
 	// First, check if the field has a type that can be used as a positional argument.
 	if !isSingleValue(ctx.Value) {
-		return nil, fmt.Errorf("%w: field '%s' has an invalid type for a positional argument",
-			flagerrors.ErrNotValue, ctx.Field.Name)
+		return nil, fmt.Errorf("field '%s' has an invalid type for a positional argument",
+			ctx.Field.Name)
 	}
 
 	field, value, tag := ctx.Field, ctx.Value, ctx.Tag

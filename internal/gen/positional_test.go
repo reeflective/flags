@@ -4,6 +4,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -605,5 +606,47 @@ func TestPassthroughArgs(t *testing.T) {
 		_, err := Generate(cfg)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "passthrough argument First must be the last positional argument")
+	})
+}
+
+//
+// Exported/unexported Fields Tests -------------------------------------------- //
+//
+
+// TestInvalidPositionalType verifies that a custom positional type that does not
+// implement the flags.Value interface returns an error.
+func TestInvalidPositionalType(t *testing.T) {
+	t.Parallel()
+
+	type customValue struct {
+		Value string
+	}
+
+	t.Run("legacy positional container", func(t *testing.T) {
+		type positionalContainer struct {
+			Positional customValue `positional-arg-name:"pos"`
+		}
+
+		type invalidPositionalTypeConfig struct {
+			Args positionalContainer `positional-args:"true"`
+		}
+
+		cfg := &invalidPositionalTypeConfig{}
+		_, err := Generate(cfg)
+
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "field 'Positional' has an invalid type for a positional argument")
+	})
+
+	t.Run("kong-style positional", func(t *testing.T) {
+		type invalidKongPositional struct {
+			Positional customValue `arg:""`
+		}
+
+		cfg := &invalidKongPositional{}
+		_, err := Generate(cfg)
+
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "field 'Positional' has an invalid type for a positional argument")
 	})
 }
