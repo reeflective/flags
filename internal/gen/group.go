@@ -7,8 +7,8 @@ import (
 	"github.com/carapace-sh/carapace"
 	"github.com/spf13/cobra"
 
-	"github.com/reeflective/flags/internal/errors"
 	"github.com/reeflective/flags/internal/completions"
+	"github.com/reeflective/flags/internal/errors"
 	"github.com/reeflective/flags/internal/parser"
 )
 
@@ -161,10 +161,22 @@ func buildFlagCompleter(flag *parser.Flag) (carapace.Action, bool) {
 
 	action := carapace.ActionCallback(completer)
 
+	// INFO: Map separator (FOR NOW, NOT REALLY NEEDED)
+	// if flag.RValue.Kind() == reflect.Map && flag.MapSeparator != nil {
+	// 	action = action.MultiPartsP
+	// }
+
 	// Then, and irrespectively of where the completer comes from,
 	// we adapt it considering the kind of type we're dealing with.
 	if isRepeatable {
-		action = action.UniqueList(",")
+
+		// List separator
+		separator := ","
+		if flag.Separator != nil && *flag.Separator != "none" {
+			separator = *flag.Separator
+		}
+		action = action.UniqueList(separator)
+
 	}
 
 	return action, true
