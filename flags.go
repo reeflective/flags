@@ -37,7 +37,7 @@ import (
 // Shell completions are generated and attached automatically.
 //
 // This is the primary entry point for creating a new CLI application.
-func ParseCommands(data any, opts ...Option) (*cobra.Command, error) {
+func Parse(data any, opts ...Option) (*cobra.Command, error) {
 	cmd, err := gen.Generate(data, toInternalOpts(opts)...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate command: %w", err)

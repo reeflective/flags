@@ -1,4 +1,3 @@
-
 <div align="center">
   <a href="https://github.com/reeflective/flags">
     <img alt="" src="" width="600">
@@ -6,8 +5,8 @@
   <br> <h1> Flags </h1>
 
   <p>  Generate cobra commands from structs </p>
-  <p>  jessevdk/go-flags and octago/sflags compliant tags. </p>
-  <p>  Enhanced with advanced related CLI functionality, at minimum cost. </p>
+  <p>  jessevdk/go-flags, urfave/sflags and alecthomas/kong compliant tags. </p>
+  <p>  Advanced related CLI features (validations, completions and more), at a minimum cost. </p>
 </div>
 
 
@@ -44,54 +43,120 @@
   </a>
 </p>
 
+`reeflective/flags` lets you effortlessly build powerful, feature-rich `spf13/cobra` command-line applications directly from Go structs. Stop writing boilerplate for flags, commands, and argument parsing. Instead, define your entire CLI structure declaratively and let `flags` handle the generation.
 
-## Summary
+## Features
 
-The flags library allows to declare cobra CLI commands, flags and positional arguments from structs and field tags.
-It originally aimed to enhance [go-flags](https://github.com/jessevdk/go-flags), but ended up shifting its approach in order to leverage the widely 
-used and battle-tested [cobra](https://github.com/spf13/cobra) CLI library. In addition, it provides other generators leveraging the [carapace](https://github.com/rsteube/carapace)
-completion engine, thus allowing for very powerful yet simple completion and as-you-type usage generation for 
-the commands, flags and positional arguments.
-
-In short, the main purpose of this library is to let users focus on writing programs. It requires very little 
-time and focus spent on declaring CLI interface specs (commands, flags, groups of flags/commands) and associated 
-functionality (completions and validations), and then generates powerful and ready to use CLI programs.
-
-
-## Features 
+### Overview
+*   **Declarative & Simple:** Define your entire CLI—commands, subcommands, flags, and positional arguments—using simple Go struct tags.
+*   **Powerful Completions:** Instantly generate rich, context-aware shell completions for Zsh, Bash, Fish, and more, powered by a single call to `carapace`.
+*   **Built-in Validation:** Add validation rules (`required`, `min`, `max`, `oneof`, etc.) directly in your struct tags using the `validate` tag.
+*   **Seamless Cobra Integration:** Generates a standard `cobra.Command`, so you can still use the full power of the Cobra ecosystem.
+*   **High Compatibility:** Offers a familiar experience for developers coming from `jessevdk/go-flags` or `octago/sflags` by supporting their tag formats.
+*   **Focus on Your Logic:** Spend less time on CLI boilerplate and more time on what your application actually does.
 
 ### Commands, flags & positionals 
-- Easily declare commands, flags, and positional arguments through struct tags.
-- Various ways to structure the command trees in groups (tagged, or encapsulated in structs).
-- Almost entirely retrocompatible with [go-flags](https://github.com/jessevdk/go-flags), with a ported and enlarged test suite.
-- Advanced and versatile positional arguments declaration, with automatic binding to `cobra.Args`.
-- Large array of native types supported as flags or positional arguments.
+-   Various ways to structure the command trees in groups (tagged, or encapsulated in structs).
+-   Almost entirely retrocompatible with [go-flags](https://github.com/jessevdk/go-flags), [sflags](https://github.com/urfave/sflags) and [kong](https://github.com/alecthomas/kong) with a ported and enlarged test suite.
+-   Advanced and versatile positional arguments declaration, with automatic binding to `cobra.Args`.
+-   Large array of native types supported as flags or positional arguments.
 
 ### Related functionality
-- Easily declare validations on command flags or positional arguments, with [go-validator](https://github.com/go-playground/validator) tags.
-- Generate advanced completions with the [carapace](https://github.com/rsteube/carapace) completion engine in a single call.
-- Implement completers on positional/flag types, or declare builtin completers via struct tags. 
-- Generated completions include commands/flags groups, descriptions, usage strings.
-- Live validation of command-line input with completers running flags' validations.
-- All of these features, cross-platform and cross-shell, almost for free.
+-   Easily declare validations on command flags or positional arguments, with [go-validator](https://github.com/go-playground/validator) tags.
+-   Generate advanced completions with the [carapace](https://github.com/rsteube/carapace) completion engine in a single call.
+-   Implement completers on positional/flag types, or declare builtin completers via struct tags. 
+-   Generated completions include commands/flags groups, descriptions, usage strings.
+-   Live validation of command-line input with completers running flags' validations.
+ 
+## Discovering the Library
 
+A good way to introduce you to this library is to [install and use the example application binary](https://github.com/reeflective/flags/tree/main/example).
+This example application will give you a taste of the behavior and supported features.
 
-## Documentation
+## Quick Start
 
-- A good way to introduce you to this library is to [install and use the example application binary](https://github.com/reeflective/flags/tree/main/example).
-  This example application will give you a taste of the behavior and supported features.
-- The generation package [flags](https://github.com/reeflective/flags/tree/main/gen/flags) has a [godoc file](https://github.com/reeflective/flags/tree/main/gen/flags/flags.go) with all the valid tags for each component 
-  (commands/groups/flags/positionals), along with some notes and advices. This is so that you can
-  quickly get access to those from your editor when writing commands and functionality.
-- Another [godoc file](https://github.com/reeflective/flags/tree/main/flags.go) provides quick access to global parsing options (for global behavior, 
-  validators, etc) located in the root package of this library. Both godoc files will be merged.
+Go beyond simple flags. Define commands, grouped flags, positional arguments with validation, and shell completions—all from a single struct.
+
+```go
+package main
+
+import (
+	"fmt"
+	"os"
+
+	"github.comcom/reeflective/flags"
+)
+
+// Define the root command structure.
+var opts struct {
+	Verbose bool     `short:"v" long:"verbose" desc:"Show verbose debug information"`
+	Hello   HelloCmd `command:"hello" description:"A command to say hello"`
+}
+
+// Define the 'hello' subcommand.
+type HelloCmd struct {
+	// Add a required positional argument with shell completion for usernames.
+	Name string `arg:"" required:"true" description:"The name to greet" complete:"users"`
+
+	// Add an optional positional argument with a default value.
+	Greeting string `arg:"" help:"An optional, custom greeting"`
+
+	// Group flags together for better --help output.
+	Output struct {
+		Formal bool   `long:"formal" description:"Use a more formal greeting"`
+		Color  string `long:"color" default:"auto" description:"When to use color output" choice:"auto always never"`
+	} `group:"Output Settings"`
+}
+
+// Execute will be automatically discovered and used as the handler for the 'hello' command.
+func (c *HelloCmd) Execute(args []string) error {
+	greeting := c.Greeting
+	if c.Output.Formal {
+		greeting = "Greetings"
+	}
+
+	message := fmt.Sprintf("%s, %s!", greeting, c.Name)
+
+	// A real app would check if stdout is a TTY for "auto"
+	if c.Output.Color == "always" || c.Output.Color == "auto" {
+		message = "\033[32m" + message + "\033[0m" // Green text
+	}
+
+	fmt.Println(message)
+
+	if opts.Verbose {
+		fmt.Println("(Executed with verbose flag)")
+	}
+
+	return nil
+}
+
+func main() {
+	// Generate the cobra.Command from your struct.
+    // Completions will be automatically generated.
+	cmd, err := flags.Parse(&opts)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
+	// Execute the application.
+	if err := cmd.Execute(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
+```
+
+## Advanced Usage & Wiki
+
 - Along with the above, the following is the table of contents of the [wiki documentation](https://github.com/reeflective/flags/wiki):
 
 ### Development
 * [Introduction and principles](https://github.com/reeflective/flags/wiki/Introduction)
-* [Declaring and using commands](https://github.com/reeflective/flags/wiki/Commands)
-* [Positional arguments](https://github.com/reeflective/flags/wiki/Positionals)
+* [Commands](https://github.com/reeflective/flags/wiki/Commands)
 * [Flags](https://github.com/reeflective/flags/wiki/Flags)
+* [Positional arguments](https://github.com/reeflective/flags/wiki/Positionals)
 * [Completions](https://github.com/reeflective/flags/wiki/Completions)
 * [Validations](https://github.com/reeflective/flags/wiki/Validations)
 * [Side features](https://github.com/reeflective/flags/wiki/Side-Features)
@@ -99,30 +164,16 @@ functionality (completions and validations), and then generates powerful and rea
 ### Coming from other libraries
 * [Changes from octago/sflags](https://github.com/reeflective/flags/wiki/Sflags)
 * [Changes from jessevdk/go-flags](https://github.com/reeflective/flags/wiki/Go-Flags)
-
+* [Changes from alecthomas/kong](https://github.com/reeflective/flags/wiki/Kong)
 
 ## Status
 
-This library is currently in a pre-release candidate state, for several reasons:
-- It has not been widely tested, and some features/enhancements remain to be done.
-- There might be bugs, or behavior inconsistencies that I might have missed.
-- The codebase is not huge, but significant nonetheless. I aimed to write it 
-  as structured and cleanly as possible.
+This library is approaching v1.0.0 status: it has been under a big refactoring and has seen many
+improvements in many aspects (Compatibility, completions, validations, failure safety, etc).
+However, it has not been much tested outside of its test suite: there might be bugs, or behavior 
+inconsistencies that I might have missed.
 
 Please open a PR or an issue if you wish to bring enhancements to it. For newer features, 
 please consider if there is a large number of people who might benefit from it, or if it 
 has a chance of impairing on future development. If everything is fine, please propose !
 Other contributions, as well as bug fixes and reviews are also welcome.
-
-
-## Credits
-
-- This library is _heavily_ based on [octago/sflags](https://github.com/octago/sflags) code (it is actually forked from it since most of its code was needed).
-  The flags generation is almost entirely his, and this library would not be as nearly as powerful without it. He should also
-  be credited for 99% of this library's 99% coverage rate. It is also the inspiration for the trajectory this project has taken, 
-  which originally would just enhance go-flags.
-- The [go-flags](https://github.com/jessevdk/go-flags) is probably the most widely used reflection-based CLI library. While it will be hard to find a lot of 
-  similarities with this project's codebase, the internal logic for scanning arbitrary structures draws almost all of its
-  inspiration out of this project.
-- The completion engine [carapace](https://github.com/rsteube/carapace), a fantastic library for providing cross-shell, multi-command CLI completion with hundreds 
-  of different system completers. The flags project makes use of it for generation the completers for the command structure.
