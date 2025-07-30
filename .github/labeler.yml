@@ -1,33 +1,30 @@
 # List of PR labels for readline
 
 tags:
-- tag.go
 - internal/tag/*
 commands:
-- command.go
-- gen/flags/command*
+- internal/gen/command*
 flags:
-- flag.go
-- camelcase*
-- gen/flags/flags*
+- flags.go
+- internal/parser/camelcase*
+- internal/gen/flag*
 positionals:
+- internal/gen/positional*
 - internal/positional/*
-- gen/flags/positional*
+- internal/parser/positional/*
 completions:
-- gen/completions/*
+- internal/completions/*
 options:
-- options.go
 - internal/scan/options.go
 scan:
-- parser.go
-- errors.go
-- parser_test.go
+- internal/parser.go
+- internal/errors/errors.go
+- internal/parser/parser_test.go
 - internal/scan/*
 validation:
-- validator/*
 - internal/validation/*
 types:
 - internal/convert/*
-- cmd/genvalues/*
-- values*
-- converters*
+- internal/values/*
+- internal/values/genvalues/*
+- types.go
