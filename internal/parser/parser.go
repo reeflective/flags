@@ -68,6 +68,10 @@ func ParseField(val reflect.Value, fld reflect.StructField, opts *Opts) ([]*Flag
 
 // parseField is the main dispatcher for parsing a single struct field.
 func parseField(ctx *FieldContext) ([]*Flag, *Positional, bool, error) {
+	// First, check if the field is tagged as a flag but has an invalid type.
+	if err := validateFlagType(ctx); err != nil {
+		return nil, nil, true, err
+	}
 
 	// Either scan the field as a positional argument
 	if _, isArg := ctx.Tag.Get("arg"); isArg {
@@ -96,6 +100,38 @@ func parseField(ctx *FieldContext) ([]*Flag, *Positional, bool, error) {
 	}
 
 	return []*Flag{flag}, nil, true, nil
+}
+
+// validateFlagType checks if a field that is tagged as a flag has a type that
+// can be used as a flag value.
+func validateFlagType(ctx *FieldContext) error {
+	// If the field is not tagged as a flag, we don't need to validate it.
+	if !isTaggedAsFlag(ctx.Tag) {
+		return nil
+	}
+
+	// If the field is a struct and ParseAll is not enabled, it's an error.
+	if isOptionGroup(ctx.Value) && !ctx.Opts.ParseAll {
+		return fmt.Errorf("%w: field '%s' is a struct but ParseAll is not enabled",
+			errors.ErrNotValue, ctx.Field.Name)
+	}
+
+	// If the field is not a struct, it must be a single value type.
+	if !isOptionGroup(ctx.Value) && !isSingleValue(ctx.Value) {
+		return fmt.Errorf("%w: field '%s' has an invalid type for a flag",
+			errors.ErrNotValue, ctx.Field.Name)
+	}
+
+	return nil
+}
+
+// isTaggedAsFlag checks if a field is tagged with any of the flag tags.
+func isTaggedAsFlag(tag *Tag) bool {
+	_, isFlag := tag.Get("flag")
+	_, isShort := tag.Get("short")
+	_, isLong := tag.Get("long")
+
+	return isFlag || isShort || isLong
 }
 
 // newValue creates a new values.Value for a field and runs initial validation.

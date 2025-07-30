@@ -459,3 +459,23 @@ func TestCustomNegatableFlags(t *testing.T) {
 		run(t, test)
 	})
 }
+
+// TestInvalidFlagType verifies that a custom flag type that does not
+// implement the flags.Value interface returns an error.
+func TestInvalidFlagType(t *testing.T) {
+	t.Parallel()
+
+	type customValue struct {
+		Value string
+	}
+
+	type invalidFlagTypeConfig struct {
+		Invalid customValue `long:"invalid"`
+	}
+
+	cfg := &invalidFlagTypeConfig{}
+	_, err := Generate(cfg)
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "parse error: field marked as flag does not implement flags.Value: field 'Invalid' is a struct but ParseAll is not enabled")
+}

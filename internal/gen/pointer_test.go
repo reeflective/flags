@@ -48,6 +48,7 @@ type pointerGroup struct {
 // types (except structs) correctly parse their command-line values.
 func TestPointerPrimitiveFlags(t *testing.T) {
 	t.Parallel()
+	test := assert.New(t)
 
 	data := pointerRoot{}
 	args := []string{
@@ -63,9 +64,10 @@ func TestPointerPrimitiveFlags(t *testing.T) {
 	}
 
 	root, err := newCommandWithArgs(&data, args)
+	test.NoError(err, "Command should have been generated successfully")
+
 	cmd, err := root.ExecuteC()
 
-	test := assert.New(t)
 	test.NotNil(cmd)
 	test.NoError(err, "Command should have exited successfully")
 

@@ -130,6 +130,9 @@ func isSingleValue(val reflect.Value) bool {
 		if values.ParseGeneratedPtrs(addr) != nil {
 			return true
 		}
+		if values.ParseGeneratedMap(addr, nil) != nil {
+			return true
+		}
 	}
 
 	// 3. Handle pointers: if the value is a pointer, check the type it points to.
