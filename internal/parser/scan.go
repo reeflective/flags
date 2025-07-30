@@ -44,6 +44,8 @@ func scan(v reflect.Value, handler Handler) error {
 		field := t.Field(i)
 		value := v.Field(i)
 
+		// Never scan unexported fields, but only return an error
+		// right away if they are tagged as a flag/arg/command.
 		if !field.IsExported() {
 			if err := checkForDisallowedTags(field); err != nil {
 				return err
@@ -52,6 +54,7 @@ func scan(v reflect.Value, handler Handler) error {
 			continue
 		}
 
+		// Otherwise, start the scanning process.
 		if _, err := handler(value, &field); err != nil {
 			return err
 		}

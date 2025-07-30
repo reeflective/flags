@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
 	"github.com/reeflective/flags/internal/parser"
@@ -19,12 +20,19 @@ type flagSet interface {
 var _ flagSet = (*pflag.FlagSet)(nil)
 
 // generateTo takes a list of parser.Flag, parsed from
-// a struct, and adds them to the destination flag set.
-func generateTo(src []*parser.Flag, dst flagSet) {
+// a struct, and adds them to the destination command's flag sets.
+func generateTo(src []*parser.Flag, cmd *cobra.Command) {
 	for _, srcFlag := range src {
 		val, ok := srcFlag.Value.(pflag.Value)
 		if !ok {
 			continue
+		}
+
+		var dst *pflag.FlagSet
+		if srcFlag.Persistent {
+			dst = cmd.PersistentFlags()
+		} else {
+			dst = cmd.Flags()
 		}
 
 		// Register the primary flag.

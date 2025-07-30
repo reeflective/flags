@@ -22,6 +22,7 @@ type Flag struct {
 	Hidden        bool          // Flag hidden from descriptions/completions
 	Deprecated    bool          // Not in use anymore
 	Required      bool          // If true, the option _must_ be specified on the command line.
+	Persistent    bool          // If true, the flag is persistent on its command.
 	Choices       []string      // If non empty, only a certain set of values is allowed for an option.
 	OptionalValue []string      // The optional value of the option.
 	Negatable     *string       // If not nil, a negation flag is generated with the given prefix.
@@ -148,6 +149,7 @@ func buildFlag(name, short string, fld reflect.StructField, tag *Tag, opts *Opts
 		DefValue:      getFlagDefault(tag),
 		Hidden:        isSet(tag, "hidden"),
 		Deprecated:    isSet(tag, "deprecated"),
+		Persistent:    isSet(tag, "persistent"),
 		Choices:       getFlagChoices(tag),
 		OptionalValue: tag.GetMany("optional-value"),
 		Negatable:     getFlagNegatable(fld, tag),

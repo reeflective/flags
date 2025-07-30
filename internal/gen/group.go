@@ -51,19 +51,20 @@ func handleFlagGroup(ctx *context, val reflect.Value, fld *reflect.StructField, 
 	// 1. Call the new parser.ParseGroup to get the list of flags.
 	flags, _, err := parser.ParseGroup(fieldCtx)
 	if err != nil {
-		return err // The error is already wrapped by ParseGroup.
+		return err
+	}
+
+	if persistent, _ := tag.Get("persistent"); persistent != "" {
+		for _, flag := range flags {
+			flag.Persistent = true
+		}
 	}
 
 	// 2. Collect the parsed flags for post-processing (e.g., XOR).
 	ctx.Flags = append(ctx.Flags, flags...)
 
 	// 3. Generate the parsed flags into the command's flag set.
-	// The 'persistent' tag is handled here, in the generation step.
-	if persistent, _ := tag.Get("persistent"); persistent != "" {
-		generateTo(flags, ctx.cmd.PersistentFlags())
-	} else {
-		generateTo(flags, ctx.cmd.Flags())
-	}
+	generateTo(flags, ctx.cmd)
 
 	// And add their completions to the context.
 	if len(flags) > 0 {
@@ -122,7 +123,7 @@ func flagsOrPositional(ctx *context) parser.Handler {
 		// Either we found flags, add them to the command.
 		if len(flags) > 0 {
 			ctx.Flags = append(ctx.Flags, flags...)
-			generateTo(flags, ctx.cmd.Flags())
+			generateTo(flags, ctx.cmd)
 
 			// And add their completions to the context.
 			for _, flag := range flags {

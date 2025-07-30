@@ -61,6 +61,14 @@ func NewArgs() *Args {
 
 // ToCobraArgs converts the list of positional arguments into a cobra.PositionalArgs function.
 func (args *Args) ToCobraArgs() cobra.PositionalArgs {
+	if len(args.slots) == 0 {
+		return func(cmd *cobra.Command, cargs []string) error {
+			SetRemainingArgs(cmd, cargs)
+
+			return nil
+		}
+	}
+
 	return func(cmd *cobra.Command, cargs []string) error {
 		// Apply the words on the all/some of the positional fields,
 		// returning any words that have not been parsed in fields,
