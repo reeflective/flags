@@ -8,9 +8,9 @@ import (
 )
 
 // BindPositionals registers the completions for a set of positional arguments.
-func BindPositionals(comps *carapace.Carapace, args *positional.Args) {
+func BindPositionals(comps *carapace.Carapace, args *positional.Args, opts *parser.Opts) {
 	compArgs := args.Copy()
-	completionCache := positionalCompleters(compArgs)
+	completionCache := positionalCompleters(compArgs, opts)
 	compArgs = positional.WithWordConsumer(compArgs, consumePositionalWith(completionCache))
 
 	handler := func(ctx carapace.Context) carapace.Action {
@@ -22,11 +22,11 @@ func BindPositionals(comps *carapace.Carapace, args *positional.Args) {
 	comps.PositionalAnyCompletion(carapace.ActionCallback(handler))
 }
 
-func positionalCompleters(args *positional.Args) *compCache {
+func positionalCompleters(args *positional.Args, opts *parser.Opts) *compCache {
 	cache := newCompletionCache()
 
 	for _, arg := range args.Positionals() {
-		completer := buildPositionalCompleter(arg)
+		completer := buildPositionalCompleter(arg, opts)
 		if completer != nil {
 			cache.add(arg.Index, completer)
 		}
@@ -35,11 +35,11 @@ func positionalCompleters(args *positional.Args) *compCache {
 	return cache
 }
 
-func buildPositionalCompleter(arg *parser.Positional) carapace.CompletionCallback {
+func buildPositionalCompleter(arg *parser.Positional, opts *parser.Opts) carapace.CompletionCallback {
 	// 1. Get all potential completer components.
 	hint, hasHint := hintCompletions(*arg.Tag)
 	typeCompleter, _, _ := typeCompleter(arg.Value)
-	tagCompleter, combine, hasTagCompleter := getTaggedCompletionAction(*arg.Tag)
+	tagCompleter, combine, hasTagCompleter := getTaggedCompletionAction(*arg.Tag, opts)
 
 	// 2. Combine value completers.
 	var valueCompleter carapace.CompletionCallback

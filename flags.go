@@ -14,6 +14,7 @@ package flags
 import (
 	"fmt"
 
+	"github.com/carapace-sh/carapace"
 	"github.com/go-playground/validator/v10"
 	"github.com/spf13/cobra"
 
@@ -119,6 +120,16 @@ func WithValidation() Option {
 // and using custom validations through the *Validate type.
 func WithValidator(v *validator.Validate) Option {
 	return Option(parser.Validator(validation.NewWith(v)))
+}
+
+// === Completion ===
+
+// WithCompleter adds a custom completer function to the parser options.
+// You can use this completer by tagging flag or positional arg struct fields
+// with `complete:"custom-completer-name"`, and bind this completer under the
+// same name in this function.
+func WithCompleter(name string, completer carapace.CompletionCallback) Option {
+	return Option(parser.WithCompleter(name, completer))
 }
 
 // === Core Interfaces ===

@@ -69,7 +69,7 @@ func handleFlagGroup(ctx *context, val reflect.Value, fld *reflect.StructField, 
 	// And add their completions to the context.
 	if len(flags) > 0 {
 		for _, flag := range flags {
-			if comp, found := buildFlagCompleter(flag); found {
+			if comp, found := buildFlagCompleter(flag, ctx.opts); found {
 				ctx.flagComps[flag.Name] = comp
 			}
 		}
@@ -127,7 +127,7 @@ func flagsOrPositional(ctx *context) parser.Handler {
 
 			// And add their completions to the context.
 			for _, flag := range flags {
-				if comp, found := buildFlagCompleter(flag); found {
+				if comp, found := buildFlagCompleter(flag, ctx.opts); found {
 					ctx.flagComps[flag.Name] = comp
 				}
 			}
@@ -145,9 +145,9 @@ func flagsOrPositional(ctx *context) parser.Handler {
 	return flagScanner
 }
 
-func buildFlagCompleter(flag *parser.Flag) (carapace.Action, bool) {
+func buildFlagCompleter(flag *parser.Flag, opts *parser.Opts) (carapace.Action, bool) {
 	// Get the combined completer from the type and the struct tag.
-	completer, isRepeatable, _ := completions.GetCombinedCompletionAction(flag.RValue, *flag.Tag)
+	completer, isRepeatable, _ := completions.GetCombinedCompletionAction(flag.RValue, *flag.Tag, opts)
 
 	// Check if the flag has some choices: if yes, we simply overwrite
 	// the completer implementation with a builtin one.

@@ -33,7 +33,7 @@ func (c *context) bindCompletions() {
 	}
 
 	// Positionals
-	completions.BindPositionals(c.comps, c.positionals)
+	completions.BindPositionals(c.comps, c.positionals, c.opts)
 }
 
 // Generate returns a root cobra Command to be used directly as an entry-point.

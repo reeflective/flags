@@ -4,6 +4,7 @@ import (
 	"maps"
 	"reflect"
 
+	"github.com/carapace-sh/carapace"
 	"github.com/reeflective/flags/internal/validation"
 )
 
@@ -52,6 +53,9 @@ type Opts struct {
 
 	// GlobalVars is a map of variables that are applied globally.
 	GlobalVars map[string]string
+
+	// Completers is a map of custom completer functions.
+	Completers map[string]carapace.CompletionCallback
 }
 
 // DefOpts returns the default parsing options.
@@ -64,6 +68,7 @@ func DefOpts() *Opts {
 		Flatten:     false,
 		Vars:        make(map[string]string),
 		GlobalVars:  make(map[string]string),
+		Completers:  make(map[string]carapace.CompletionCallback),
 	}
 }
 
@@ -130,5 +135,15 @@ func FlagHandler(val FlagFunc) OptFunc {
 func WithVars(vars map[string]string) OptFunc {
 	return func(opt *Opts) {
 		maps.Copy(opt.GlobalVars, vars)
+	}
+}
+
+// WithCompleter adds a custom completer function to the parser options.
+func WithCompleter(name string, completer carapace.CompletionCallback) OptFunc {
+	return func(opt *Opts) {
+		if opt.Completers == nil {
+			opt.Completers = make(map[string]carapace.CompletionCallback)
+		}
+		opt.Completers[name] = completer
 	}
 }

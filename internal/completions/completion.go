@@ -16,9 +16,9 @@ const (
 )
 
 // GetCombinedCompletionAction returns a combined completion action from both the type and the struct tag.
-func GetCombinedCompletionAction(val reflect.Value, tag parser.Tag) (carapace.CompletionCallback, bool, bool) {
+func GetCombinedCompletionAction(val reflect.Value, tag parser.Tag, opts *parser.Opts) (carapace.CompletionCallback, bool, bool) {
 	typeCompCallback, isRepeatable, itemsImplement := typeCompleter(val)
-	tagCompCallback, combineWithCompleter, found := getTaggedCompletionAction(tag)
+	tagCompCallback, combineWithCompleter, found := getTaggedCompletionAction(tag, opts)
 
 	// Combine the type-implemented completer with tagged completions.
 	if typeCompCallback != nil && combineWithCompleter {
@@ -142,7 +142,7 @@ func getCompleter(val reflect.Value) carapace.CompletionCallback {
 	return nil
 }
 
-func getTaggedCompletionAction(tag parser.Tag) (carapace.CompletionCallback, bool, bool) {
+func getTaggedCompletionAction(tag parser.Tag, opts *parser.Opts) (carapace.CompletionCallback, bool, bool) {
 	compTag := tag.GetMany(completeTagName)
 	description, _ := tag.Get("description")
 	desc, _ := tag.Get("desc")
@@ -166,6 +166,13 @@ func getTaggedCompletionAction(tag parser.Tag) (carapace.CompletionCallback, boo
 		if strings.HasPrefix(tagVal, "+") {
 			combineWithCompleter = true
 			tagVal = strings.TrimPrefix(tagVal, "+")
+		}
+
+		// Check for a custom completer first.
+		if completer, ok := opts.Completers[tagVal]; ok {
+			actions = append(actions, carapace.ActionCallback(completer))
+
+			continue
 		}
 
 		items := strings.SplitAfterN(tagVal, ",", completeTagMaxParts)
