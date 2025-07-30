@@ -41,16 +41,16 @@ func (m *Machine) Complete(ctx carapace.Context) carapace.Action {
 	}
 }
 
-func (p *Machine) String() string {
-	return string(*p)
+func (m *Machine) String() string {
+	return string(*m)
 }
 
-func (p *Machine) Set(value string) error {
-	*p = (Machine)(value)
+func (m *Machine) Set(value string) error {
+	*m = (Machine)(value)
 
 	return nil
 }
 
-func (p *Machine) Type() string {
-	return reflect.TypeOf(*p).Kind().String()
+func (m *Machine) Type() string {
+	return reflect.TypeOf(*m).Kind().String()
 }

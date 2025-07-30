@@ -14,7 +14,7 @@ import (
 // Handler is a function that can be applied to a struct field.
 type Handler func(val reflect.Value, field *reflect.StructField) (bool, error)
 
-// Type actually scans the type, recursively if needed.
+// Scan actually scans the type, recursively if needed.
 func Scan(data any, handler Handler) error {
 	// Get all the public fields in the data struct
 	ptrval := reflect.ValueOf(data)
@@ -31,11 +31,7 @@ func Scan(data any, handler Handler) error {
 
 	realval := reflect.Indirect(ptrval)
 
-	if err := scan(realval, handler); err != nil {
-		return err
-	}
-
-	return nil
+	return scan(realval, handler)
 }
 
 func scan(v reflect.Value, handler Handler) error {

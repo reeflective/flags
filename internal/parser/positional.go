@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+	"math"
 	"reflect"
 	"strconv"
 	"strings"
@@ -189,15 +190,20 @@ func parseQuantityRequired(fieldTag Tag) (int, int, bool, error) {
 
 	if len(rng) > 1 {
 		if preq, err := strconv.ParseInt(rng[0], 10, 64); err == nil {
-			required = int(preq)
+			if preq > 0 && preq <= math.MaxInt {
+				required = int(preq)
+			}
 		}
-
 		if preq, err := strconv.ParseInt(rng[1], 10, 64); err == nil {
-			maximum = int(preq)
+			if preq > 0 && preq <= math.MaxInt {
+				maximum = int(preq)
+			}
 		}
 	} else {
 		if preq, err := strconv.ParseInt(sreq, 10, 64); err == nil {
-			required = int(preq)
+			if preq > 0 && preq <= math.MaxInt {
+				required = int(preq)
+			}
 		}
 	}
 

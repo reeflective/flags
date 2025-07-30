@@ -39,6 +39,7 @@ func GetCombinedCompletionAction(val reflect.Value, tag parser.Tag, opts *parser
 	return nil, isRepeatable, false
 }
 
+// ChoiceCompletions produces a completer proposing the tagged choices for a flag/arg.
 func ChoiceCompletions(tag parser.Tag, val reflect.Value) carapace.CompletionCallback {
 	choices := tag.GetMany("choice")
 
