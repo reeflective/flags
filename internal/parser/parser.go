@@ -49,7 +49,7 @@ func ParseGroup(ctx *FieldContext) ([]*Flag, []*Positional, error) {
 
 // ParseField is the updated version of ParseField that returns the new parser.Positional type.
 func ParseField(val reflect.Value, fld reflect.StructField, opts *Opts) ([]*Flag, *Positional, bool, error) {
-	if (fld.PkgPath != "" && !fld.Anonymous) || val.Kind() == reflect.Func {
+	if val.Kind() == reflect.Func {
 		return nil, nil, false, nil
 	}
 
@@ -69,6 +69,7 @@ func ParseField(val reflect.Value, fld reflect.StructField, opts *Opts) ([]*Flag
 // parseField is the main dispatcher for parsing a single struct field.
 func parseField(ctx *FieldContext) ([]*Flag, *Positional, bool, error) {
 
+	// Either scan the field as a positional argument
 	if _, isArg := ctx.Tag.Get("arg"); isArg {
 		pos, err := parsePositional(ctx, false)
 		if err != nil {
@@ -78,6 +79,7 @@ func parseField(ctx *FieldContext) ([]*Flag, *Positional, bool, error) {
 		return nil, pos, true, nil
 	}
 
+	// Or scan it as a struct container for a group of flags (named or not)
 	if ctx.Field.Anonymous || (isOptionGroup(ctx.Value) && ctx.Opts.ParseAll) {
 		flags, _, err := ParseGroup(ctx)
 		if err != nil {
@@ -87,6 +89,7 @@ func parseField(ctx *FieldContext) ([]*Flag, *Positional, bool, error) {
 		return flags, nil, true, nil
 	}
 
+	// Or scan the field as a single flag value.
 	flag, found, err := parseSingleFlag(ctx)
 	if err != nil || !found {
 		return nil, nil, found, err

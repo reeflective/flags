@@ -23,10 +23,6 @@ type positionalStrict struct {
 	} `positional-args:"true" required:"true"`
 }
 
-func (p *positionalStrict) Execute(args []string) error {
-	return nil
-}
-
 // positionalSoftPassthrough is a command that allows excess arguments
 // to be passed to its Execute method.
 type positionalSoftPassthrough struct {
@@ -36,10 +32,6 @@ type positionalSoftPassthrough struct {
 	} `passthrough:"true" positional-args:"true" required:"true"`
 }
 
-func (p *positionalSoftPassthrough) Execute(args []string) error {
-	return nil
-}
-
 // positionalAmbiguousPassthrough has a container-level passthrough
 // and a greedy final positional, which is an invalid configuration.
 type positionalAmbiguousPassthrough struct {
@@ -47,10 +39,6 @@ type positionalAmbiguousPassthrough struct {
 		Arg1    string
 		Greedy2 []string
 	} `passthrough:"true" positional-args:"true"`
-}
-
-func (p *positionalAmbiguousPassthrough) Execute(args []string) error {
-	return nil
 }
 
 //

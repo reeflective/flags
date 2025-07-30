@@ -95,10 +95,6 @@ type EmbeddedXor struct {
 	Milk  bool `long:"milk"  xor:"beverage"`
 }
 
-func (x *xorConfig) Execute(args []string) error {
-	return nil
-}
-
 // run condenses all CLI/flags parsing steps, and compares
 // all structs/errors against their expected state.
 func run(t *testing.T, test *testConfig) {
@@ -346,6 +342,80 @@ type customNegatableConfig struct {
 	Default   bool `long:"default" negatable:""`
 	Custom    bool `long:"custom"  negatable:"disable-custom"`
 	WithValue bool `default:"true" long:"with-value"          negatable:"disable"`
+}
+
+// TestUnexportedFields verifies that fields that are not exported but have tags are rejected.
+func TestUnexportedFields(t *testing.T) {
+	t.Parallel()
+
+	type unexportedPositional struct {
+		first  string `positional-args:"yes"`
+		second string
+	}
+
+	type unexportedCommand struct {
+		unexportedPositional `command:"pos"`
+	}
+
+	type unexportedGroup struct {
+		flag bool `long:"flag"`
+	}
+
+	tests := []struct {
+		name    string
+		spec    any
+		expErr  string
+		wantErr bool
+	}{
+		{
+			name: "unexported flag",
+			spec: &struct {
+				unexported bool `long:"unexported"`
+			}{},
+			expErr:  "unexported field: field 'unexported' is not exported but has tags: long",
+			wantErr: true,
+		},
+		{
+			name: "unexported command",
+			spec: &struct {
+				cmd unexportedCommand `command:"cmd"`
+			}{},
+			expErr:  "unexported field: field 'cmd' is not exported but has tags: command",
+			wantErr: true,
+		},
+		{
+			name: "unexported group",
+			spec: &struct {
+				group unexportedGroup `group:"group"`
+			}{},
+			expErr:  "unexported field: field 'group' is not exported but has tags: group",
+			wantErr: true,
+		},
+		{
+			name: "unexported positional",
+			spec: &struct {
+				pos unexportedPositional `positional-args:"true"`
+			}{},
+			expErr:  "unexported field: field 'pos' is not exported but has tags: positional-args",
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			parseOptions := parser.ParseAll()
+			_, err := Generate(tt.spec, parseOptions)
+
+			if tt.wantErr {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.expErr)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
 }
 
 // TestCustomNegatableFlags verifies the behavior of negatable flags with

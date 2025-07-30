@@ -39,22 +39,12 @@ var (
 	// ErrUnsupportedType indicates that a type is not supported for a given operation.
 	ErrUnsupportedType = errors.New("unsupported type")
 
-	// ErrInvalidChoice indicates that the provided flag argument is not among the valid choices.
-	ErrInvalidChoice = errors.New("invalid choice")
-
-	// ErrInvalidValue indicates that the provided flag argument is not a valid value for the flag type.
-	ErrInvalidValue = errors.New("invalid value")
-
 	// ErrInvalidRequiredQuantity indicates that the minimum number of required arguments is greater
 	// than the maximum number of arguments that can be accepted.
 	ErrInvalidRequiredQuantity = errors.New("maximum number of arguments cannot be 0")
 
-	// ErrRequired signals an argument field has not been
-	// given its minimum amount of positional words to use.
-	ErrRequired = errors.New("required argument")
-
-	// ErrTooManyArguments indicates that too many arguments were provided to the command.
-	ErrTooManyArguments = errors.New("too many arguments")
+	// ErrUnexportedField indicates that an unexported field has been tagged.
+	ErrUnexportedField = errors.New("unexported field")
 )
 
 // Validation errors: command/flag/argument validation errors.
@@ -70,6 +60,19 @@ var (
 
 	// ErrInvalidFloat indicates that a string could not be parsed as a float.
 	ErrInvalidFloat = errors.New("invalid float value")
+
+	// ErrInvalidChoice indicates that the provided flag argument is not among the valid choices.
+	ErrInvalidChoice = errors.New("invalid choice")
+
+	// ErrInvalidValue indicates that the provided flag argument is not a valid value for the flag type.
+	ErrInvalidValue = errors.New("invalid value")
+
+	// ErrRequired signals an argument field has not been
+	// given its minimum amount of positional words to use.
+	ErrRequired = errors.New("required argument")
+
+	// ErrTooManyArguments indicates that too many arguments were provided to the command.
+	ErrTooManyArguments = errors.New("too many arguments")
 )
 
 // Internal errors: should not happen, but are here for safety.

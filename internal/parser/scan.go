@@ -1,7 +1,10 @@
 package parser
 
 import (
+	"fmt"
 	"reflect"
+	"strings"
+	"sync"
 
 	"github.com/reeflective/flags/internal/errors"
 	"github.com/reeflective/flags/internal/interfaces"
@@ -41,13 +44,54 @@ func scan(v reflect.Value, handler Handler) error {
 		field := t.Field(i)
 		value := v.Field(i)
 
-		if field.PkgPath != "" && !field.Anonymous {
+		if !field.IsExported() {
+			if err := checkForDisallowedTags(field); err != nil {
+				return err
+			}
+
 			continue
 		}
 
 		if _, err := handler(value, &field); err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+var disallowedTags = []string{
+	"flag", "short", "long", "command", "cmd",
+	"group", "options", "arg", "positional-args",
+}
+
+func checkForDisallowedTags(field reflect.StructField) error {
+	tag, skip, _ := GetFieldTag(field)
+	if skip {
+		return nil
+	}
+
+	var foundTags []string
+	var checks sync.WaitGroup
+	var mu sync.Mutex
+
+	for _, tagName := range disallowedTags {
+		checks.Add(1)
+		go func(t string) {
+			defer checks.Done()
+			if _, ok := tag.Get(t); ok {
+				mu.Lock()
+				foundTags = append(foundTags, t)
+				mu.Unlock()
+			}
+		}(tagName)
+	}
+
+	checks.Wait()
+
+	if len(foundTags) > 0 {
+		return fmt.Errorf("%w: field '%s' is not exported but has tags: %s",
+			errors.ErrUnexportedField, field.Name, strings.Join(foundTags, ", "))
 	}
 
 	return nil

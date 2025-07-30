@@ -59,9 +59,6 @@ func parseSingleFlag(ctx *FieldContext) (*Flag, bool, error) {
 }
 
 func newFlag(field reflect.StructField, opts *Opts) (*Flag, *Tag, error) {
-	if field.PkgPath != "" && !field.Anonymous {
-		return nil, nil, nil
-	}
 
 	flag, tag, err := parseFlag(field, opts)
 	if flag == nil || err != nil {
