@@ -95,7 +95,7 @@ func getCompletionAction(name, value, desc string) carapace.Action {
 // it then checks the slice's element type.
 func typeCompleter(val reflect.Value) (carapace.CompletionCallback, bool, bool) {
 	var callback carapace.CompletionCallback
-	isRepeatable := (val.Type().Kind() == reflect.Slice)
+	isRepeatable := val.Type().Kind() == reflect.Slice || val.Type().Kind() == reflect.Map
 	itemsImplement := false
 
 	// Always check that the type itself does implement, even if
@@ -117,7 +117,6 @@ func typeCompleter(val reflect.Value) (carapace.CompletionCallback, bool, bool) 
 		itemsImplement = true
 		callback = impl.Complete
 	} else if val.CanAddr() {
-		isRepeatable = true
 		if impl, ok := val.Addr().Interface().(interfaces.Completer); ok && impl != nil {
 			itemsImplement = true
 			callback = impl.Complete

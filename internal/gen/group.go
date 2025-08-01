@@ -170,14 +170,12 @@ func buildFlagCompleter(flag *parser.Flag, opts *parser.Opts) (carapace.Action, 
 	// Then, and irrespectively of where the completer comes from,
 	// we adapt it considering the kind of type we're dealing with.
 	if isRepeatable {
-
 		// List separator
 		separator := ","
 		if flag.Separator != nil && *flag.Separator != "none" {
 			separator = *flag.Separator
 		}
 		action = action.UniqueList(separator)
-
 	}
 
 	return action, true
