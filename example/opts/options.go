@@ -2,7 +2,6 @@ package opts
 
 import (
 	"reflect"
-	"strings"
 
 	"github.com/carapace-sh/carapace"
 	"github.com/carapace-sh/carapace-bin/pkg/actions/net/ssh"
@@ -32,13 +31,18 @@ type Machine string
 
 // Complete provides user@host completions.
 func (m *Machine) Complete(ctx carapace.Context) carapace.Action {
-	if strings.Contains(ctx.Value, "@") {
-		prefix := strings.SplitN(ctx.Value, "@", 2)[0]
+	action := carapace.ActionMultiParts("@", func(c carapace.Context) carapace.Action {
+		switch len(c.Parts) {
+		case 0:
+			return os.ActionUsers().Invoke(ctx).Suffix("@").ToA().NoSpace('@')
+		case 1:
+			return ssh.ActionHosts()
+		default:
+			return carapace.ActionValues()
+		}
+	})
 
-		return ssh.ActionHosts().Invoke(ctx).Prefix(prefix + "@").ToA()
-	} else {
-		return os.ActionUsers().Suffix("@").NoSpace('@')
-	}
+	return action
 }
 
 func (m *Machine) String() string {
